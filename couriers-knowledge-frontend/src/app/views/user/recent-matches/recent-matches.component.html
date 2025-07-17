@@ -1,0 +1,122 @@
+<div class="matches-container">
+  <div *ngIf="selectedMatch; else matchList" class="details-view">
+    <div class="details-header">
+      <button class="back-button" (click)="backToMatches()">&larr; Voltar para Partidas</button>
+      <div class="details-title">
+        <h2>
+          {{ selectedMatch.radiant_win ? 'Vitória do Time Iluminado' : 'Vitória do Time Temido' }}
+        </h2>
+        <span class="match-duration">{{ (selectedMatch.duration / 60) | number:'1.0-0' }} min</span>
+      </div>
+      <div class="details-score">
+        <span class="radiant-score">{{ selectedMatch.radiant_score }}</span>
+        <span>vs</span>
+        <span class="dire-score">{{ selectedMatch.dire_score }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-message">Carregando detalhes...</div>
+
+    <div *ngIf="!isLoading" class="teams-container">
+      <div class="team-column">
+        <div *ngFor="let player of selectedMatch.players | filter:true:'is_radiant'" class="player-detail-card">
+          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)" class="hero-portrait-detail">
+          <div class="player-info-detail">
+            <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
+            <div class="kda">
+              <span>{{ player.kills }}</span> / 
+              <span>{{ player.deaths }}</span> / 
+              <span>{{ player.assists }}</span>
+            </div>
+          </div>
+          <div class="items-grid">
+            <img *ngFor="let itemId of player.items" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            <img *ngFor="let itemId of player.backpack" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon backpack" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+          </div>
+          <button class="evaluate-button" [disabled]="player.is_already_evaluated || !player.steam_id_64" (click)="evaluatePlayer(player)">
+            {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="team-column">
+        <div *ngFor="let player of selectedMatch.players | filter:false:'is_radiant'" class="player-detail-card">
+          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)" class="hero-portrait-detail">
+          <div class="player-info-detail">
+            <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
+            <div class="kda">
+              <span>{{ player.kills }}</span> / 
+              <span>{{ player.deaths }}</span> / 
+              <span>{{ player.assists }}</span>
+            </div>
+          </div>
+          <div class="items-grid">
+            <img *ngFor="let itemId of player.items" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            <img *ngFor="let itemId of player.backpack" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon backpack" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+          </div>
+          <button class="evaluate-button" [disabled]="player.is_already_evaluated || !player.steam_id_64" (click)="evaluatePlayer(player)">
+            {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #matchList>
+    <h1>Partidas Recentes</h1>
+    <div *ngIf="isLoading" class="loading-message">Carregando histórico de partidas...</div>
+
+    <div class="match-list-container" *ngIf="!isLoading">
+      <div class="match-row-header">
+          <div class="header-player">Seu Herói</div>
+          <div class="header-result">Resultado</div>
+          <div class="header-heroes">Heróis na Partida</div>
+          <div class="header-info">Duração & Data</div>
+      </div>
+      <div *ngFor="let match of matches" 
+           class="match-row" 
+           [ngClass]="{ 'win': match.user_won, 'loss': !match.user_won }"
+           (click)="viewMatchDetails(match.match_id)">
+        <div class="match-player-col">
+          <img [src]="gameDataService.getHeroImageUrl(match.user_hero_id)" class="hero-icon-medium" [alt]="gameDataService.getHeroById(match.user_hero_id)?.localized_name">
+          <span class="hero-name">{{ gameDataService.getHeroById(match.user_hero_id)?.localized_name }}</span>
+        </div>
+        <div class="match-result-col">
+          <span class="result-text">{{ match.user_won ? 'Vitória' : 'Derrota' }}</span>
+        </div>
+        <div class="match-heroes-col">
+          <div class="team-heroes radiant">
+            <img *ngFor="let player of match.players | filter:true:'is_radiant'"
+                 [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+                 class="hero-icon-small"
+                 [class.user-hero]="player.hero_id === match.user_hero_id"
+                 [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
+          </div>
+          <div class="score-vs">
+            <span class="radiant-score">{{ match.radiant_score }}</span> 
+            <span>vs</span> 
+            <span class="dire-score">{{ match.dire_score }}</span>
+          </div>
+          <div class="team-heroes dire">
+            <img *ngFor="let player of match.players | filter:false:'is_radiant'"
+                 [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+                 class="hero-icon-small"
+                 [class.user-hero]="player.hero_id === match.user_hero_id"
+                 [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
+          </div>
+        </div>
+        <div class="match-info-col">
+          <span>{{ (match.duration / 60) | number:'1.0-0' }} min</span>
+          <small>{{ match.start_time * 1000 | date:'dd/MM/yy HH:mm' }}</small>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>
+
+<app-evaluation-form
+  *ngIf="isFormVisible"
+  [evaluationData]="evaluationInitialData"
+  (closeModal)="closeForm()"
+  (evaluationSaved)="onEvaluationSaved()">
+</app-evaluation-form>

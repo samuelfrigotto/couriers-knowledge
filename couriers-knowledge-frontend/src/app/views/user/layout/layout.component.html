@@ -1,0 +1,26 @@
+<div class="layout-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Courier's Knowledge</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a routerLink="/app/dashboard" routerLinkActive="active">
+        <span>Minhas Avaliações</span>
+      </a>
+      <a routerLink="/app/live" routerLinkActive="active"><span>Partida Ao Vivo</span></a>
+      <a routerLink="/app/matches" routerLinkActive="active">
+        <span>Partidas Recentes</span>
+      </a>
+      <a routerLink="/app/profile" routerLinkActive="active">
+        <span>Meu Perfil</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button (click)="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,90 @@
+<div class="profile-container" *ngIf="!isLoading && stats">
+  <div class="profile-header">
+    <img [src]="stats.avatarUrl" alt="Avatar do usuário" class="profile-avatar">
+    <div class="profile-info">
+      <h1>{{ stats.steamUsername }}</h1>
+      <p>Membro desde: {{ stats.accountCreatedAt | date:'longDate' }}</p>
+      <span class="status-badge">{{ stats.accountStatus }}</span>
+    </div>
+  </div>
+
+  <div class="stats-grid general-stats">
+    <div class="stat-card">
+      <h3>Avaliações Feitas</h3>
+      <p class="stat-value">{{ stats.totalEvaluations }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Média das Avaliações Feitas</h3>
+      <p class="stat-value">{{ stats.averageRating }}/5</p>
+    </div>
+    <div class="stat-card">
+      <h3>Autoavaliação</h3>
+      <p class="stat-value">{{ stats.selfAverageRating }}/5</p>
+    </div>
+    <div class="stat-card premium-feature" *ngIf="true"> <h3>Média de Avaliações Recebidas</h3>
+      <div *ngIf="stats.accountStatus === 'Premium'; else upgradePrompt">
+        <p class="stat-value">{{ stats.receivedAverageRating }}/5</p>
+      </div>
+      <ng-template #upgradePrompt>
+        <div class="upgrade-prompt">
+          <button class="upgrade-button">Assine o Premium</button>
+        </div>
+      </ng-template>
+      <span class="premium-badge">Premium</span>
+    </div>
+    <div class="stat-card full-width">
+      <h3>Tags Mais Utilizadas</h3>
+      <div class="tags-container">
+        <span *ngFor="let tag of stats.mostUsedTags" class="tag-badge">{{ tag }}</span>
+        <span *ngIf="!stats.mostUsedTags || stats.mostUsedTags.length === 0">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider">
+    <h2>Últimas 20 Partidas</h2>
+  </div>
+
+  <div class="stats-grid recent-matches-stats">
+    <div class="stat-card full-width">
+      <h3>Jogadores Avaliados</h3>
+      <div class="progress-bar-container">
+        <div class="progress-bar" [style.width.%]="stats.evaluationPercentage">
+          <span>{{ stats.evaluationPercentage }}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <h3>Vitórias</h3>
+      <p class="stat-value">{{ stats.winsLast20 }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Tempo Médio de Partida</h3>
+      <p class="stat-value">{{ stats.averageMatchTime | secondsToTime }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Herói Mais Jogado</h3>
+      <div *ngIf="stats.mostUsedHeroId" class="hero-stat">
+        <img [src]="gameDataService.getHeroImageUrl(stats.mostUsedHeroId)" class="hero-icon">
+        <span>{{ gameDataService.getHeroById(stats.mostUsedHeroId)?.localized_name }}</span>
+      </div>
+      <p *ngIf="!stats.mostUsedHeroId" class="stat-value">-</p>
+    </div>
+    <div class="stat-card">
+      <h3>Herói Mais Enfrentado</h3>
+      <div *ngIf="stats.mostFacedHeroId" class="hero-stat">
+        <img [src]="gameDataService.getHeroImageUrl(stats.mostFacedHeroId)" class="hero-icon">
+        <span>{{ gameDataService.getHeroById(stats.mostFacedHeroId)?.localized_name }}</span>
+      </div>
+      <p *ngIf="!stats.mostFacedHeroId" class="stat-value">-</p>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="loading-message">
+  <p>Carregando perfil...</p>
+</div>
+
+<div *ngIf="!isLoading && !stats" class="loading-message">
+    <p>Não foi possível carregar as estatísticas do perfil.</p>
+</div>

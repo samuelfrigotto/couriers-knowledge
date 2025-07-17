@@ -1,0 +1,102 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Minhas Avaliações</h1>
+    <div class="header-actions">
+      <button class="refresh-button" (click)="refreshNames()" [disabled]="isRefreshing">
+        {{ isRefreshing ? 'Atualizando...' : 'Atualizar Nomes' }}
+      </button>
+      <button class="add-button" (click)="openFormModal()">+ Nova Avaliação</button>
+    </div>
+  </div>
+
+  <div class="list-header" [formGroup]="filterForm" *ngIf="!isLoading">
+    <div class="col-player header-col">
+      <div class="header-title" (click)="toggleFilter('playerName', $event)" [class.active]="activeFilter === 'playerName'">Jogador <span>▼</span></div>
+      <div class="filter-popover" *ngIf="activeFilter === 'playerName'" (click)="$event.stopPropagation()">
+        <input type="text" placeholder="Buscar por nome..." formControlName="playerName" autofocus>
+      </div>
+    </div>
+    <div class="col-hero header-col">
+      <div class="header-title" (click)="toggleFilter('heroId', $event)" [class.active]="activeFilter === 'heroId'">Herói / Função <span>▼</span></div>
+      <div class="filter-popover" *ngIf="activeFilter === 'heroId'" (click)="$event.stopPropagation()">
+        <select formControlName="heroId">
+          <option [ngValue]="null">Todos os Heróis</option>
+          <option *ngFor="let hero of (heroes$ | async)" [value]="hero.id">{{ hero.localized_name }}</option>
+        </select>
+        <select formControlName="role">
+          <option [ngValue]="null">Todas as Funções</option>
+          <option *ngFor="let role of roles" [value]="role">{{ role.toUpperCase() }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-notes header-col">
+      <div class="header-title" (click)="toggleFilter('notes', $event)" [class.active]="activeFilter === 'notes'">Anotação <span>▼</span></div>
+      <div class="filter-popover" *ngIf="activeFilter === 'notes'" (click)="$event.stopPropagation()">
+        <input type="text" placeholder="Buscar nas anotações..." formControlName="notes" autofocus>
+      </div>
+    </div>
+    <div class="col-tags header-col">
+      <div class="header-title" (click)="toggleFilter('tags', $event)" [class.active]="activeFilter === 'tags'">Tags <span>▼</span></div>
+      <div class="filter-popover" [class.align-right]="true" *ngIf="activeFilter === 'tags'" (click)="$event.stopPropagation()">
+        <input type="text" placeholder="Buscar por tag..." formControlName="tags" autofocus>
+      </div>
+    </div>
+    <div class="col-rating header-col">
+      <div class="header-title" (click)="toggleFilter('rating', $event)" [class.active]="activeFilter === 'rating'">Nota <span>▼</span></div>
+      <div class="filter-popover" [class.align-right]="true" *ngIf="activeFilter === 'rating'" (click)="$event.stopPropagation()">
+         <select formControlName="rating">
+          <option [ngValue]="null">Qualquer Nota</option>
+          <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-actions">
+        <button class="clear-filters-button" (click)="resetFilters()" title="Limpar Filtros">&times;</button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-message">
+    <p>Carregando avaliações...</p>
+  </div>
+  <div *ngIf="!isLoading && displayedEvaluations.length === 0" class="no-evaluations">
+    <p>Nenhuma avaliação encontrada com os filtros atuais.</p>
+  </div>
+
+  <div class="evaluation-list-body" *ngIf="!isLoading && displayedEvaluations.length > 0">
+    <div *ngFor="let evaluation of displayedEvaluations" class="list-item">
+      <div class="col-player">
+        <span class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</span>
+        <small class="match-id" *ngIf="evaluation.match_id">Partida: {{ evaluation.match_id }}</small>
+      </div>
+      <div class="col-hero">
+        <div *ngIf="evaluation.hero_id" class="hero-info">
+          <img [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)" class="hero-icon">
+          <span>{{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}</span>
+        </div>
+        <div *ngIf="evaluation.role" class="role-badge">{{ evaluation.role.toUpperCase() }}</div>
+      </div>
+      <div class="col-notes">
+        <p>{{ evaluation.notes }}</p>
+      </div>
+      <div class="col-tags">
+        <span *ngFor="let tag of evaluation.tags" class="tag-badge">{{ tag }}</span>
+      </div>
+      <div class="col-rating">
+        <app-rating-display [rating]="evaluation.rating"></app-rating-display>
+      </div>
+      <div class="col-actions">
+        <div class="action-buttons">
+          <button class="action-button edit-button" (click)="openEditModal(evaluation)">&#9998;</button>
+          <button class="action-button delete-button" (click)="deleteEvaluation(evaluation.id, $event)">&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-evaluation-form 
+  *ngIf="isFormModalVisible" 
+  [evaluationData]="selectedEvaluation"
+  (closeModal)="closeFormModal()"
+  (evaluationSaved)="onFormSaved()">
+</app-evaluation-form>

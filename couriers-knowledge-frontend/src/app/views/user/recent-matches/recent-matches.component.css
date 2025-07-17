@@ -1,0 +1,300 @@
+:host {
+  color: var(--text-color);
+}
+
+/* Títulos */
+h1, h2 {
+  border-bottom: 1px solid var(--accent-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* --- LISTA DE PARTIDAS --- */
+.match-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-row-header {
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  color: #a0aec0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: var(--secondary-bg-color);
+  border-radius: 8px;
+  border-left: 5px solid;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.match-row:hover {
+  transform: scale(1.01);
+  background-color: var(--accent-color);
+}
+
+.match-row.win { border-left-color: #48bb78; }
+.match-row.loss { border-left-color: #e53e3e; }
+
+.header-player,
+.match-player-col {
+  width: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+}
+
+.header-result,
+.match-result-col {
+  width: 12%;
+  text-align: center;
+}
+
+.header-heroes,
+.match-heroes-col {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.header-info,
+.match-info-col {
+  width: 15%;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Ícones do herói */
+.match-player-col .hero-icon-medium {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--accent-color);
+}
+
+.match-player-col .hero-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.match-result-col .result-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.win .result-text { color: #48bb78; }
+.loss .result-text { color: #e53e3e; }
+
+/* Ícones da partida */
+.match-heroes-col .team-heroes {
+  display: flex;
+  gap: 3px;
+}
+
+.score-vs {
+  margin: 0 15px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #a0aec0;
+}
+
+.score-vs .radiant-score { color: #68d391; }
+.score-vs .dire-score { color: #fc8181; }
+
+.hero-icon-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  object-fit: cover;
+  background-color: #000;
+}
+
+.user-hero {
+  border-color: #f6e05e;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px #f6e05e;
+}
+
+.match-info-col span {
+  font-weight: bold;
+}
+
+.match-info-col small {
+  color: #a0aec0;
+  font-size: 0.8rem;
+}
+
+/* --- DETALHES DA PARTIDA --- */
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--accent-color);
+}
+
+.details-title h2 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  color: #fff;
+}
+
+.details-title .match-duration {
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.details-score {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.details-score .radiant-score { color: #68d391; }
+.details-score .dire-score { color: #fc8181; }
+
+.back-button {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #4a5568;
+}
+
+/* Times */
+.teams-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.team-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cartão do jogador */
+.player-detail-card {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas: 
+    "hero info"
+    "hero items"
+    "button button";
+  gap: 5px 15px;
+  background-color: var(--secondary-bg-color);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.hero-portrait-detail {
+  grid-area: hero;
+  width: 50px;
+  height: 50px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.player-info-detail {
+  grid-area: info;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.player-name-detail {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kda {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.kda span:nth-child(2) {
+  color: #e53e3e;
+}
+
+/* Itens */
+.items-grid .item-icon {
+width: 20px; /* Reduzido /
+height: 20px; / Reduzido */
+border: 1px solid var(--divider-color);
+border-radius: 4px;
+}
+
+.items-grid .item-icon.backpack {
+opacity: 0.7; /* Opcional: indica que está na mochila */
+}
+.item-icon.backpack {
+  border: 1px solid #718096;
+}
+
+.item-icon.empty-slot {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--accent-color);
+  aspect-ratio: 45 / 34;
+}
+
+/* Botão Avaliar */
+.evaluate-button {
+  grid-area: button;
+  width: 100%;
+  background-color: #3a86ff;
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.evaluate-button:hover:not(:disabled) {
+  background-color: #2a6dcc;
+}
+
+.evaluate-button:disabled {
+  background-color: #4a5568;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Mensagem de carregamento */
+.loading-message {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #a0aec0;
+}

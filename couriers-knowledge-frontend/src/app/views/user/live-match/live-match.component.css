@@ -1,0 +1,141 @@
+:host {
+  color: var(--text-color);
+}
+
+h1 {
+  border-bottom: 1px solid var(--accent-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.live-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.game-state-badge {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+.game-state-badge.pre-game { background-color: #4a5568; }
+.game-state-badge.in-progress { background-color: #3a86ff; }
+.game-state-badge.post-game { background-color: #e53e3e; }
+
+.teams-display-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+.team-display h2 {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid;
+}
+.team-display.radiant h2 { color: #68d391; border-color: #68d391; }
+.team-display.dire h2 { color: #fc8181; border-color: #fc8181; }
+
+.players-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.player-live-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--secondary-bg-color);
+  padding: 10px;
+  border-radius: 8px;
+}
+.hero-portrait-live {
+  width: 50px;
+  height: 50px;
+  border-radius: 5px;
+  margin-right: 15px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: #000;
+  border: 1px solid var(--accent-color);
+}
+
+.player-info-live {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 4px;
+}
+.player-name-live {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+.player-stats-live {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+/* ESTILOS ATUALIZADOS: de 'view-details-btn' para 'rating-details-btn' */
+.rating-details-btn {
+  background-color: var(--accent-color);
+  color: #f6e05e; /* Cor amarela para a nota */
+  border: 1px solid #4a5568;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 8px 12px;
+  transition: all 0.2s;
+  min-width: 60px; /* Garante um tamanho mínimo */
+  text-align: center;
+}
+.rating-details-btn:hover {
+  background-color: #4a5568;
+  border-color: #f6e05e;
+}
+
+/* --- ESTILOS DO MODAL DE DETALHES --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+.modal-content {
+  background-color: #1a202c;
+  padding: 30px; border-radius: 8px;
+  width: 90%; max-width: 600px;
+  max-height: 80vh; overflow-y: auto;
+  border: 1px solid var(--accent-color);
+}
+.modal-content h2 { margin-top: 0; }
+.evaluation-detail-item {
+  background-color: var(--secondary-bg-color);
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border-left: 3px solid #3a86ff;
+}
+.eval-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.eval-date { font-size: 0.8rem; color: #a0aec0; }
+.eval-context { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; margin-bottom: 10px; }
+.hero-icon-tiny { width: 24px; height: 24px; border-radius: 4px; }
+.eval-notes { margin: 0 0 10px; line-height: 1.5; }
+.eval-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag-badge { background-color: #4a5568; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; }
+.modal-close-btn {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 30px;
+  background-color: #3a86ff;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.waiting-container, .waiting-message { text-align: center; }
+.waiting-message { padding: 50px; font-size: 1.2rem; color: #a0aec0; }

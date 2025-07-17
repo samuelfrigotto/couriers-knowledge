@@ -1,0 +1,56 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Usando o gradiente escuro que sugerimos */
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  color: var(--text-color);
+}
+
+.login-box {
+  text-align: center;
+  padding: 50px;
+  border-radius: 10px;
+  background-color: var(--secondary-bg-color);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--accent-color);
+}
+
+.login-box h1 {
+    font-size: 3rem;
+    margin-bottom: 8px;
+    /* Um pequeno detalhe para o título */
+    font-weight: 700; 
+}
+
+.login-box p {
+    font-size: 1rem;
+    color: #a0aec0; /* Um cinza mais claro para o subtítulo */
+    margin-bottom: 40px;
+}
+
+.steam-login-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 5px;
+  border: none;
+  background-color: var(--steam-color);
+  color: var(--text-color);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Transição suave para todos os efeitos */
+}
+
+.steam-login-button:hover {
+  background-color: var(--steam-hover-color);
+  transform: translateY(-3px); /* Efeito de elevação ao passar o mouse */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.steam-login-button img {
+  width: 24px;
+  margin-right: 12px;
+}

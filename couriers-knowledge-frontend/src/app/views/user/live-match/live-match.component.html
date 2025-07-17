@@ -1,0 +1,79 @@
+<div class="live-match-container">
+  <h1>Partida Ao Vivo</h1>
+
+  <ng-container *ngIf="gsiData; else waiting">
+    <div class="live-header">
+      <div class="game-state-badge" [ngClass]="getGameStateClass(gsiData.map?.game_state)">
+        {{ getGameStateText(gsiData.map?.game_state) }}
+      </div>
+    </div>
+
+    <div class="teams-display-container">
+      <div class="team-display radiant">
+        <h2>Iluminados</h2>
+        <div class="players-container">
+          <div *ngFor="let player of getPlayersByTeam(gsiData, 'radiant')" class="player-live-card">
+            <img class="hero-portrait-live" [src]="player.hero && player.hero.id !== 0 ? gameDataService.getHeroImageUrl(player.hero.id) : (isUser(player) ? 'assets/images/courier1.png' : 'assets/images/courier3.png')" alt="Retrato do Herói">
+            <div class="player-info-live">
+                <span class="player-name-live">{{ player.name }}</span>
+                <div class="player-stats-live" *ngIf="playerStats[player.steamid]">
+                    <span class="eval-count">({{ playerStats[player.steamid].evaluationCount }} {{ playerStats[player.steamid].evaluationCount === 1 ? 'anotação' : 'anotações' }})</span>
+                </div>
+            </div>
+            <button class="rating-details-btn" *ngIf="playerStats[player.steamid]" (click)="showPlayerEvaluationDetails(player, $event)">
+              {{ formatAverageRating(playerStats[player.steamid].averageRating) }}/5
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="team-display dire">
+        <h2>Temidos</h2>
+        <div class="players-container">
+            <div *ngFor="let player of getPlayersByTeam(gsiData, 'dire')" class="player-live-card">
+              <img class="hero-portrait-live" [src]="player.hero && player.hero.id !== 0 ? gameDataService.getHeroImageUrl(player.hero.id) : (isUser(player) ? 'assets/images/courier1.png' : 'assets/images/courier3.png')" alt="Retrato do Herói">
+              <div class="player-info-live">
+                  <span class="player-name-live">{{ player.name }}</span>
+                  <div class="player-stats-live" *ngIf="playerStats[player.steamid]">
+                      <span class="eval-count">({{ playerStats[player.steamid].evaluationCount }} {{ playerStats[player.steamid].evaluationCount === 1 ? 'anotação' : 'anotações' }})</span>
+                  </div>
+              </div>
+              <button class="rating-details-btn" *ngIf="playerStats[player.steamid]" (click)="showPlayerEvaluationDetails(player, $event)">
+                {{ formatAverageRating(playerStats[player.steamid].averageRating) }}/5
+              </button>
+            </div>
+          </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #waiting>
+    <div class="waiting-container">
+      <p class="waiting-message">Aguardando dados do Dota 2... Inicie uma partida para começar.</p>
+    </div>
+  </ng-template>
+</div>
+
+<div class="modal-overlay" *ngIf="isDetailModalVisible" (click)="closeDetailModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2 *ngIf="selectedPlayerForDetails">Anotações sobre {{ selectedPlayerForDetails.name }}</h2>
+    <div *ngIf="selectedPlayerEvaluations.length > 0; else noEvals">
+      <div *ngFor="let eval of selectedPlayerEvaluations" class="evaluation-detail-item">
+        <div class="eval-header">
+          <app-rating-display [rating]="eval.rating"></app-rating-display>
+          <span class="eval-date">{{ eval.created_at | date:'dd/MM/yy' }}</span>
+        </div>
+        <div class="eval-context" *ngIf="eval.hero_id || eval.role">
+          Jogando de <img [src]="gameDataService.getHeroImageUrl(eval.hero_id)" class="hero-icon-tiny"> <strong>{{ gameDataService.getHeroById(eval.hero_id)?.localized_name }}</strong> como <strong>{{ eval.role?.toUpperCase() }}</strong>
+        </div>
+        <p class="eval-notes">{{ eval.notes }}</p>
+        <div class="eval-tags">
+          <span *ngFor="let tag of eval.tags" class="tag-badge">{{ tag }}</span>
+        </div>
+      </div>
+    </div>
+    <ng-template #noEvals>
+        <p>Nenhuma avaliação encontrada para este jogador.</p>
+    </ng-template>
+    <button class="modal-close-btn" (click)="closeDetailModal()">Fechar</button>
+  </div>
+</div>
