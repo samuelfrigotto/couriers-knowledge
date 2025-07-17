@@ -4,7 +4,7 @@
     <div class="profile-info">
       <h1>{{ stats.steamUsername }}</h1>
       <p>Membro desde: {{ stats.accountCreatedAt | date:'longDate' }}</p>
-      <span class="status-badge">{{ stats.accountStatus }}</span>
+      <span class="status-badge" [class.premium]="stats.accountStatus === 'Premium'">{{ stats.accountStatus }}</span>
     </div>
   </div>
 
@@ -15,23 +15,59 @@
     </div>
     <div class="stat-card">
       <h3>Média das Avaliações Feitas</h3>
-      <p class="stat-value">{{ stats.averageRating }}/5</p>
+      <p class="stat-value">{{ stats.averageRating | number:'1.1-1' }}/5</p>
     </div>
     <div class="stat-card">
       <h3>Autoavaliação</h3>
-      <p class="stat-value">{{ stats.selfAverageRating }}/5</p>
+      <p class="stat-value" *ngIf="stats.selfAverageRating > 0; else noSelfRating">{{ stats.selfAverageRating | number:'1.1-1' }}/5</p>
+      <ng-template #noSelfRating><p class="stat-value">-</p></ng-template>
     </div>
-    <div class="stat-card premium-feature" *ngIf="true"> <h3>Média de Avaliações Recebidas</h3>
-      <div *ngIf="stats.accountStatus === 'Premium'; else upgradePrompt">
-        <p class="stat-value">{{ stats.receivedAverageRating }}/5</p>
+
+    <ng-container *ngIf="stats.accountStatus === 'Premium'">
+      <div class="stat-card premium-feature">
+        <h3>Avaliações Recebidas</h3>
+        <p class="stat-value">{{ stats.totalReceivedEvaluations }}</p>
+        <span class="premium-badge">Premium</span>
       </div>
-      <ng-template #upgradePrompt>
+      <div class="stat-card premium-feature">
+        <h3>Média de Avaliações Recebidas</h3>
+        <p class="stat-value" *ngIf="stats.receivedAverageRating > 0; else noReceivedRating">{{ stats.receivedAverageRating | number:'1.1-1' }}/5</p>
+        <ng-template #noReceivedRating><p class="stat-value">-</p></ng-template>
+        <span class="premium-badge">Premium</span>
+      </div>
+      <div class="stat-card premium-feature">
+        <h3>Taxa de Vitória com Aliados Tóxicos</h3>
+        <p class="stat-value" *ngIf="stats.tiltWinRate !== null; else noTiltData">{{ stats.tiltWinRate }}%</p>
+        <ng-template #noTiltData><p class="stat-value">-</p></ng-template>
+        <span class="premium-badge">Premium</span>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="stats.accountStatus !== 'Premium'">
+      <div class="stat-card premium-feature">
+          <h3>Avaliações Recebidas</h3>
+          <div class="upgrade-prompt">
+            <button class="upgrade-button">Assine o Premium</button>
+          </div>
+          <span class="premium-badge">Premium</span>
+      </div>
+            <div class="stat-card premium-feature">
+        <h3>Média de Avaliações Recebidas</h3>
         <div class="upgrade-prompt">
-          <button class="upgrade-button">Assine o Premium</button>
-        </div>
-      </ng-template>
-      <span class="premium-badge">Premium</span>
-    </div>
+            <button class="upgrade-button">Assine o Premium</button>
+          </div>
+          <span class="premium-badge">Premium</span>
+        <span class="premium-badge">Premium</span>
+      </div>
+      <div class="stat-card premium-feature">
+        <h3>Taxa de Vitória com "Aliados" Tóxicos</h3>
+        <div class="upgrade-prompt">
+            <button class="upgrade-button">Assine o Premium</button>
+          </div>
+          <span class="premium-badge">Premium</span>
+        <span class="premium-badge">Premium</span>
+      </div>
+    </ng-container>
     <div class="stat-card full-width">
       <h3>Tags Mais Utilizadas</h3>
       <div class="tags-container">
@@ -63,6 +99,10 @@
       <p class="stat-value">{{ stats.averageMatchTime | secondsToTime }}</p>
     </div>
     <div class="stat-card">
+      <div class="stat-card">
+    <h3>KDA Médio</h3>
+    <p class="stat-value">{{ stats.averageKDA }}</p>
+    </div>
       <h3>Herói Mais Jogado</h3>
       <div *ngIf="stats.mostUsedHeroId" class="hero-stat">
         <img [src]="gameDataService.getHeroImageUrl(stats.mostUsedHeroId)" class="hero-icon">

@@ -1,6 +1,9 @@
+/* ARQUIVO: src/app/views/user/layout/layout.component.css */
+
 :host {
   display: block;
   height: 100vh;
+  background-color: #121212;
 }
 
 .layout-container {
@@ -15,12 +18,14 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
+  border-right: 1px solid #2a2a2a;
 }
 
 .sidebar-header h2 {
   margin: 0;
   text-align: center;
   padding-bottom: 20px;
+  color: white;
 }
 
 .sidebar-nav {
@@ -36,6 +41,7 @@
   border-radius: 5px;
   margin-bottom: 8px;
   transition: background-color 0.2s;
+  font-weight: 500;
 }
 
 .sidebar-nav a:hover, .sidebar-nav a.active {
@@ -43,7 +49,75 @@
   color: white;
 }
 
-.sidebar-footer button {
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  background-color: #121212;
+  overflow-y: auto;
+}
+
+/* --- ESTILOS ATUALIZADOS PARA O FOOTER CLICÁVEL --- */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #2a2a2a;
+}
+
+/* A nova classe que transforma o footer em um link interativo */
+.user-profile-link {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 15px;
+  margin: -15px -15px 15px -15px; /* Usa margem negativa para expandir a área clicável */
+  border-radius: 8px;
+  text-decoration: none; /* Remove sublinhado do link */
+  color: inherit; /* Herda a cor do texto normal */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.user-profile-link:hover {
+  background-color: #2a2a2a; /* Efeito hover para indicar que é clicável */
+}
+
+.user-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #3a86ff;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.updates-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #121212;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+}
+
+.updates-counter span {
+  color: #a0aec0;
+}
+
+/* O botão de logout agora fica fora do link */
+.logout-button {
   width: 100%;
   padding: 10px;
   background-color: #c53030;
@@ -51,11 +125,66 @@
   color: white;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: bold;
 }
 
-.main-content {
-  flex-grow: 1;
-  padding: 30px;
-  background-color: #121212;
-  overflow-y: auto;
+.logout-button:hover {
+  background-color: #a52020;
+}
+
+/* --- Estilos do Tooltip (sem alterações) --- */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.info-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #a0aec0;
+  color: #121212;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-weight: bold;
+  cursor: help;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: #2a2a2a;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 10;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -110px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #2a2a2a transparent transparent transparent;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }

@@ -11,13 +11,23 @@
       <a routerLink="/app/matches" routerLinkActive="active">
         <span>Partidas Recentes</span>
       </a>
-      <a routerLink="/app/profile" routerLinkActive="active">
-        <span>Meu Perfil</span>
+      </nav>
+
+    <a routerLink="/app/profile" class="sidebar-footer user-profile-link" *ngIf="userProfile">
+      <div class="user-details">
+        <img [src]="userProfile.avatarUrl" alt="Avatar" class="user-avatar">
+        <span class="user-name">{{ userProfile.steamUsername }}</span>
+      </div>
+      <div class="updates-counter">
+        <span>Atualizações: {{ userProfile.remainingUpdates }} / {{ userProfile.totalUpdates }}</span>
+        <div class="tooltip">
+          <i class="info-icon">?</i>
+          <span class="tooltip-text">{{ updateLimitTooltip }}</span>
+        </div>
+      </div>
       </a>
-    </nav>
-    <div class="sidebar-footer">
-      <button (click)="logout()">Logout</button>
-    </div>
+    <button class="logout-button" (click)="logout()">Sair</button>
+
   </aside>
 
   <main class="main-content">

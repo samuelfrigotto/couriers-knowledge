@@ -1,7 +1,21 @@
 const axios = require('axios');
 const db = require('../config/database');
+require('dotenv').config();
 
 const STEAM_API_KEY = process.env.STEAM_API_KEY;
+const OPENDOTA_API_KEY = process.env.OPENDOTA_API_KEY;
+
+// --- Instância do Axios para OpenDota com API Key ---
+const openDotaApi = axios.create({
+    baseURL: 'https://api.opendota.com/api',
+    timeout: 10000
+});
+openDotaApi.interceptors.request.use(config => {
+    if (OPENDOTA_API_KEY) {
+        config.params = { ...config.params, api_key: OPENDOTA_API_KEY };
+    }
+    return config;
+});
 
 // Função utilitária interna para conversão de ID
 function convertAccountIdToSteamId64(accountId) {
@@ -117,9 +131,34 @@ async function updatePlayerNamesFromSteam(steamIds) {
     return { updated: updatedCount };
 }
 
+async function getPlayerWinLoss(steamId) {
+    const accountId = (BigInt(steamId) - BigInt(76561197960265728)).toString();
+    try {
+        const response = await openDotaApi.get(`/players/${accountId}/wl`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erro ao buscar W/L para ${accountId}:`, error.response?.data || error.message);
+        throw new Error('Falha ao buscar vitórias e derrotas.');
+    }
+}
+
+async function getPlayerHeroes(steamId) {
+    const accountId = (BigInt(steamId) - BigInt(76561197960265728)).toString();
+    try {
+        const response = await openDotaApi.get(`/players/${accountId}/heroes`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erro ao buscar heróis para ${accountId}:`, error.response?.data || error.message);
+        throw new Error('Falha ao buscar heróis.');
+    }
+}
+
+
 module.exports = {
     getPlayerSummaries,
     getMatchHistory,
     getMatchDetails,
-    updatePlayerNamesFromSteam
+    updatePlayerNamesFromSteam,
+    getPlayerWinLoss, // <-- Nova função
+    getPlayerHeroes   // <-- Nova função
 };

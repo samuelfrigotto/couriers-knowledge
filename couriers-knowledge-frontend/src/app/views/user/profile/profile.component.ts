@@ -1,3 +1,5 @@
+// ARQUIVO: src/app/views/user/pages/profile/profile.component.ts
+
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { UserService } from '../../../core/user.service';
@@ -9,15 +11,13 @@ import { SecondsToTimePipe } from '../../../pipes/seconds-to-time.pipe';
   standalone: true,
   imports: [CommonModule, DatePipe, SecondsToTimePipe],
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  styleUrls: ['./profile.component.css']
 })
-
 export class ProfileComponent implements OnInit {
   private userService = inject(UserService);
   public gameDataService = inject(GameDataService);
 
   public isLoading = true;
-  // CORREÇÃO: A propriedade 'stats' precisa ser declarada na classe.
   public stats: any = null;
 
   ngOnInit(): void {

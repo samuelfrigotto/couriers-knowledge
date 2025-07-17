@@ -15,17 +15,17 @@
       </div>
     </div>
 
-    <div *ngIf="isLoading" class="loading-message">Carregando detalhes...</div>
+    <div *ngIf="isDetailsLoading" class="loading-message">Carregando detalhes...</div>
 
-    <div *ngIf="!isLoading" class="teams-container">
+    <div *ngIf="!isDetailsLoading" class="teams-container">
       <div class="team-column">
         <div *ngFor="let player of selectedMatch.players | filter:true:'is_radiant'" class="player-detail-card">
           <img [src]="gameDataService.getHeroImageUrl(player.hero_id)" class="hero-portrait-detail">
           <div class="player-info-detail">
             <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
             <div class="kda">
-              <span>{{ player.kills }}</span> / 
-              <span>{{ player.deaths }}</span> / 
+              <span>{{ player.kills }}</span> /
+              <span>{{ player.deaths }}</span> /
               <span>{{ player.assists }}</span>
             </div>
           </div>
@@ -45,8 +45,8 @@
           <div class="player-info-detail">
             <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
             <div class="kda">
-              <span>{{ player.kills }}</span> / 
-              <span>{{ player.deaths }}</span> / 
+              <span>{{ player.kills }}</span> /
+              <span>{{ player.deaths }}</span> /
               <span>{{ player.assists }}</span>
             </div>
           </div>
@@ -64,17 +64,17 @@
 
   <ng-template #matchList>
     <h1>Partidas Recentes</h1>
-    <div *ngIf="isLoading" class="loading-message">Carregando histórico de partidas...</div>
+    <div *ngIf="isLoading$ | async" class="loading-message">Carregando histórico de partidas...</div>
 
-    <div class="match-list-container" *ngIf="!isLoading">
-      <div class="match-row-header">
+    <div class="match-list-container" *ngIf="matches$ | async as matches">
+      <div *ngIf="matches.length > 0" class="match-row-header">
           <div class="header-player">Seu Herói</div>
           <div class="header-result">Resultado</div>
           <div class="header-heroes">Heróis na Partida</div>
           <div class="header-info">Duração & Data</div>
       </div>
-      <div *ngFor="let match of matches" 
-           class="match-row" 
+      <div *ngFor="let match of matches"
+           class="match-row"
            [ngClass]="{ 'win': match.user_won, 'loss': !match.user_won }"
            (click)="viewMatchDetails(match.match_id)">
         <div class="match-player-col">
@@ -93,8 +93,8 @@
                  [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
           </div>
           <div class="score-vs">
-            <span class="radiant-score">{{ match.radiant_score }}</span> 
-            <span>vs</span> 
+            <span class="radiant-score">{{ match.radiant_score }}</span>
+            <span>vs</span>
             <span class="dire-score">{{ match.dire_score }}</span>
           </div>
           <div class="team-heroes dire">
