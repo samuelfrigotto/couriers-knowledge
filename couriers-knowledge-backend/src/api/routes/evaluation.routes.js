@@ -4,6 +4,10 @@ const router = express.Router();
 const evaluationController = require('../../controllers/evaluation.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 
+
+router.get('/share/:id', evaluationController.getSharedEvaluation);
+
+
 // A rota POST /evaluations será protegida.
 // Apenas usuários autenticados (com um token válido) podem criar avaliações.
 router.post('/evaluations', authMiddleware.verifyToken, evaluationController.createEvaluation);

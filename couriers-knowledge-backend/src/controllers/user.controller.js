@@ -231,19 +231,32 @@ exports.getUserStats = async (req, res) => {
         
         let winsLast20 = 0;
         let totalDuration = 0;
+        let totalKills = 0;
+        let totalDeaths = 0;
+        let totalAssists = 0;
         const heroCounts = {};
         const opponentHeroCounts = {};
         
         detailedMatches.forEach(match => {
             if (match && match.players) {
+                // Soma da duração e vitórias
                 totalDuration += match.duration;
                 if(match.user_won) winsLast20++;
                 
+                // Encontra os dados do jogador na partida
                 const userPlayerInfo = match.players.find(p => p.steam_id_64 === userSteamId);
+                
                 if (userPlayerInfo) {
+                    // Contagem do herói mais usado
                     heroCounts[userPlayerInfo.hero_id] = (heroCounts[userPlayerInfo.hero_id] || 0) + 1;
+                    
+                    // Soma do KDA
+                    totalKills += userPlayerInfo.kills || 0;
+                    totalDeaths += userPlayerInfo.deaths || 0;
+                    totalAssists += userPlayerInfo.assists || 0;
                 }
 
+                // Contagem do herói mais enfrentado
                 match.players.forEach(player => {
                     if (player.steam_id_64 !== userSteamId) {
                         opponentHeroCounts[player.hero_id] = (opponentHeroCounts[player.hero_id] || 0) + 1;
@@ -252,9 +265,16 @@ exports.getUserStats = async (req, res) => {
             }
         });
 
-        const averageMatchTime = detailedMatches.length > 0 ? Math.round(totalDuration / detailedMatches.length) : 0;
+        // Cálculos das médias (agora corretos)
+        const matchCount = detailedMatches.length;
+        const averageMatchTime = matchCount > 0 ? Math.round(totalDuration / matchCount) : 0;
         const mostUsedHeroId = Object.entries(heroCounts).sort(([,a],[,b]) => b-a)[0]?.[0];
         const mostFacedHeroId = Object.entries(opponentHeroCounts).sort(([,a],[,b]) => b-a)[0]?.[0];
+        const averageKda = matchCount > 0 ? {
+            kills: (totalKills / matchCount).toFixed(1),
+            deaths: (totalDeaths / matchCount).toFixed(1),
+            assists: (totalAssists / matchCount).toFixed(1)
+        } : null;
 
         const stats = {
             steamUsername: user.steam_username,
@@ -275,7 +295,8 @@ exports.getUserStats = async (req, res) => {
             // NOVOS CAMPOS ADICIONADOS:
             remainingUpdates: Math.max(0, remainingUpdates),
             totalUpdates: totalUpdatesLimit,
-            tiltWinRate
+            tiltWinRate,
+            averageKda: averageKda
         };
 
         res.status(200).json(stats);

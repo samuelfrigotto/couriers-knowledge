@@ -99,10 +99,20 @@
       <p class="stat-value">{{ stats.averageMatchTime | secondsToTime }}</p>
     </div>
     <div class="stat-card">
-      <div class="stat-card">
     <h3>KDA Médio</h3>
-    <p class="stat-value">{{ stats.averageKDA }}</p>
+      <div *ngIf="stats.averageKda; else noKda" class="kda-display">
+        <span>{{ stats.averageKda.kills }}</span>
+        <span class="divider">/</span>
+        <span>{{ stats.averageKda.deaths }}</span>
+        <span class="divider">/</span>
+        <span>{{ stats.averageKda.assists }}</span>
+      </div>
+      <ng-template #noKda>
+        <p class="stat-value">-</p>
+      </ng-template>
     </div>
+
+    <div class="stat-card">
       <h3>Herói Mais Jogado</h3>
       <div *ngIf="stats.mostUsedHeroId" class="hero-stat">
         <img [src]="gameDataService.getHeroImageUrl(stats.mostUsedHeroId)" class="hero-icon">
@@ -110,6 +120,7 @@
       </div>
       <p *ngIf="!stats.mostUsedHeroId" class="stat-value">-</p>
     </div>
+
     <div class="stat-card">
       <h3>Herói Mais Enfrentado</h3>
       <div *ngIf="stats.mostFacedHeroId" class="hero-stat">

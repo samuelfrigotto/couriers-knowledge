@@ -1,104 +1,159 @@
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
 }
+
 .modal-content {
-    background-color: var(--secondary-bg-color);
-    padding: 30px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    color: var(--text-color);
+  background-color: var(--secondary-bg-color);
+  padding: 20px 30px 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 550px;
+  color: var(--text-color);
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--accent-color);
+  padding-bottom: 15px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.form-section {
+  border: none;
+  padding: 0;
+  margin: 0 0 25px 0;
+}
+
+.form-section legend {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding: 0;
+  color: #3a86ff;
+}
+
 .form-group {
-    margin-bottom: 20px;
+  margin-bottom: 18px;
 }
+
 .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #a0aec0;
 }
-.form-group input, .form-group textarea {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--accent-color);
-    border: 1px solid #4a5568;
-    border-radius: 5px;
-    color: var(--text-color);
-    box-sizing: border-box;
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-bg-color);
+  border: 1px solid #4a5568;
+  border-radius: 5px;
+  color: var(--text-color);
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 30px;
-}
-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-primary {
-    background-color: #3a86ff;
-    color: white;
-}
-.btn-primary:disabled {
-    background-color: #4a5568;
-    cursor: not-allowed;
-}
-.btn-secondary {
-    background-color: #718096;
-    color: white;
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.3);
 }
 
 .form-row {
   display: flex;
   gap: 20px;
 }
+
 .form-row .form-group {
-  flex: 1; /* Faz com que ambos os grupos ocupem espaço igual */
+  flex: 1;
 }
 
-/* Estilo para o campo select */
-.form-group select {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--accent-color);
-    border: 1px solid #4a5568;
-    border-radius: 5px;
-    color: var(--text-color);
-    box-sizing: border-box;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
 }
 
-/* Estilos para o contador de caracteres */
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #3a86ff;
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #2a6dcc;
+}
+.btn-primary:disabled {
+  background-color: #4a5568;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.btn-secondary {
+  background-color: #4a5568;
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: #718096;
+}
+
 .char-counter {
   text-align: right;
   font-size: 0.8rem;
-  color: #a0aec0;
+  color: #718096;
+  margin-top: 5px;
 }
 .char-counter.error {
-  color: #e53e3e; /* Vermelho quando o limite é excedido */
-  font-weight: bold;
+  color: #e53e3e;
 }
 
-/* Estilos para as mensagens de erro */
 .error-message {
   color: #e53e3e;
   font-size: 0.8rem;
   margin-top: 5px;
 }
 
-/* Estilos para as sugestões de tags */
 .tag-suggestions {
   margin-top: 8px;
   display: flex;
@@ -111,23 +166,26 @@ button {
   background-color: var(--accent-color);
   color: var(--text-color);
   border: 1px solid #4a5568;
-  border-radius: 10px;
-  padding: 3px 8px;
+  border-radius: 12px;
+  padding: 3px 10px;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 .tag-suggestion-btn:hover {
   background-color: #3a86ff;
   border-color: #3a86ff;
 }
 
+/* --- Novo Input de Rating --- */
+.rating-group label {
+  margin-bottom: 12px;
+}
 .rating-input-container {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 .rating-input-square {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
 }
 .rating-square-inner {
@@ -135,9 +193,13 @@ button {
   height: 100%;
   background-color: var(--accent-color);
   border: 1px solid #4a5568;
-  border-radius: 3px;
+  border-radius: 4px;
   position: relative;
   display: flex;
+  transition: all 0.1s ease-in-out;
+}
+.rating-square-inner:hover {
+  transform: scale(1.1);
 }
 .rating-square-inner.filled {
   background-color: #f6e05e;
@@ -149,4 +211,47 @@ button {
 .half-left, .half-right {
   flex: 1;
   height: 100%;
+}
+
+
+.btn-tertiary {
+  background-color: transparent;
+  color: #a0aec0;
+  border: 1px solid #4a5568;
+}
+.btn-tertiary:hover {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+/* NOVO ESTILO: Indicador de Etapas */
+.step-indicator {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #a0aec0;
+  background-color: var(--accent-color);
+  padding: 5px 10px;
+  border-radius: 12px;
+}
+
+/* NOVO ESTILO: Campo de exibição para valores desabilitados */
+.disabled-field-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background-color: var(--accent-color);
+  border: 1px solid #4a5568;
+  border-radius: 5px;
+  color: #a0aec0; 
+  box-sizing: border-box;
+  cursor: not-allowed;
+}
+
+/* NOVO ESTILO: Ícone do herói dentro do campo de exibição */
+.disabled-field-display .hero-icon {
+  width: 32px;
+  height: auto;
+  border-radius: 4px;
 }

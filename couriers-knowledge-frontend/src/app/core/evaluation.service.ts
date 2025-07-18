@@ -39,5 +39,9 @@ export class EvaluationService {
     return this.http.get<any[]>(`${this.apiUrl}/evaluations/player/${steamId}`);
   }
 
+  getSharedEvaluation(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/evaluations/share/${id}`);
+  }
+
 
 }

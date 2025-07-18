@@ -1,8 +1,11 @@
 <div class="rating-display-container">
-  <div *ngFor="let i of counter(5); let index = index" class="rating-square-wrapper">
-    <div class="rating-square"
-         [style.background-image]="'linear-gradient(to right, #f6e05e ' + getFillPercentage(index) + '%, var(--accent-color) ' + getFillPercentage(index) + '%)'">
+  <div class="squares-container">
+    <div *ngFor="let i of counter(5); let index = index" class="rating-square-wrapper">
+      <div class="rating-square"
+           [style.background-image]="'linear-gradient(to right, #f6e05e ' + getFillPercentage(index) + '%, var(--accent-color) ' + getFillPercentage(index) + '%)'">
+      </div>
     </div>
   </div>
+
   <span class="rating-text">{{ formattedRating }}/5</span>
 </div>

@@ -85,17 +85,27 @@
         <app-rating-display [rating]="evaluation.rating"></app-rating-display>
       </div>
       <div class="col-actions">
-        <div class="action-buttons">
-          <button class="action-button edit-button" (click)="openEditModal(evaluation)">&#9998;</button>
-          <button class="action-button delete-button" (click)="deleteEvaluation(evaluation.id, $event)">&times;</button>
-        </div>
+          <button class="action-menu-trigger" (click)="toggleActionMenu($event, evaluation.id)" title="Ações">
+            &#8942; </button>
+
+          <div class="action-popover" *ngIf="activeActionMenu === evaluation.id" (click)="$event.stopPropagation()">
+            <button class="popover-action-btn" (click)="openEditModal(evaluation)">
+              <span>Editar</span>
+            </button>
+            <button class="popover-action-btn" (click)="shareEvaluation(evaluation)">
+              <span>Compartilhar</span>
+            </button>
+            <button class="popover-action-btn delete" (click)="deleteEvaluation(evaluation.id, $event)">
+              <span>Excluir</span>
+            </button>
+          </div>
       </div>
     </div>
   </div>
 </div>
 
-<app-evaluation-form 
-  *ngIf="isFormModalVisible" 
+<app-evaluation-form
+  *ngIf="isFormModalVisible"
   [evaluationData]="selectedEvaluation"
   (closeModal)="closeFormModal()"
   (evaluationSaved)="onFormSaved()">

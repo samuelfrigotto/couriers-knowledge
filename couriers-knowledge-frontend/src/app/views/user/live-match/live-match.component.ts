@@ -37,36 +37,48 @@ export class LiveMatchComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.gsiDataSubscription = this.gsiService.gsiData$.subscribe(data => {
-      if (data) {
-        // CORREÇÃO: Lógica robusta para processar o GSI
-        let processedData = { ...data };
+    this.gsiDataSubscription = this.gsiService.gsiData$.subscribe(newData => {
+      if (newData) {
+        const combinedData = { ...this.gsiData, ...newData };
 
-        // Se a estrutura principal de jogadores (player0, player1...) existir,
-        // mas a informação do nosso herói estiver separada, nós a fundimos.
-        if (processedData.player && processedData.hero && processedData.player.team_name) {
-          const userSlotKey = `player${processedData.player.player_slot}`;
-          if (processedData[userSlotKey]) {
-            processedData[userSlotKey].hero = processedData.hero;
+        if (combinedData.player && combinedData.hero) {
+          const userSlotKey = `player${combinedData.player.player_slot}`;
+
+          if (!combinedData[userSlotKey]) {
+            combinedData[userSlotKey] = {};
           }
+
+          combinedData[userSlotKey] = {
+            ...combinedData[userSlotKey],
+            ...combinedData.player,
+            hero: combinedData.hero
+          };
+
+          // ================================================================= //
+          // AQUI ESTÁ A CORREÇÃO: Adicione esta linha!                        //
+          // Ela remove o objeto "player" duplicado após a fusão dos dados.   //
+          delete combinedData.player;                                          //
+          // ================================================================= //
         }
 
-        this.gsiData = processedData;
+        this.gsiData = combinedData;
 
+        // O restante da função continua igual...
         const playerKeys = Object.keys(this.gsiData).filter(key => key.startsWith('player'));
-
         if (playerKeys.length > 0) {
-          const steamIds = playerKeys.map(key => this.gsiData[key].steamid).filter(id => id);
+          const steamIds = playerKeys
+            .map(key => this.gsiData[key].steamid)
+            .filter(id => id && id !== '0');
+
           if (steamIds.length > 0) {
             this.gsiService.getPlayerStats(steamIds).subscribe(stats => {
-              this.playerStats = stats;
+              this.playerStats = { ...this.playerStats, ...stats };
             });
           }
         }
       }
     });
   }
-
   ngOnDestroy() {
     if (this.gsiDataSubscription) {
       this.gsiDataSubscription.unsubscribe();

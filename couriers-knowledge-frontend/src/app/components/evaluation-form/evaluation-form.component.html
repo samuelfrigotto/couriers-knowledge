@@ -1,85 +1,104 @@
 <div class="modal-overlay" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2>{{ isEditMode ? 'Editar Avaliação' : 'Nova Avaliação' }}</h2>
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Editar Avaliação' : 'Nova Avaliação' }}</h2>
+      <div class="step-indicator" *ngIf="!isEditMode">Passo {{ currentStep }} de 2</div>
+      <button class="close-btn" (click)="onClose()">&times;</button>
+    </div>
+
     <form [formGroup]="evaluationForm" (ngSubmit)="submitForm()">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="targetSteamId">SteamID64 do Jogador</label>
-          <input id="targetSteamId" type="text" formControlName="targetSteamId">
-        </div>
-      <div class="form-group">
-        <label>Nota</label>
-        <div class="rating-input-container">
-          <div *ngFor="let i of [1,2,3,4,5]" 
-              class="rating-input-square" 
-              (click)="setRating(i)" 
-              (mouseenter)="hoverRating = i" 
-              (mouseleave)="hoverRating = 0">
 
-            <div class="rating-square-inner" [ngClass]="{
-              'filled': (hoverRating > 0 ? hoverRating : evaluationForm.get('rating')?.value) >= i,
-              'half': (hoverRating > 0 ? hoverRating : evaluationForm.get('rating')?.value) === i - 0.5
-            }">
-              <div class="half-left" (click)="setRating(i - 0.5, $event)" (mouseenter)="hoverRating = i - 0.5"></div>
-              <div class="half-right" (click)="setRating(i, $event)" (mouseenter)="hoverRating = i"></div>
+      <div *ngIf="currentStep === 1">
+        <fieldset class="form-section">
+          <legend>1. Jogador</legend>
+          <div class="form-group">
+            <label for="targetSteamId">SteamID64 do Jogador *</label>
+            <input id="targetSteamId" type="text" formControlName="targetSteamId" placeholder="Ex: 765611980..." [readonly]="isEditMode">
+            <div *ngIf="evaluationForm.get('targetSteamId')?.invalid && evaluationForm.get('targetSteamId')?.touched" class="error-message">
+               SteamID64 inválido. Deve ser um número de 17 dígitos.
             </div>
-
           </div>
-        </div>
-      </div>
-        <div class="form-group" *ngIf="evaluationForm.get('rating')?.errors?.['required']">
-          <span class="error-message">A nota é obrigatória.</span>
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div class="form-group">
-          <label for="hero_id">Herói Jogado (Opcional)</label>
-          <select id="hero_id" formControlName="hero_id">
-            <option [ngValue]="null">Selecione um Herói</option>
-            <option *ngFor="let hero of (heroes$ | async)" [value]="hero.id">{{ hero.localized_name }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="role">Função (Opcional)</label>
-          <select id="role" formControlName="role">
-            <option [ngValue]="null">Selecione uma Função</option>
-            <option *ngFor="let role of roles" [value]="role">{{ role.toUpperCase() }}</option>
-          </select>
-        </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>2. Contexto da Partida (Opcional)</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="hero_id">Herói Jogado</label>
+
+              <select *ngIf="!evaluationForm.get('hero_id')?.disabled" id="hero_id" formControlName="hero_id">
+                <option [ngValue]="null">Não informar</option>
+                <option *ngFor="let hero of (heroes$ | async)" [value]="hero.id">{{ hero.localized_name }}</option>
+              </select>
+
+              <div *ngIf="evaluationForm.get('hero_id')?.disabled" class="disabled-field-display">
+                <img *ngIf="evaluationForm.get('hero_id')?.value" [src]="gameDataService.getHeroImageUrl(evaluationForm.get('hero_id')?.value)" class="hero-icon">
+                {{ prefilledHeroName || 'Carregando...' }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="role">Função</label>
+              <select id="role" formControlName="role">
+                <option [ngValue]="null">Não informar</option>
+                <option *ngFor="let role of roles" [value]="role">{{ role.toUpperCase() }}</option>
+              </select>
+            </div>
+          </div>
+           <div class="form-group">
+            <label for="matchId">ID da Partida</label>
+            <input id="matchId" type="text" formControlName="matchId" placeholder="Ex: 7123456789">
+          </div>
+        </fieldset>
       </div>
 
-      <div class="form-group">
-        <label for="matchId">ID da Partida (Opcional)</label>
-        <input id="matchId" type="text" formControlName="matchId">
+      <div *ngIf="currentStep === 2">
+        <fieldset class="form-section">
+          <legend>3. Sua Avaliação</legend>
+          <div class="form-group rating-group">
+            <label>Nota *</label>
+            <div class="rating-input-container">
+              <div *ngFor="let i of [1,2,3,4,5]" class="rating-input-square" (click)="setRating(i)" (mouseenter)="hoverRating = i" (mouseleave)="hoverRating = 0">
+                <div class="rating-square-inner" [ngClass]="{ 'filled': (hoverRating || evaluationForm.get('rating')?.value) >= i, 'half': (hoverRating || evaluationForm.get('rating')?.value) === i - 0.5 }">
+                  <div class="half-left" (click)="setRating(i - 0.5, $event)" (mouseenter)="hoverRating = i - 0.5"></div>
+                  <div class="half-right" (click)="setRating(i, $event)" (mouseenter)="hoverRating = i"></div>
+                </div>
+              </div>
+            </div>
+             <div *ngIf="evaluationForm.get('rating')?.invalid && evaluationForm.get('rating')?.touched" class="error-message">
+               A nota é obrigatória.
+             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tags">Tags (separadas por vírgula)</label>
+            <input id="tags" type="text" formControlName="tags" placeholder="Ex: comunicativo, bom farm, tóxico...">
+            <div class="tag-suggestions" *ngIf="(suggestedTags$ | async) as suggestions">
+              <span *ngIf="suggestions.length > 0">Sugestões:</span>
+              <button type="button" *ngFor="let tag of suggestions" class="tag-suggestion-btn" (click)="addTag(tag)">{{ tag }}</button>
+            </div>
+            <div *ngIf="evaluationForm.get('tags')?.errors as errors" class="error-message">
+              <span *ngIf="errors['maxTags']">Máximo de 5 tags permitido.</span>
+              <span *ngIf="errors['maxTagLength']">A tag '{{ errors['maxTagLength'].value }}' é longa demais (máx 25 caracteres).</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Anotações</label>
+            <textarea id="notes" rows="4" formControlName="notes" placeholder="Descreva o comportamento, pontos fortes e fracos..."></textarea>
+            <div class="char-counter" [class.error]="evaluationForm.get('notes')?.errors?.['maxlength']">
+              {{ evaluationForm.get('notes')?.value?.length || 0 }} / 200
+            </div>
+          </div>
+        </fieldset>
       </div>
 
-      <div class="form-group">
-        <label for="tags">Tags (separadas por vírgula)</label>
-        <input id="tags" type="text" formControlName="tags" placeholder="comunicativo, bom farm, tóxico...">
-        <div class="tag-suggestions" *ngIf="(suggestedTags$ | async) as suggestions">
-          <span *ngIf="suggestions.length > 0">Sugestões:</span>
-          <button type="button" *ngFor="let tag of suggestions" class="tag-suggestion-btn" (click)="addTag(tag)">
-            {{ tag }}
-          </button>
-        </div>
-        <div *ngIf="evaluationForm.get('tags')?.errors as errors" class="error-message">
-          <span *ngIf="errors['maxTags']">Máximo de 5 tags permitido.</span>
-          <span *ngIf="errors['maxTagLength']">A tag '{{ errors['maxTagLength'].value }}' é longa demais (máx 25 caracteres).</span>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="notes">Anotações</label>
-        <textarea id="notes" rows="3" formControlName="notes"></textarea>
-        <div class="char-counter" [class.error]="evaluationForm.get('notes')?.errors?.['maxlength']">
-          {{ evaluationForm.get('notes')?.value?.length || 0 }} / 200
-        </div>
-      </div>
-      
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="onClose()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="evaluationForm.invalid">Salvar</button>
+        <button type="button" class="btn-tertiary" *ngIf="currentStep === 2 && !isEditMode" (click)="prevStep()">Voltar</button>
+        <button type="button" class="btn-primary" *ngIf="currentStep === 1" (click)="nextStep()" [disabled]="evaluationForm.get('targetSteamId')?.invalid">Próximo</button>
+        <button type="submit" class="btn-primary" *ngIf="currentStep === 2" [disabled]="evaluationForm.invalid">
+          {{ isEditMode ? 'Salvar Alterações' : 'Criar Avaliação' }}
+        </button>
       </div>
     </form>
   </div>

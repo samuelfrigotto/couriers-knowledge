@@ -1,18 +1,43 @@
+:host {
+  display: inline-block;
+}
+
+/* Contêiner principal: organiza os itens na vertical e os centraliza */
 .rating-display-container {
   display: flex;
-  align-items: center;
-  gap: 3px;
+  flex-direction: column; /* Empilha os itens */
+  align-items: center;   /* Centraliza na horizontal */
+  gap: 6px;              /* Cria um espaço entre os quadrados e o texto */
 }
+
+/* Novo contêiner para os quadrados: mantém eles na horizontal */
+.squares-container {
+  display: flex;
+  align-items: center;
+}
+
+/* O "quadrado" que serve como fundo */
 .rating-square {
   width: 18px;
   height: 18px;
-  background-color: var(--accent-color);
-  border: 1px solid #4a5568;
   border-radius: 3px;
+  border: 1px solid #4a5568;
+  /* O preenchimento dinâmico continua sendo controlado pelo style no HTML */
 }
+
+/* Wrapper para o espaçamento entre os quadrados */
+.rating-square-wrapper {
+  margin-right: 3px;
+}
+
+/* Remove a margem do último quadrado para um alinhamento perfeito */
+.rating-square-wrapper:last-child {
+  margin-right: 0;
+}
+
+/* Estilo para o texto da nota */
 .rating-text {
-  margin-left: 8px;
-  font-weight: bold;
-  font-size: 1rem;
-  color: var(--text-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #a0aec0;
 }

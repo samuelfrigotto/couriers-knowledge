@@ -170,3 +170,33 @@ exports.getUniqueTags = async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
+
+
+exports.getSharedEvaluation = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+      SELECT
+        p.personaname as player_name,
+        e.rating,
+        e.notes,
+        e.tags,
+        e.hero_id
+      FROM evaluations e
+      JOIN players p ON e.player_id = p.steam_id
+      WHERE e.id = $1;
+    `;
+    const { rows } = await db.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Avaliação não encontrada.' });
+    }
+
+    // Retornamos apenas os dados seguros para compartilhamento
+    res.status(200).json(rows[0]);
+
+  } catch (error) {
+    console.error('Erro ao buscar avaliação para compartilhamento:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};

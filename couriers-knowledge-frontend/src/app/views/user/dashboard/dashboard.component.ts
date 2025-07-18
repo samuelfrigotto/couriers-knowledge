@@ -24,7 +24,7 @@ export class DashboardComponent implements OnInit {
 
   private allEvaluations: any[] = [];
   public displayedEvaluations: any[] = [];
-  
+
   public isLoading = true;
   public isRefreshing = false;
   public isFormModalVisible = false;
@@ -34,6 +34,8 @@ export class DashboardComponent implements OnInit {
   public filterForm: FormGroup;
   public heroes$!: Observable<Hero[]>;
   public roles = ['hc', 'mid', 'off', 'sup 4', 'sup 5', 'outro'];
+  public activeActionMenu: number | null = null;
+
 
   constructor() {
     this.filterForm = this.fb.group({
@@ -57,6 +59,7 @@ export class DashboardComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     // Se o clique não foi em um título de filtro, fecha o popover ativo
+    this.activeActionMenu = null;
     const target = event.target as HTMLElement;
     if (!target.closest('.header-title')) {
       this.activeFilter = null;
@@ -75,13 +78,13 @@ export class DashboardComponent implements OnInit {
         this.setupFilterListener(); // E então configuramos o ouvinte para futuras mudanças
         this.isLoading = false;
       },
-      error: (err) => { 
-        this.toastr.error('Falha ao buscar avaliações.'); 
-        this.isLoading = false; 
+      error: (err) => {
+        this.toastr.error('Falha ao buscar avaliações.');
+        this.isLoading = false;
       }
     });
   }
-  
+
   setupFilterListener(): void {
     this.filterForm.valueChanges.pipe(
       debounceTime(250),
@@ -118,10 +121,10 @@ export class DashboardComponent implements OnInit {
       const term = filters.tags.toLowerCase();
       filtered = filtered.filter(e => (e.tags || []).some((tag: string) => tag.toLowerCase().includes(term)));
     }
-    
+
     this.displayedEvaluations = filtered;
   }
-  
+
   private customSort(a: any, b: any): number {
     const nameA = (a.targetPlayerName || '').toLowerCase();
     const nameB = (b.targetPlayerName || '').toLowerCase();
@@ -140,9 +143,9 @@ export class DashboardComponent implements OnInit {
   }
 
   resetFilters(): void {
-    this.filterForm.reset({ 
-      playerName: '', heroId: null, role: null, 
-      rating: null, notes: '', tags: '' 
+    this.filterForm.reset({
+      playerName: '', heroId: null, role: null,
+      rating: null, notes: '', tags: ''
     });
     this.activeFilter = null;
     this.toastr.info('Filtros limpos!');
@@ -162,7 +165,7 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
-  
+
   deleteEvaluation(id: string, event: MouseEvent): void {
     event.stopPropagation();
     const confirmed = window.confirm('Você tem certeza que deseja apagar esta avaliação? Esta ação não pode ser desfeita.');
@@ -188,18 +191,56 @@ export class DashboardComponent implements OnInit {
     this.loadAllEvaluations();
   }
 
-  openFormModal(): void { 
-    this.selectedEvaluation = null; 
-    this.isFormModalVisible = true; 
+  openFormModal(): void {
+    this.selectedEvaluation = null;
+    this.isFormModalVisible = true;
   }
 
-  openEditModal(evaluation: any): void { 
-    this.selectedEvaluation = evaluation; 
-    this.isFormModalVisible = true; 
+  openEditModal(evaluation: any): void {
+    this.selectedEvaluation = evaluation;
+    this.isFormModalVisible = true;
   }
 
-  closeFormModal(): void { 
-    this.isFormModalVisible = false; 
-    this.selectedEvaluation = null; 
+  closeFormModal(): void {
+    this.isFormModalVisible = false;
+    this.selectedEvaluation = null;
   }
+
+  shareEvaluation(evaluation: any): void {
+    // Chama o serviço para obter os dados formatados para compartilhamento
+    this.evaluationService.getSharedEvaluation(evaluation.id).subscribe({
+      next: async (shareData) => {
+        const hero = await this.gameDataService.getHeroById(shareData.hero_id);
+        const heroName = hero ? hero.localized_name : 'Herói não informado';
+        const ratingStars = '★'.repeat(Math.floor(shareData.rating)) + '☆'.repeat(5 - Math.floor(shareData.rating));
+
+        const shareText = `[Courier's Knowledge] Avaliação de jogador:
+- Jogador: ${shareData.player_name}
+- Herói: ${heroName}
+- Nota: ${shareData.rating.toFixed(1)}/5 (${ratingStars})
+- Anotações: "${shareData.notes || 'Nenhuma.'}"
+- Tags: ${shareData.tags && shareData.tags.length > 0 ? '#' + shareData.tags.join(' #') : 'Nenhuma.'}
+
+Anote e avalie seus jogos com o Courier's Knowledge!`;
+
+        try {
+          await navigator.clipboard.writeText(shareText);
+          this.toastr.success('Avaliação copiada para a área de transferência!');
+        } catch (err) {
+          console.error('Erro ao copiar para a área de transferência', err);
+          this.toastr.error('Não foi possível copiar a avaliação.');
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao buscar dados para compartilhar', err);
+        this.toastr.error('Não foi possível obter os dados da avaliação.');
+      }
+    });
+  }
+
+  toggleActionMenu(event: MouseEvent, evaluationId: number): void {
+    event.stopPropagation(); // Impede que o clique no documento feche o menu imediatamente
+    this.activeActionMenu = this.activeActionMenu === evaluationId ? null : evaluationId;
+  }
+
 }
