@@ -41,15 +41,26 @@
         <input type="text" placeholder="Buscar por tag..." formControlName="tags" autofocus>
       </div>
     </div>
+
     <div class="col-rating header-col">
       <div class="header-title" (click)="toggleFilter('rating', $event)" [class.active]="activeFilter === 'rating'">Nota <span>▼</span></div>
       <div class="filter-popover" [class.align-right]="true" *ngIf="activeFilter === 'rating'" (click)="$event.stopPropagation()">
-         <select formControlName="rating">
-          <option [ngValue]="null">Qualquer Nota</option>
-          <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
-        </select>
-      </div>
+        <div class="rating-range-filter">
+          <label for="minRating">De:</label>
+          <select formControlName="minRating" id="minRating">
+            <option [ngValue]="null">1</option>
+            <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
+          </select>
+          <label for="maxRating">Até:</label>
+          <select formControlName="maxRating" id="maxRating">
+            <option [ngValue]="null">5</option>
+            <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
+          </select>
+        </div>
+        </div>
     </div>
+
+
     <div class="col-actions">
         <button class="clear-filters-button" (click)="resetFilters()" title="Limpar Filtros">&times;</button>
     </div>
@@ -64,24 +75,30 @@
 
   <div class="evaluation-list-body" *ngIf="!isLoading && displayedEvaluations.length > 0">
     <div *ngFor="let evaluation of displayedEvaluations" class="list-item">
-      <div class="col-player">
+      <div class="col-player" data-label="Jogador:">
         <span class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</span>
         <small class="match-id" *ngIf="evaluation.match_id">Partida: {{ evaluation.match_id }}</small>
       </div>
-      <div class="col-hero">
-        <div *ngIf="evaluation.hero_id" class="hero-info">
-          <img [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)" class="hero-icon">
-          <span>{{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}</span>
+      <div class="col-hero" data-label="Herói/Função:">
+        <div class="hero-role-wrapper">
+          <div *ngIf="evaluation.hero_id" class="hero-info">
+            <img [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)" class="hero-icon">
+            <span>{{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}</span>
+          </div>
+          <div *ngIf="evaluation.role" class="role-badge">{{ evaluation.role.toUpperCase() }}</div>
+          <div *ngIf="!evaluation.hero_id && !evaluation.role" class="no-info">-</div>
         </div>
-        <div *ngIf="evaluation.role" class="role-badge">{{ evaluation.role.toUpperCase() }}</div>
       </div>
-      <div class="col-notes">
-        <p>{{ evaluation.notes }}</p>
+      <div class="col-notes" data-label="Anotações:">
+        <p>{{ evaluation.notes || '-' }}</p>
       </div>
-      <div class="col-tags">
-        <span *ngFor="let tag of evaluation.tags" class="tag-badge">{{ tag }}</span>
+      <div class="col-tags" data-label="Tags:">
+        <div class="tags-wrapper">
+            <span *ngFor="let tag of evaluation.tags" class="tag-badge">{{ tag }}</span>
+            <span *ngIf="!evaluation.tags || evaluation.tags.length === 0" class="no-info">-</span>
+        </div>
       </div>
-      <div class="col-rating">
+      <div class="col-rating" data-label="Nota:">
         <app-rating-display [rating]="evaluation.rating"></app-rating-display>
       </div>
       <div class="col-actions">

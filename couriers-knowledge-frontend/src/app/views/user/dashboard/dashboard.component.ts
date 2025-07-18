@@ -9,10 +9,18 @@ import { Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
 
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, EvaluationFormComponent, ReactiveFormsModule, DecimalPipe, DatePipe, RatingDisplayComponent],
+  imports: [
+    CommonModule,
+    EvaluationFormComponent,
+    ReactiveFormsModule,
+    DecimalPipe,
+    DatePipe,
+    RatingDisplayComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -42,7 +50,8 @@ export class DashboardComponent implements OnInit {
       playerName: [''],
       heroId: [null],
       role: [null],
-      rating: [null],
+      minRating: [null],
+      maxRating: [null],
       notes: [''],
       tags: ['']
     });
@@ -55,10 +64,8 @@ export class DashboardComponent implements OnInit {
     this.loadAllEvaluations();
   }
 
-  // Detecta cliques fora dos filtros para fechá-los
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    // Se o clique não foi em um título de filtro, fecha o popover ativo
     this.activeActionMenu = null;
     const target = event.target as HTMLElement;
     if (!target.closest('.header-title')) {
@@ -73,9 +80,8 @@ export class DashboardComponent implements OnInit {
     ).subscribe({
       next: (sortedData) => {
         this.allEvaluations = sortedData;
-        // CORREÇÃO: Removemos a chamada ao setupFilterListener daqui
-        this.applyAllFilters(); // Aplicamos o filtro inicial aqui
-        this.setupFilterListener(); // E então configuramos o ouvinte para futuras mudanças
+        this.applyAllFilters();
+        this.setupFilterListener();
         this.isLoading = false;
       },
       error: (err) => {
@@ -90,7 +96,6 @@ export class DashboardComponent implements OnInit {
       debounceTime(250),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
     ).subscribe(() => {
-      // Quando qualquer valor do formulário muda, nós re-aplicamos todos os filtros.
       this.applyAllFilters();
     });
   }
@@ -109,10 +114,14 @@ export class DashboardComponent implements OnInit {
     if (filters.role) {
       filtered = filtered.filter(e => e.role === filters.role);
     }
-    if (filters.rating) {
-      // CORREÇÃO: Trocamos '>=' por '===' para uma busca exata.
-      filtered = filtered.filter(e => e.rating === Number(filters.rating));
+
+    const { minRating, maxRating } = this.filterForm.value;
+    if (minRating !== null || maxRating !== null) {
+      const min = minRating === null ? 1 : Number(minRating);
+      const max = maxRating === null ? 5 : Number(maxRating);
+      filtered = filtered.filter(e => e.rating >= min && e.rating <= max);
     }
+
     if (filters.notes) {
       const term = filters.notes.toLowerCase();
       filtered = filtered.filter(e => (e.notes || '').toLowerCase().includes(term));
@@ -138,14 +147,19 @@ export class DashboardComponent implements OnInit {
   }
 
   toggleFilter(filterName: string, event: MouseEvent): void {
-    event.stopPropagation(); // Impede que o clique no documento seja acionado
+    event.stopPropagation();
     this.activeFilter = this.activeFilter === filterName ? null : filterName;
   }
 
   resetFilters(): void {
     this.filterForm.reset({
-      playerName: '', heroId: null, role: null,
-      rating: null, notes: '', tags: ''
+      playerName: '',
+      heroId: null,
+      role: null,
+      minRating: null,
+      maxRating: null,
+      notes: '',
+      tags: ''
     });
     this.activeFilter = null;
     this.toastr.info('Filtros limpos!');
@@ -206,41 +220,51 @@ export class DashboardComponent implements OnInit {
     this.selectedEvaluation = null;
   }
 
-  shareEvaluation(evaluation: any): void {
-    // Chama o serviço para obter os dados formatados para compartilhamento
-    this.evaluationService.getSharedEvaluation(evaluation.id).subscribe({
-      next: async (shareData) => {
-        const hero = await this.gameDataService.getHeroById(shareData.hero_id);
-        const heroName = hero ? hero.localized_name : 'Herói não informado';
-        const ratingStars = '★'.repeat(Math.floor(shareData.rating)) + '☆'.repeat(5 - Math.floor(shareData.rating));
+  async shareEvaluation(evaluation: any): Promise<void> {
+    try {
+      const hero = await this.gameDataService.getHeroById(evaluation.hero_id);
+      const heroName = hero ? hero.localized_name : 'Herói não informado';
 
-        const shareText = `[Courier's Knowledge] Avaliação de jogador:
-- Jogador: ${shareData.player_name}
-- Herói: ${heroName}
-- Nota: ${shareData.rating.toFixed(1)}/5 (${ratingStars})
-- Anotações: "${shareData.notes || 'Nenhuma.'}"
-- Tags: ${shareData.tags && shareData.tags.length > 0 ? '#' + shareData.tags.join(' #') : 'Nenhuma.'}
+      const rating = Number(evaluation.rating);
+      // Formata a nota para não exibir ".0" para números inteiros
+      const formattedRating = (rating % 1 === 0) ? rating.toFixed(0) : rating.toFixed(1);
+      const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
 
-Anote e avalie seus jogos com o Courier's Knowledge!`;
+      // Inicia a construção do texto de compartilhamento
+      let shareText = `[Courier's Knowledge] Avaliação de jogador:\n`;
 
-        try {
-          await navigator.clipboard.writeText(shareText);
-          this.toastr.success('Avaliação copiada para a área de transferência!');
-        } catch (err) {
-          console.error('Erro ao copiar para a área de transferência', err);
-          this.toastr.error('Não foi possível copiar a avaliação.');
-        }
-      },
-      error: (err) => {
-        console.error('Erro ao buscar dados para compartilhar', err);
-        this.toastr.error('Não foi possível obter os dados da avaliação.');
+      // Adiciona o nome do jogador e, se disponível, o Steam ID
+      shareText += `- Jogador: ${evaluation.targetPlayerName || 'Jogador Desconhecido'}`;
+      // A propriedade do ID do jogador é 'target_player_steam_id'
+      if (evaluation.target_player_steam_id) {
+        shareText += ` (ID: ${evaluation.target_player_steam_id})`;
       }
-    });
+      shareText += `\n`;
+
+      shareText += `- Herói: ${heroName}\n`;
+
+      // Adiciona a partida, se disponível
+      if (evaluation.match_id) {
+        shareText += `- Partida: ${evaluation.match_id}\n`;
+      }
+
+      // Adiciona o restante das informações
+      shareText += `- Nota: ${formattedRating}/5 (${ratingStars})\n`;
+      shareText += `- Anotações: "${evaluation.notes || 'Nenhuma.'}"\n`;
+      shareText += `- Tags: ${evaluation.tags && evaluation.tags.length > 0 ? '#' + evaluation.tags.join(' #') : 'Nenhuma.'}\n`;
+      shareText += `\nAnote e avalie seus jogos com o Courier's Knowledge!`;
+
+      await navigator.clipboard.writeText(shareText);
+      this.toastr.success('Avaliação copiada para a área de transferência!');
+
+    } catch (err) {
+      console.error('Erro ao compartilhar avaliação:', err);
+      this.toastr.error('Não foi possível copiar a avaliação.');
+    }
   }
 
   toggleActionMenu(event: MouseEvent, evaluationId: number): void {
-    event.stopPropagation(); // Impede que o clique no documento feche o menu imediatamente
+    event.stopPropagation();
     this.activeActionMenu = this.activeActionMenu === evaluationId ? null : evaluationId;
   }
-
 }

@@ -1,3 +1,7 @@
+/* ================================================================= */
+/* 1: ESTILIZAÇÃO PADRÃO (1600x900 E ACIMA)                          */
+/* ================================================================= */
+
 /* --- CABEÇALHO --- */
 .dashboard-header {
   display: flex;
@@ -38,7 +42,6 @@
   padding: 50px;
   font-size: 1.2rem;
 }
-.evaluation-list { width: 100%; color: var(--text-color); }
 .list-item {
   display: flex;
   align-items: center;
@@ -49,8 +52,6 @@
   position: relative;
 }
 .list-item:hover { background-color: var(--accent-color); }
-.list-item .action-buttons { display: none; }
-.list-item:hover .action-buttons { display: flex; }
 
 /* --- CABEÇALHO INTERATIVO E FILTROS POPOVER --- */
 .list-header {
@@ -104,7 +105,6 @@
   gap: 10px;
   width: 250px;
 }
-/* CORREÇÃO: Alinhamento para os pop-ups da direita */
 .filter-popover.align-right {
   left: auto;
   right: 0;
@@ -116,10 +116,9 @@
   border: 1px solid #4a5568;
   border-radius: 5px;
   color: var(--text-color);
-  box-sizing: border-box; /* <-- CORREÇÃO: Impede o input de vazar */
+  box-sizing: border-box;
 }
 
-/* Pequena seta apontando para baixo */
 .filter-popover::after {
   content: '';
   position: absolute;
@@ -151,148 +150,208 @@
 }
 
 /* --- COLUNAS E ELEMENTOS INTERNOS DA LISTA --- */
-.col-player { width: 18%; }
-.col-hero { width: 18%; display: flex; flex-direction: column; gap: 5px; }
-.col-notes { width: 30%; flex-grow: 1; color: #a0aec0; }
-.col-tags { width: 15%; display: flex; flex-wrap: wrap; gap: 5px; }
-.col-rating { width: 10%; text-align: center; }
-.col-actions {
-  position: relative; /* Essencial para o posicionamento absoluto do popover */
-  text-align: center;
+.col-player { width: 18%; padding-right: 10px; }
+.col-hero { width: 18%; padding-right: 10px; display: flex; flex-direction: column; gap: 5px; }
+.col-notes { width: 30%; flex-grow: 1; color: #a0aec0; padding-right: 10px; }
+/* CORREÇÃO 1: Adicionado display: flex e gap para espaçar as tags */
+.col-tags {
+  width: 15%;
+  padding-right: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px; /* Define o espaço entre as tags */
 }
+.col-rating { width: 10%; text-align: center; }
+.col-actions { width: 5%; text-align: center; }
+
+/* Esconde os data-labels na visualização padrão */
+[data-label]::before {
+  display: none;
+}
+
 .player-name { font-weight: bold; font-size: 1.1rem; display: block; color: var(--text-color); }
 .match-id { font-size: 0.8rem; color: #718096; }
 .hero-info { display: flex; align-items: center; gap: 10px; color: var(--text-color); }
 .hero-icon { width: 32px; height: 32px; border-radius: 5px; }
 .role-badge { background-color: #4a5568; color: var(--text-color); padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; align-self: flex-start; }
 .tag-badge { background-color: #4a5568; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; }
-.rating-badge { font-weight: bold; font-size: 1.2rem; color: var(--text-color); }
-.action-buttons { display: flex; gap: 8px; }
-.action-button { background-color: var(--accent-color); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; transition: background-color 0.2s; }
-.edit-button { background-color: #3a86ff; line-height: 26px; }
-.edit-button:hover { background-color: #2a6dcc; }
-.delete-button { background-color: #e53e3e; }
-.delete-button:hover { background-color: #c53030; }
 
 .action-menu-trigger {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text-color);
-  font-size: 1.5rem;
-  padding: 0 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  line-height: 1;
+  background: none; border: 1px solid transparent; color: var(--text-color);
+  font-size: 1.5rem; padding: 0 10px; border-radius: 5px; cursor: pointer; line-height: 1;
+  /* CORREÇÃO 2: Garantir que o botão de ações fique visível */
+  opacity: 1;
+  visibility: visible;
 }
-
-.action-menu-trigger:hover {
-  background-color: var(--accent-color);
-  border-color: #4a5568;
-}
-
+.action-menu-trigger:hover { background-color: var(--accent-color); border-color: #4a5568; }
 
 .action-popover {
+  /* CORREÇÃO 2: Ajuste no posicionamento para o popover aparecer ao lado do botão */
   position: absolute;
-  right: 100%; /* Posiciona o menu à esquerda do botão */
+  right: calc(5%); /* Posiciona à esquerda do gatilho */
   top: 50%;
   transform: translateY(-50%);
-  background-color: var(--secondary-bg-color);
-  border: 1px solid #4a5568;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-  width: 150px; /* Largura do menu */
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  background-color: var(--secondary-bg-color); border: 1px solid #4a5568;
+  border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); z-index: 10;
+  width: 150px; padding: 5px; display: flex; flex-direction: column; gap: 5px;
 }
 
-/* Estilo para os botões dentro do menu */
+
 .popover-action-btn {
-  width: 100%;
-  background-color: transparent;
-  border: none;
-  color: var(--text-color);
-  padding: 10px;
-  text-align: left;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px; /* Espaço entre ícone (se houver) e texto */
-  font-size: 0.9rem;
+  width: 100%; background-color: transparent; border: none; color: var(--text-color);
+  padding: 10px; text-align: left; border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+}
+.popover-action-btn:hover { background-color: var(--accent-color); }
+.popover-action-btn.delete:hover { background-color: #e53e3e; color: white; }
+
+/* Wrappers para conteúdo interno - escondidos por padrão, usados em telas menores */
+.hero-role-wrapper, .tags-wrapper, .no-info, .player-info-wrapper {
+    display: contents; /* Comportamento padrão em telas grandes */
 }
 
-.popover-action-btn:hover {
-  background-color: var(--accent-color);
+/* ================================================================= */
+/* 2: DESIGN MÉDIO (DE 1280px ATÉ 1599px)                           */
+/* ================================================================= */
+@media (max-width: 1599px) and (min-width: 1280px) {
+  .list-item {
+    padding: 12px 10px;
+  }
+  .player-name {
+    font-size: 1rem;
+  }
+  .col-player { width: 20%; }
+  .col-notes { width: 25%; }
+  .col-tags { width: 18%; }
+  .col-rating { width: 12%; }
+  .col-actions { width: 5%; }
+
+  .col-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .hero-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .role-badge {
+    align-self: auto;
+  }
 }
 
-/* Cor especial para a ação de deletar */
-.popover-action-btn.delete:hover {
-  background-color: #e53e3e;
-  color: white;
-}
-
-
-
-/* --- ESTILOS PARA TELAS PEQUENAS (RESPONSIVIDADE) --- */
-@media (max-width: 768px) {
-
-  /* Esconde o cabeçalho da lista, que não faz sentido no layout de cards */
+/* ================================================================= */
+/* 3: DESIGN PEQUENO (ABAIXO DE 1280px) - LAYOUT DE CARDS            */
+/* ================================================================= */
+@media (max-width: 1279px) {
   .list-header {
     display: none;
   }
 
-  /* Transforma a linha em um "card" empilhado */
-  .evaluation-row {
+  .list-item {
     flex-direction: column;
-    align-items: flex-start; /* Alinha itens à esquerda */
-    gap: 15px; /* Aumenta o espaçamento interno do card */
+    align-items: stretch; /* Alinha os itens para ocuparem a largura total */
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
   }
 
-  /* Faz cada coluna ocupar a largura total */
-  .evaluation-row .col-player,
-  .evaluation-row .col-hero,
-  .evaluation-row .col-notes,
-  .evaluation-row .col-tags,
-  .evaluation-row .col-rating {
+  .list-item:hover {
+      border-color: #3a86ff;
+  }
+
+  /* CORREÇÃO 3: Estilo base para todas as colunas no modo card */
+  .col-player, .col-notes, .col-tags, .col-rating {
     width: 100%;
     display: flex;
-    justify-content: space-between; /* Alinha o título e o conteúdo */
+    justify-content: space-between;
     align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--accent-color);
+    gap: 15px; /* Adiciona um espaço entre o label e o conteúdo */
+  }
+
+  .col-hero {
+    display: flex;
+    justify-content: space-between; /* <-- A MÁGICA ACONTECE AQUI */
+    align-items: center;
+    width: 100%;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--accent-color);
   }
 
-  /* Remove a borda do último item do card */
-  .evaluation-row .col-rating {
+
+  /* Remove a borda do último item */
+  .list-item > div:last-of-type {
     border-bottom: none;
+    padding-bottom: 0;
   }
 
-  /* Exibe o título de cada coluna (que pegamos do data-label) */
-  .evaluation-row [data-label]::before {
-    content: attr(data-label); /* A mágica acontece aqui! */
+  /* Exibe o título de cada coluna (label) */
+  [data-label]::before {
+    display: inline;
+    content: attr(data-label);
     font-weight: bold;
-    color: var(--text-color);
-    margin-right: 10px;
+    color: #a0aec0;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    white-space: nowrap; /* Impede que o label quebre a linha */
   }
 
-  /* Ajusta o posicionamento do menu de ações */
+  /* CORREÇÃO 3: Ajustes específicos para cada campo */
+  .player-info-wrapper, .tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    text-align: right;
+  }
+
+
+  .hero-role-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end; /* Alinha o conteúdo (ícone, nome, badge) à direita */
+    align-items: center;
+    gap: 10px;
+    text-align: right; /* Garante alinhamento se o texto quebrar a linha */
+  }
+
+  .player-info-wrapper {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .col-notes p {
+      margin: 0;
+      text-align: right;
+  }
+
+  .no-info {
+      color: #718096;
+      font-style: italic;
+  }
+
+  /* Ajusta o posicionamento do menu de ações para o canto do card */
   .col-actions {
     position: absolute;
     top: 10px;
     right: 10px;
+    width: auto; /* Reseta a largura */
+    border: none; /* Remove a borda do modo card */
+    padding: 0; /* Remove o padding do modo card */
   }
 
   .action-popover {
     top: 100%;
     right: 0;
     transform: translateY(5px); /* Ajusta para aparecer abaixo do botão */
-  }
-
-  /* Garante que o texto de "nenhuma tag" fique alinhado */
-  .no-tags {
-    margin-left: auto;
   }
 }

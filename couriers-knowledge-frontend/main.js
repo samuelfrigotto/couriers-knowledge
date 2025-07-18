@@ -27,15 +27,15 @@ function createGsiServer(win) {
 }
 
 function createWindow () {
-  mainWindow = new BrowserWindow({
-    width: 1280,
+   mainWindow = new BrowserWindow({
+    width: 1280,       // Largura inicial padrão
     height: 800,
+    minWidth: 800,     // << LARGURA MÍNIMA: Impede que o usuário encolha demais a janela
+    minHeight: 600,    // << Altura mínima
+    resizable: true,   // << GARANTIR que a janela possa ser redimensionada
     webPreferences: {
-      // O script 'preload' é a ponte segura entre os processos
       preload: path.join(__dirname, 'preload.js'),
-      // Manter contextIsolation como true é a prática recomendada por segurança
-      contextIsolation: true,
-      nodeIntegration: false
+      // ...
     }
   });
 
