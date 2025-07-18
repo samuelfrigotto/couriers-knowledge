@@ -1,0 +1,285 @@
+<!-- frontend/src/app/views/user/friends/friends.component.html -->
+
+<div class="friends-container">
+  <!-- Header da página -->
+  <div class="friends-header">
+    <div class="header-content">
+      <h1 class="friends-title">
+        Amigos Steam
+      </h1>
+      <p class="friends-subtitle">
+        Convide seus amigos e compartilhe suas experiências no Dota 2
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        class="refresh-btn"
+        (click)="refreshFriends()"
+        [disabled]="isLoading"
+        title="Atualizar lista de amigos">
+        {{ isLoading ? 'Carregando...' : 'Atualizar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading && !friendsData" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando seus amigos da Steam...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="!isLoading && !friendsData" class="error-container">
+    <div class="error-content">
+      <h3>Não foi possível carregar seus amigos</h3>
+      <p>Verifique se seu perfil Steam não está privado e tente novamente.</p>
+      <button class="retry-btn" (click)="refreshFriends()">
+        Tentar novamente
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div *ngIf="friendsData" class="friends-content">
+    <!-- Statistics summary -->
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-number">{{ friendsData.total_friends }}</div>
+        <div class="stat-label">Total de amigos</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-number">{{ friendsData.statistics.friends_using_app }}</div>
+        <div class="stat-label">Usando o app</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-number">{{ friendsData.statistics.friends_not_using_app }}</div>
+        <div class="stat-label">Para convidar</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-number">{{ friendsData.statistics.total_invites_sent }}</div>
+        <div class="stat-label">Convites enviados</div>
+      </div>
+    </div>
+
+    <!-- Navigation tabs -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button
+          class="tab"
+          [class.active]="activeTab === 'not-using-app'"
+          (click)="setActiveTab('not-using-app')">
+          Para convidar ({{ friendsData.notUsingApp.length }})
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'invited'"
+          (click)="setActiveTab('invited')">
+          Convidados ({{ getInvitedFriendsCount() }})
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'using-app'"
+          (click)="setActiveTab('using-app')">
+          Usando o app ({{ friendsData.usingApp.length }})
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'statistics'"
+          (click)="setActiveTab('statistics')">
+          Estatísticas
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab: Friends to invite (PRINCIPAL) -->
+    <div *ngIf="activeTab === 'not-using-app'" class="tab-content">
+      <div *ngIf="friendsData.notUsingApp.length === 0" class="empty-state">
+        <h3>Todos os seus amigos já usam o app!</h3>
+        <p>Parabéns! Todos os seus amigos da Steam já conhecem o Courier's Knowledge.</p>
+      </div>
+
+      <div *ngIf="friendsData.notUsingApp.length > 0" class="friends-grid">
+        <div *ngFor="let friend of friendsData.notUsingApp; trackBy: trackByFriend" class="friend-card">
+          <div class="friend-avatar">
+            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+            <div
+              class="status-indicator"
+              [class]="getOnlineStatusClass(friend.is_online!)"
+              [title]="getOnlineStatusText(friend.is_online!)">
+            </div>
+          </div>
+
+          <div class="friend-info">
+            <h4 class="friend-name">{{ friend.steam_username }}</h4>
+            <p class="friend-status">
+              <span [class]="getOnlineStatusClass(friend.is_online!)">
+                {{ getOnlineStatusText(friend.is_online!) }}
+              </span>
+              <span *ngIf="friend.already_invited" class="invited-indicator">
+                • Convidado {{ formatDate(friend.invited_at!) }}
+              </span>
+            </p>
+          </div>
+
+          <div class="friend-actions">
+            <button
+              class="action-btn steam-btn"
+              (click)="openSteamProfile(friend)"
+              title="Abrir perfil Steam">
+              Steam
+            </button>
+
+            <button
+              [class]="'invite-btn ' + getInviteButtonClass(friend)"
+              (click)="inviteFriend(friend)"
+              [disabled]="isInviting(friend.steam_id)"
+              [title]="friend.already_invited ? 'Enviar convite novamente' : 'Convidar para usar o app'">
+              {{ getInviteButtonText(friend) }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Invited friends (NOVA ABA) -->
+    <div *ngIf="activeTab === 'invited'" class="tab-content">
+      <div *ngIf="getInvitedFriendsCount() === 0" class="empty-state">
+        <h3>Nenhum amigo convidado ainda</h3>
+        <p>Vá para a aba "Para convidar" e comece a chamar seus amigos!</p>
+        <button class="primary-btn" (click)="setActiveTab('not-using-app')">
+          Ver amigos para convidar
+        </button>
+      </div>
+
+      <div *ngIf="getInvitedFriendsCount() > 0" class="friends-grid">
+        <div *ngFor="let friend of getInvitedFriends(); trackBy: trackByFriend" class="friend-card invited">
+          <div class="friend-avatar">
+            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+            <div class="invited-badge" title="Convite enviado">
+              ✓
+            </div>
+          </div>
+
+          <div class="friend-info">
+            <h4 class="friend-name">{{ friend.steam_username }}</h4>
+            <p class="friend-status">
+              <span class="invited-text">Convidado {{ formatDate(friend.invited_at!) }}</span>
+            </p>
+          </div>
+
+          <div class="friend-actions">
+            <button
+              class="action-btn steam-btn"
+              (click)="openSteamProfile(friend)"
+              title="Abrir perfil Steam">
+              Steam
+            </button>
+
+            <button
+              class="invite-btn btn-secondary"
+              (click)="inviteFriend(friend)"
+              [disabled]="isInviting(friend.steam_id)"
+              title="Enviar convite novamente">
+              {{ isInviting(friend.steam_id) ? 'Gerando...' : 'Convidar novamente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Friends using app -->
+    <div *ngIf="activeTab === 'using-app'" class="tab-content">
+      <div *ngIf="friendsData.usingApp.length === 0" class="empty-state">
+        <h3>Nenhum amigo usando o app ainda</h3>
+        <p>Que tal convidar alguns amigos para usar o Courier's Knowledge?</p>
+        <button class="primary-btn" (click)="setActiveTab('not-using-app')">
+          Ver amigos para convidar
+        </button>
+      </div>
+
+      <div *ngIf="friendsData.usingApp.length > 0" class="friends-grid">
+        <div *ngFor="let friend of friendsData.usingApp; trackBy: trackByFriend" class="friend-card using-app">
+          <div class="friend-avatar">
+            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+            <div class="app-badge" title="Usa o Courier's Knowledge">
+              ✓
+            </div>
+          </div>
+
+          <div class="friend-info">
+            <h4 class="friend-name">{{ friend.steam_username }}</h4>
+            <p class="friend-status">
+              Entrou em {{ formatDate(friend.joined_at!) }}
+            </p>
+          </div>
+
+          <div class="friend-actions">
+            <button
+              class="action-btn steam-btn"
+              (click)="openSteamProfile(friend)"
+              title="Abrir perfil Steam">
+              Steam
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Statistics -->
+    <div *ngIf="activeTab === 'statistics'" class="tab-content">
+      <div class="statistics-content">
+        <h3>Suas estatísticas de amigos</h3>
+
+        <div class="stats-detailed">
+          <div class="stat-detail">
+            <span class="stat-icon">Amigos</span>
+            <div class="stat-info">
+              <div class="stat-value">{{ friendsData.statistics.friends_using_app }}</div>
+              <div class="stat-description">Amigos usando o app</div>
+            </div>
+          </div>
+
+          <div class="stat-detail">
+            <span class="stat-icon">Convites</span>
+            <div class="stat-info">
+              <div class="stat-value">{{ friendsData.statistics.total_invites_sent }}</div>
+              <div class="stat-description">Convites enviados</div>
+            </div>
+          </div>
+
+          <div class="stat-detail">
+            <span class="stat-icon">Aceitos</span>
+            <div class="stat-info">
+              <div class="stat-value">{{ friendsData.statistics.friends_joined_after_invite }}</div>
+              <div class="stat-description">Amigos que entraram após convite</div>
+            </div>
+          </div>
+
+          <div class="stat-detail">
+            <span class="stat-icon">Pendentes</span>
+            <div class="stat-info">
+              <div class="stat-value">{{ getInvitedFriendsCount() }}</div>
+              <div class="stat-description">Convites pendentes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section">
+          <h4>Progresso</h4>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              [style.width.%]="(friendsData.statistics.friends_using_app / friendsData.total_friends) * 100">
+            </div>
+          </div>
+          <p>
+            {{ friendsData.statistics.friends_using_app }} de {{ friendsData.total_friends }} amigos
+            ({{ ((friendsData.statistics.friends_using_app / friendsData.total_friends) * 100).toFixed(1) }}%)
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

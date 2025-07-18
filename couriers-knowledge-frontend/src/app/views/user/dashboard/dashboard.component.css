@@ -1,26 +1,114 @@
-/* ================================================================= */
-/* 1: ESTILIZAÇÃO PADRÃO (1600x900 E ACIMA)                          */
-/* ================================================================= */
+/* frontend/src/app/views/user/dashboard/dashboard.component.css */
+/* ATUALIZAÇÃO: CSS para filtro permanente + tema dark */
 
-/* --- CABEÇALHO --- */
+/* ===== CABEÇALHO ATUALIZADO ===== */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* Mudado para flex-start para acomodar filtro */
   border-bottom: 1px solid var(--accent-color);
-  padding-bottom: 10px;
+  padding-bottom: 20px; /* Aumentado para acomodar filtro */
   margin-bottom: 20px;
+  gap: 20px;
 }
+
+.header-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
 .dashboard-header h1 {
   margin: 0;
   border-bottom: none;
   padding-bottom: 0;
   color: var(--text-color);
 }
+
 .header-actions {
   display: flex;
   gap: 10px;
+  flex-shrink: 0;
 }
+
+/* ===== NOVO: FILTRO PERMANENTE DE BUSCA ===== */
+.permanent-search-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 0;
+  transition: border-color 0.2s ease;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.1);
+}
+
+.search-icon {
+  padding: 0 12px;
+  color: #a0aec0;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.permanent-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 8px;
+  color: var(--text-color);
+  font-size: 14px;
+  outline: none;
+  min-width: 250px;
+}
+
+.permanent-search-input::placeholder {
+  color: #a0aec0;
+  font-style: italic;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 18px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  color: var(--text-color);
+}
+
+.search-results-count {
+  font-size: 12px;
+  color: #3a86ff;
+  font-weight: 500;
+  padding-left: 4px;
+}
+
+.search-no-results {
+  font-size: 12px;
+  color: #ed8936;
+  font-weight: 500;
+  padding-left: 4px;
+}
+
+/* ===== BOTÕES DO HEADER ===== */
 .add-button, .refresh-button {
   color: white;
   border: none;
@@ -35,7 +123,7 @@
 .refresh-button { background-color: var(--accent-color); }
 .refresh-button:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* --- MENSAGENS E LISTA --- */
+/* ===== MENSAGENS E LISTA ===== */
 .loading-message, .no-evaluations {
   color: var(--text-color);
   text-align: center;
@@ -53,7 +141,7 @@
 }
 .list-item:hover { background-color: var(--accent-color); }
 
-/* --- CABEÇALHO INTERATIVO E FILTROS POPOVER --- */
+/* ===== CABEÇALHO DE FILTROS EXISTENTE ===== */
 .list-header {
   font-weight: bold;
   color: #a0aec0;
@@ -149,17 +237,16 @@
     color: white;
 }
 
-/* --- COLUNAS E ELEMENTOS INTERNOS DA LISTA --- */
+/* ===== COLUNAS E ELEMENTOS INTERNOS DA LISTA ===== */
 .col-player { width: 18%; padding-right: 10px; }
 .col-hero { width: 18%; padding-right: 10px; display: flex; flex-direction: column; gap: 5px; }
 .col-notes { width: 30%; flex-grow: 1; color: #a0aec0; padding-right: 10px; }
-/* CORREÇÃO 1: Adicionado display: flex e gap para espaçar as tags */
 .col-tags {
   width: 15%;
   padding-right: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 5px; /* Define o espaço entre as tags */
+  gap: 5px;
 }
 .col-rating { width: 10%; text-align: center; }
 .col-actions { width: 5%; text-align: center; }
@@ -179,23 +266,20 @@
 .action-menu-trigger {
   background: none; border: 1px solid transparent; color: var(--text-color);
   font-size: 1.5rem; padding: 0 10px; border-radius: 5px; cursor: pointer; line-height: 1;
-  /* CORREÇÃO 2: Garantir que o botão de ações fique visível */
   opacity: 1;
   visibility: visible;
 }
 .action-menu-trigger:hover { background-color: var(--accent-color); border-color: #4a5568; }
 
 .action-popover {
-  /* CORREÇÃO 2: Ajuste no posicionamento para o popover aparecer ao lado do botão */
   position: absolute;
-  right: calc(5%); /* Posiciona à esquerda do gatilho */
+  right: calc(5%);
   top: 50%;
   transform: translateY(-50%);
   background-color: var(--secondary-bg-color); border: 1px solid #4a5568;
   border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); z-index: 10;
   width: 150px; padding: 5px; display: flex; flex-direction: column; gap: 5px;
 }
-
 
 .popover-action-btn {
   width: 100%; background-color: transparent; border: none; color: var(--text-color);
@@ -205,26 +289,68 @@
 .popover-action-btn:hover { background-color: var(--accent-color); }
 .popover-action-btn.delete:hover { background-color: #e53e3e; color: white; }
 
-/* Wrappers para conteúdo interno - escondidos por padrão, usados em telas menores */
+/* Wrappers para conteúdo interno */
 .hero-role-wrapper, .tags-wrapper, .no-info, .player-info-wrapper {
-    display: contents; /* Comportamento padrão em telas grandes */
+    display: contents;
 }
 
-/* ================================================================= */
-/* 2: DESIGN MÉDIO (DE 1280px ATÉ 1599px)                           */
-/* ================================================================= */
-@media (max-width: 1599px) and (min-width: 1280px) {
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1279px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .permanent-search-filter {
+    max-width: none;
+  }
+
+  .permanent-search-input {
+    min-width: auto;
+  }
+
+  .list-header {
+    display: none;
+  }
+
   .list-item {
-    padding: 12px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
   }
-  .player-name {
-    font-size: 1rem;
+
+  .list-item:hover {
+      border-color: #3a86ff;
   }
-  .col-player { width: 20%; }
-  .col-notes { width: 25%; }
-  .col-tags { width: 18%; }
-  .col-rating { width: 12%; }
-  .col-actions { width: 5%; }
+
+  .col-player, .col-notes, .col-tags, .col-rating {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--accent-color);
+    gap: 15px;
+  }
+
+  .col-hero {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--accent-color);
+    gap: 15px;
+  }
 
   .col-hero {
     flex-direction: column;
@@ -241,50 +367,6 @@
   .role-badge {
     align-self: auto;
   }
-}
-
-/* ================================================================= */
-/* 3: DESIGN PEQUENO (ABAIXO DE 1280px) - LAYOUT DE CARDS            */
-/* ================================================================= */
-@media (max-width: 1279px) {
-  .list-header {
-    display: none;
-  }
-
-  .list-item {
-    flex-direction: column;
-    align-items: stretch; /* Alinha os itens para ocuparem a largura total */
-    gap: 12px;
-    padding: 15px;
-    border: 1px solid var(--accent-color);
-    border-radius: 8px;
-    margin-bottom: 15px;
-  }
-
-  .list-item:hover {
-      border-color: #3a86ff;
-  }
-
-  /* CORREÇÃO 3: Estilo base para todas as colunas no modo card */
-  .col-player, .col-notes, .col-tags, .col-rating {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--accent-color);
-    gap: 15px; /* Adiciona um espaço entre o label e o conteúdo */
-  }
-
-  .col-hero {
-    display: flex;
-    justify-content: space-between; /* <-- A MÁGICA ACONTECE AQUI */
-    align-items: center;
-    width: 100%;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--accent-color);
-  }
-
 
   /* Remove a borda do último item */
   .list-item > div:last-of-type {
@@ -300,10 +382,9 @@
     color: #a0aec0;
     text-transform: uppercase;
     font-size: 0.8rem;
-    white-space: nowrap; /* Impede que o label quebre a linha */
+    white-space: nowrap;
   }
 
-  /* CORREÇÃO 3: Ajustes específicos para cada campo */
   .player-info-wrapper, .tags-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -313,14 +394,13 @@
     text-align: right;
   }
 
-
   .hero-role-wrapper {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end; /* Alinha o conteúdo (ícone, nome, badge) à direita */
+    justify-content: flex-end;
     align-items: center;
     gap: 10px;
-    text-align: right; /* Garante alinhamento se o texto quebrar a linha */
+    text-align: right;
   }
 
   .player-info-wrapper {
@@ -339,19 +419,41 @@
       font-style: italic;
   }
 
-  /* Ajusta o posicionamento do menu de ações para o canto do card */
   .col-actions {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: auto; /* Reseta a largura */
-    border: none; /* Remove a borda do modo card */
-    padding: 0; /* Remove o padding do modo card */
+    width: auto;
+    border: none;
+    padding: 0;
   }
 
   .action-popover {
     top: 100%;
     right: 0;
-    transform: translateY(5px); /* Ajusta para aparecer abaixo do botão */
+    transform: translateY(5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding-bottom: 16px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .permanent-search-input {
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+
+  .search-input-wrapper {
+    padding: 2px;
+  }
+
+  .permanent-search-input {
+    padding: 10px 8px;
   }
 }

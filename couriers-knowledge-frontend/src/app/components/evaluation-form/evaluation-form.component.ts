@@ -1,25 +1,21 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators, ValidationErrors  } from '@angular/forms';
 import { EvaluationService } from '../../core/evaluation.service';
 import { GameDataService, Hero } from '../../core/game-data.service';
 import { Observable, of } from 'rxjs';
 import { map, startWith, take } from 'rxjs/operators';
 
-// Validador customizado para as tags (sem alterações)
-export function tagsValidator(maxTags: number, maxTagLength: number): ValidatorFn {
-  return (control: AbstractControl): { [key: string]: any } | null => {
-    const tags = (control.value || '').split(',').map((t: string) => t.trim()).filter((t: string) => t);
-    if (tags.length > maxTags) {
-      return { maxTags: { value: control.value } };
-    }
-    for (const tag of tags) {
-      if (tag.length > maxTagLength) {
-        return { maxTagLength: { value: tag } };
-      }
-    }
-    return null;
-  };
+function tagsValidator(control: AbstractControl): ValidationErrors | null {
+  // A verificação abaixo agora é segura, pois garantimos que o valor sempre será uma string.
+  if (typeof control.value !== 'string') {
+    return null; // Se não for string, não valida (evita o erro)
+  }
+  const tags = control.value.split(',').map((tag: string) => tag.trim());
+  if (tags.some((tag: string) => tag.length > 20)) {
+    return { tagTooLong: true };
+  }
+  return null;
 }
 
 @Component({
@@ -61,7 +57,7 @@ export class EvaluationFormComponent implements OnInit {
       matchId: [''],
       role: [null],
       hero_id: [null],
-      tags: ['', [tagsValidator(5, 25)]]
+      tags: ['', [tagsValidator]],
     });
   }
 
@@ -85,6 +81,15 @@ export class EvaluationFormComponent implements OnInit {
     if (prefillData) {
       if (this.isEditMode) {
         this.currentStep = 2; // Pula para a etapa 2 na edição
+      }
+
+      const formDataToPatch = {
+        ...prefillData,
+        targetSteamId: prefillData.target_player_steam_id
+      };
+
+      if (Array.isArray(formDataToPatch.tags)) {
+        formDataToPatch.tags = formDataToPatch.tags.join(', ');
       }
 
       this.evaluationForm.patchValue(prefillData);
@@ -120,7 +125,8 @@ export class EvaluationFormComponent implements OnInit {
   }
 
   private _filterTags(value: string): string[] {
-    const currentTags = value.split(',').map(t => t.trim());
+    const val = typeof value === 'string' ? value : '';
+    const currentTags = val.split(',').map(t => t.trim());
     const lastTag = currentTags.pop()?.toLowerCase() || '';
     if (!lastTag) return [];
     return this.allUserTags.filter(tag =>

@@ -4,6 +4,8 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { RecentMatchesComponent } from './recent-matches/recent-matches.component';
 import { ProfileComponent } from './profile/profile.component';
 import { LiveMatchComponent } from './live-match/live-match.component';
+import { FriendsComponent } from './friends/friends.component';
+
 export const USER_ROUTES: Routes = [
   {
     path: '',
@@ -12,10 +14,11 @@ export const USER_ROUTES: Routes = [
       // Rotas filhas que serão renderizadas dentro do <router-outlet> do Layout
       { path: 'dashboard', component: DashboardComponent},
       { path: 'matches', component: RecentMatchesComponent },
+      { path: 'friends', component: FriendsComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'live', component: LiveMatchComponent },
-      
-      
+
+
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

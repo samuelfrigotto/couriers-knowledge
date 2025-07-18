@@ -14,6 +14,7 @@ const userRoutes = require('./src/api/routes/user.routes');
 const evaluationRoutes = require('./src/api/routes/evaluation.routes');
 const steamRoutes = require('./src/api/routes/steam.routes');
 const gsiRoutes = require('./src/api/routes/gsi.routes');
+const friendsRoutes = require('./src/api/routes/friends.routes');
 
 // 2. Inicializar o aplicativo Express
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api', userRoutes);
 app.use('/api', evaluationRoutes);
 app.use('/api', steamRoutes);
 app.use('/api', gsiRoutes);
+app.use('/api/friends', friendsRoutes);
 
 // 6. Iniciar o servidor
 app.listen(PORT, () => {

@@ -1,6 +1,9 @@
+// frontend/src/app/views/user/dashboard/dashboard.component.ts
+// ATUALIZAÇÃO: Adicionar filtro permanente de jogador - VERSÃO CORRIGIDA
+
 import { Component, HostListener , OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms'; // ✅ CORREÇÃO 1: Adicionado FormControl ao import
 import { EvaluationService } from '../../../core/evaluation.service';
 import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
 import { GameDataService, Hero } from '../../../core/game-data.service';
@@ -8,7 +11,6 @@ import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
-
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +35,10 @@ export class DashboardComponent implements OnInit {
   private allEvaluations: any[] = [];
   public displayedEvaluations: any[] = [];
 
+  // ✅ CORREÇÃO 2: Inicializar as propriedades do filtro permanente
+  public filteredBySearch: any[] = [];
+  public permanentSearchControl = new FormControl('');
+
   public isLoading = true;
   public isRefreshing = false;
   public isFormModalVisible = false;
@@ -43,7 +49,6 @@ export class DashboardComponent implements OnInit {
   public heroes$!: Observable<Hero[]>;
   public roles = ['hc', 'mid', 'off', 'sup 4', 'sup 5', 'outro'];
   public activeActionMenu: number | null = null;
-
 
   constructor() {
     this.filterForm = this.fb.group({
@@ -61,6 +66,10 @@ export class DashboardComponent implements OnInit {
     this.heroes$ = this.gameDataService.heroes$.pipe(
       map(heroesMap => Object.values(heroesMap).sort((a, b) => a.localized_name.localeCompare(b.localized_name)))
     );
+
+    // ✅ CORREÇÃO 3: Inicializar filteredBySearch antes de configurar listeners
+    this.filteredBySearch = [];
+    this.setupPermanentSearchListener();
     this.loadAllEvaluations();
   }
 
@@ -80,6 +89,8 @@ export class DashboardComponent implements OnInit {
     ).subscribe({
       next: (sortedData) => {
         this.allEvaluations = sortedData;
+        // ✅ CORREÇÃO 4: Garantir que filteredBySearch seja inicializado
+        this.filteredBySearch = [...this.allEvaluations];
         this.applyAllFilters();
         this.setupFilterListener();
         this.isLoading = false;
@@ -91,6 +102,44 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Configurar listener do filtro permanente
+  setupPermanentSearchListener(): void {
+    this.permanentSearchControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(searchTerm => {
+      this.applyPermanentSearch(searchTerm || '');
+      this.applyAllFilters();
+    });
+  }
+
+  // Aplicar filtro de busca permanente
+  applyPermanentSearch(searchTerm: string): void {
+    if (!searchTerm.trim()) {
+      this.filteredBySearch = [...this.allEvaluations];
+      return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    this.filteredBySearch = this.allEvaluations.filter(evaluation => {
+      const playerName = (evaluation.targetPlayerName || '').toLowerCase();
+      const steamId = (evaluation.target_player_steam_id || '').toLowerCase();
+      const matchId = (evaluation.match_id || '').toString().toLowerCase();
+
+      return playerName.includes(term) ||
+             steamId.includes(term) ||
+             matchId.includes(term);
+    });
+
+    console.log(`🔍 Busca permanente: "${searchTerm}" - ${this.filteredBySearch.length} resultados`);
+  }
+
+  // Limpar busca permanente
+  clearPermanentSearch(): void {
+    this.permanentSearchControl.setValue('');
+    this.toastr.info('Busca limpa!');
+  }
+
   setupFilterListener(): void {
     this.filterForm.valueChanges.pipe(
       debounceTime(250),
@@ -100,10 +149,17 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // ✅ CORREÇÃO 5: Melhorar a lógica de aplicação de filtros
   applyAllFilters(): void {
     const filters = this.filterForm.value;
-    let filtered = [...this.allEvaluations];
 
+    // Começar com dados filtrados pela busca permanente (com verificação de segurança)
+    const searchTerm = this.permanentSearchControl.value || '';
+    let filtered = searchTerm.trim() && this.filteredBySearch.length >= 0 ?
+      [...this.filteredBySearch] :
+      [...this.allEvaluations];
+
+    // Aplicar filtros do formulário
     if (filters.playerName) {
       const term = filters.playerName.toLowerCase();
       filtered = filtered.filter(e => (e.targetPlayerName || '').toLowerCase().includes(term));
@@ -151,7 +207,9 @@ export class DashboardComponent implements OnInit {
     this.activeFilter = this.activeFilter === filterName ? null : filterName;
   }
 
+  // Resetar filtros incluindo busca permanente
   resetFilters(): void {
+    // Limpar formulário de filtros
     this.filterForm.reset({
       playerName: '',
       heroId: null,
@@ -161,8 +219,12 @@ export class DashboardComponent implements OnInit {
       notes: '',
       tags: ''
     });
+
+    // Limpar também a busca permanente
+    this.permanentSearchControl.setValue('');
+
     this.activeFilter = null;
-    this.toastr.info('Filtros limpos!');
+    this.toastr.info('Todos os filtros foram limpos!');
   }
 
   refreshNames(): void {
@@ -174,35 +236,10 @@ export class DashboardComponent implements OnInit {
         this.isRefreshing = false;
       },
       error: (err) => {
-        this.toastr.error('Ocorreu um erro ao tentar atualizar os nomes.', 'Falha');
+        this.toastr.error('Ocorreu um erro ao tentar atualizar os nomes.');
         this.isRefreshing = false;
       }
     });
-  }
-
-  deleteEvaluation(id: string, event: MouseEvent): void {
-    event.stopPropagation();
-    const confirmed = window.confirm('Você tem certeza que deseja apagar esta avaliação? Esta ação não pode ser desfeita.');
-
-    if (confirmed) {
-      this.evaluationService.deleteEvaluation(id).subscribe({
-        next: () => {
-          this.toastr.success('Avaliação apagada com sucesso!');
-          this.allEvaluations = this.allEvaluations.filter(e => e.id !== id);
-          this.applyAllFilters();
-        },
-        error: (err) => {
-          this.toastr.error('Erro ao apagar avaliação');
-          console.error('Erro ao apagar avaliação', err);
-        }
-      });
-    }
-  }
-
-  onFormSaved(): void {
-    this.toastr.success('Avaliação salva com sucesso!');
-    this.closeFormModal();
-    this.loadAllEvaluations();
   }
 
   openFormModal(): void {
@@ -210,45 +247,58 @@ export class DashboardComponent implements OnInit {
     this.isFormModalVisible = true;
   }
 
-  openEditModal(evaluation: any): void {
+  editEvaluation(evaluation: any): void {
     this.selectedEvaluation = evaluation;
     this.isFormModalVisible = true;
+    this.activeActionMenu = null;
   }
 
-  closeFormModal(): void {
+  deleteEvaluation(evaluationId: number): void {
+    if (confirm('Tem certeza de que deseja excluir esta avaliação?')) {
+      this.evaluationService.deleteEvaluation(evaluationId.toString()).subscribe({
+        next: () => {
+          this.toastr.success('Avaliação excluída com sucesso!');
+          this.loadAllEvaluations();
+          this.activeActionMenu = null;
+        },
+        error: (err) => {
+          this.toastr.error('Falha ao excluir avaliação.');
+        }
+      });
+    }
+  }
+
+  onFormSubmitted(): void {
+    this.isFormModalVisible = false;
+    this.loadAllEvaluations();
+  }
+
+  onFormClosed(): void {
     this.isFormModalVisible = false;
     this.selectedEvaluation = null;
   }
 
   async shareEvaluation(evaluation: any): Promise<void> {
     try {
-      const hero = await this.gameDataService.getHeroById(evaluation.hero_id);
-      const heroName = hero ? hero.localized_name : 'Herói não informado';
+      this.activeActionMenu = null;
+      const heroName = evaluation.hero_id ?
+        this.gameDataService.getHeroById(evaluation.hero_id)?.localized_name || 'Herói não informado' :
+        'Herói não informado';
 
       const rating = Number(evaluation.rating);
-      // Formata a nota para não exibir ".0" para números inteiros
       const formattedRating = (rating % 1 === 0) ? rating.toFixed(0) : rating.toFixed(1);
       const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
 
-      // Inicia a construção do texto de compartilhamento
       let shareText = `[Courier's Knowledge] Avaliação de jogador:\n`;
-
-      // Adiciona o nome do jogador e, se disponível, o Steam ID
       shareText += `- Jogador: ${evaluation.targetPlayerName || 'Jogador Desconhecido'}`;
-      // A propriedade do ID do jogador é 'target_player_steam_id'
       if (evaluation.target_player_steam_id) {
         shareText += ` (ID: ${evaluation.target_player_steam_id})`;
       }
       shareText += `\n`;
-
       shareText += `- Herói: ${heroName}\n`;
-
-      // Adiciona a partida, se disponível
       if (evaluation.match_id) {
         shareText += `- Partida: ${evaluation.match_id}\n`;
       }
-
-      // Adiciona o restante das informações
       shareText += `- Nota: ${formattedRating}/5 (${ratingStars})\n`;
       shareText += `- Anotações: "${evaluation.notes || 'Nenhuma.'}"\n`;
       shareText += `- Tags: ${evaluation.tags && evaluation.tags.length > 0 ? '#' + evaluation.tags.join(' #') : 'Nenhuma.'}\n`;

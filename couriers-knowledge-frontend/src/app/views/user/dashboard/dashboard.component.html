@@ -1,6 +1,39 @@
+<!-- frontend/src/app/views/user/dashboard/dashboard.component.html -->
+<!-- ATUALIZAÇÃO: Adicionar filtro permanente no header - VERSÃO CORRIGIDA -->
+
 <div class="dashboard-container">
+  <!-- Header principal com filtro sempre visível -->
   <div class="dashboard-header">
-    <h1>Minhas Avaliações</h1>
+    <div class="header-left">
+      <h1>Minhas Avaliações</h1>
+      <!-- Filtro de jogador sempre visível -->
+      <div class="permanent-search-filter">
+        <div class="search-input-wrapper">
+          <i class="search-icon">⌕</i>
+          <input
+            type="text"
+            placeholder="Buscar jogador..."
+            [formControl]="permanentSearchControl"
+            class="permanent-search-input"
+            #searchInput>
+          <button
+            *ngIf="permanentSearchControl.value"
+            class="clear-search-btn"
+            (click)="clearPermanentSearch()"
+            title="Limpar busca">
+            ×
+          </button>
+        </div>
+        <!-- ✅ CORREÇÃO: Adicionadas verificações de segurança -->
+        <div *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length > 0" class="search-results-count">
+          {{ filteredBySearch.length }} resultado(s) encontrado(s)
+        </div>
+        <div *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length === 0" class="search-no-results">
+          Nenhum jogador encontrado
+        </div>
+      </div>
+    </div>
+
     <div class="header-actions">
       <button class="refresh-button" (click)="refreshNames()" [disabled]="isRefreshing">
         {{ isRefreshing ? 'Atualizando...' : 'Atualizar Nomes' }}
@@ -9,6 +42,7 @@
     </div>
   </div>
 
+  <!-- Header de filtros existente (mantido) -->
   <div class="list-header" [formGroup]="filterForm" *ngIf="!isLoading">
     <div class="col-player header-col">
       <div class="header-title" (click)="toggleFilter('playerName', $event)" [class.active]="activeFilter === 'playerName'">Jogador <span>▼</span></div>
@@ -60,12 +94,12 @@
         </div>
     </div>
 
-
     <div class="col-actions">
         <button class="clear-filters-button" (click)="resetFilters()" title="Limpar Filtros">&times;</button>
     </div>
   </div>
 
+  <!-- Estados de carregamento e sem dados -->
   <div *ngIf="isLoading" class="loading-message">
     <p>Carregando avaliações...</p>
   </div>
@@ -73,11 +107,14 @@
     <p>Nenhuma avaliação encontrada com os filtros atuais.</p>
   </div>
 
+  <!-- Lista de avaliações -->
   <div class="evaluation-list-body" *ngIf="!isLoading && displayedEvaluations.length > 0">
     <div *ngFor="let evaluation of displayedEvaluations" class="list-item">
       <div class="col-player" data-label="Jogador:">
-        <span class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</span>
-        <small class="match-id" *ngIf="evaluation.match_id">Partida: {{ evaluation.match_id }}</small>
+        <div class="player-info-wrapper">
+          <span class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</span>
+          <small class="match-id" *ngIf="evaluation.match_id">Partida: {{ evaluation.match_id }}</small>
+        </div>
       </div>
       <div class="col-hero" data-label="Herói/Função:">
         <div class="hero-role-wrapper">
@@ -89,41 +126,44 @@
           <div *ngIf="!evaluation.hero_id && !evaluation.role" class="no-info">-</div>
         </div>
       </div>
-      <div class="col-notes" data-label="Anotações:">
-        <p>{{ evaluation.notes || '-' }}</p>
+      <div class="col-notes" data-label="Anotação:">
+        <div class="notes-wrapper">
+          <p *ngIf="evaluation.notes" [innerHTML]="evaluation.notes"></p>
+          <p *ngIf="!evaluation.notes" class="no-info">Sem anotações</p>
+        </div>
       </div>
       <div class="col-tags" data-label="Tags:">
         <div class="tags-wrapper">
-            <span *ngFor="let tag of evaluation.tags" class="tag-badge">{{ tag }}</span>
-            <span *ngIf="!evaluation.tags || evaluation.tags.length === 0" class="no-info">-</span>
+          <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
+          <span *ngIf="!evaluation.tags || evaluation.tags.length === 0" class="no-info">Sem tags</span>
         </div>
       </div>
       <div class="col-rating" data-label="Nota:">
         <app-rating-display [rating]="evaluation.rating"></app-rating-display>
       </div>
       <div class="col-actions">
-          <button class="action-menu-trigger" (click)="toggleActionMenu($event, evaluation.id)" title="Ações">
-            &#8942; </button>
-
-          <div class="action-popover" *ngIf="activeActionMenu === evaluation.id" (click)="$event.stopPropagation()">
-            <button class="popover-action-btn" (click)="openEditModal(evaluation)">
-              <span>Editar</span>
-            </button>
-            <button class="popover-action-btn" (click)="shareEvaluation(evaluation)">
-              <span>Compartilhar</span>
-            </button>
-            <button class="popover-action-btn delete" (click)="deleteEvaluation(evaluation.id, $event)">
-              <span>Excluir</span>
-            </button>
-          </div>
+        <button class="action-menu-trigger" (click)="toggleActionMenu($event, evaluation.id)">
+          ⋮
+        </button>
+        <div class="action-popover" *ngIf="activeActionMenu === evaluation.id">
+          <button class="popover-action-btn" (click)="editEvaluation(evaluation)">
+            Editar
+          </button>
+          <button class="popover-action-btn" (click)="shareEvaluation(evaluation)">
+            Compartilhar
+          </button>
+          <button class="popover-action-btn delete" (click)="deleteEvaluation(evaluation.id)">
+            Excluir
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<app-evaluation-form
-  *ngIf="isFormModalVisible"
-  [evaluationData]="selectedEvaluation"
-  (closeModal)="closeFormModal()"
-  (evaluationSaved)="onFormSaved()">
-</app-evaluation-form>
+  <app-evaluation-form
+    *ngIf="isFormModalVisible"
+    [evaluationData]="selectedEvaluation"
+    (formSubmitted)="onFormSubmitted()"
+    (formClosed)="onFormClosed()">
+  </app-evaluation-form>
+</div>
