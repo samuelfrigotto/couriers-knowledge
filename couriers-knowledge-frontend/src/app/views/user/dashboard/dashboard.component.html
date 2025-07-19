@@ -1,5 +1,5 @@
 <!-- frontend/src/app/views/user/dashboard/dashboard.component.html -->
-<!-- ATUALIZAÇÃO: Adicionar filtro permanente no header - VERSÃO CORRIGIDA -->
+<!-- VERSÃO CORRIGIDA - Estrutura HTML arrumada -->
 
 <div class="dashboard-container">
   <!-- Header principal com filtro sempre visível -->
@@ -38,9 +38,30 @@
       <button class="refresh-button" (click)="refreshNames()" [disabled]="isRefreshing">
         {{ isRefreshing ? 'Atualizando...' : 'Atualizar Nomes' }}
       </button>
-      <button class="add-button" (click)="openFormModal()">+ Nova Avaliação</button>
+
+      <!-- ✅ BOTÃO COM VERIFICAÇÃO DE LIMITE -->
+      <div class="new-evaluation-button-wrapper">
+        <button
+          class="new-evaluation-btn"
+          [class.disabled]="isLimitReached"
+          [disabled]="isLimitReached"
+          (click)="openFormModal()"
+          [title]="isLimitReached ? 'Limite de avaliações atingido. Faça upgrade para Premium!' : 'Criar nova avaliação'">
+          + Nova Avaliação
+        </button>
+
+        <!-- ✅ INDICADOR DE LIMITE -->
+        <div *ngIf="evaluationStatus" class="evaluation-counter">
+          <span [class.warning]="isLimitReached">
+            {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
+            <small *ngIf="!evaluationStatus.isPremium">avaliações</small>
+            <small *ngIf="evaluationStatus.isPremium" class="premium-badge">Premium</small>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
+  <!-- ✅ CORREÇÃO: Fechar dashboard-header aqui -->
 
   <!-- Header de filtros existente (mantido) -->
   <div class="list-header" [formGroup]="filterForm" *ngIf="!isLoading">
@@ -160,10 +181,14 @@
     </div>
   </div>
 
+  <!-- ✅ MODAL DE AVALIAÇÃO -->
   <app-evaluation-form
     *ngIf="isFormModalVisible"
     [evaluationData]="selectedEvaluation"
-    (formSubmitted)="onFormSubmitted()"
-    (formClosed)="onFormClosed()">
+    (closeModal)="onFormClosed()"
+    (evaluationSaved)="onFormSubmitted()"
+    (evaluationError)="onEvaluationError($event)">
   </app-evaluation-form>
+
+
 </div>

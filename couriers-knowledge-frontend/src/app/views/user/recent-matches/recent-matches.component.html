@@ -118,5 +118,6 @@
   *ngIf="isFormVisible"
   [evaluationData]="evaluationInitialData"
   (closeModal)="closeForm()"
-  (evaluationSaved)="onEvaluationSaved()">
+  (evaluationSaved)="onEvaluationSaved()"
+  (evaluationError)="onEvaluationError($event)">
 </app-evaluation-form>

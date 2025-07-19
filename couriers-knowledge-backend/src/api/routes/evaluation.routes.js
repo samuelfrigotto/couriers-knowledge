@@ -27,6 +27,7 @@ router.delete('/evaluations/:id', authMiddleware.verifyToken, evaluationControll
 // NOVA ROTA GET para buscar as tags
 router.get('/evaluations/tags', authMiddleware.verifyToken, evaluationController.getUniqueTags);
 
-
+// Rota para buscar quantas avaliações um usuário fez
+router.get('/evaluations/status', authMiddleware.verifyToken, evaluationController.getEvaluationStatus);
 
 module.exports = router;

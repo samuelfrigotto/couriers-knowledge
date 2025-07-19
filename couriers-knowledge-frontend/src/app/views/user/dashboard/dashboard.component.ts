@@ -50,6 +50,10 @@ export class DashboardComponent implements OnInit {
   public roles = ['hc', 'mid', 'off', 'sup 4', 'sup 5', 'outro'];
   public activeActionMenu: number | null = null;
 
+  public evaluationStatus: any = null;
+  public isLimitReached = false;
+  public showUpgradeMessage = false;
+
   constructor() {
     this.filterForm = this.fb.group({
       playerName: [''],
@@ -71,6 +75,7 @@ export class DashboardComponent implements OnInit {
     this.filteredBySearch = [];
     this.setupPermanentSearchListener();
     this.loadAllEvaluations();
+    this.checkEvaluationLimit();
   }
 
   @HostListener('document:click', ['$event'])
@@ -243,6 +248,11 @@ export class DashboardComponent implements OnInit {
   }
 
   openFormModal(): void {
+    if (this.isLimitReached) {
+      this.showUpgradeToast();
+      return;
+    }
+
     this.selectedEvaluation = null;
     this.isFormModalVisible = true;
   }
@@ -271,6 +281,7 @@ export class DashboardComponent implements OnInit {
   onFormSubmitted(): void {
     this.isFormModalVisible = false;
     this.loadAllEvaluations();
+    this.checkEvaluationLimit();
   }
 
   onFormClosed(): void {
@@ -317,4 +328,54 @@ export class DashboardComponent implements OnInit {
     event.stopPropagation();
     this.activeActionMenu = this.activeActionMenu === evaluationId ? null : evaluationId;
   }
+
+
+  private checkEvaluationLimit(): void {
+    this.evaluationService.getEvaluationStatus().subscribe({
+      next: (status) => {
+        this.evaluationStatus = status;
+        this.isLimitReached = status.limitReached;
+
+        if (this.isLimitReached) {
+          this.toastr.warning(
+            `Você atingiu o limite de ${status.limit} avaliações do plano gratuito. Considere fazer upgrade para Premium!`,
+            'Limite Atingido',
+            { timeOut: 8000 }
+          );
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao verificar limite de avaliações:', err);
+      }
+    });
+  }
+
+  private showUpgradeToast(): void {
+    this.toastr.error(
+      'Você atingiu o limite de avaliações do plano gratuito. Faça upgrade para Premium para avaliações ilimitadas!',
+      'Limite Atingido',
+      {
+        timeOut: 10000,
+        closeButton: true
+      }
+    );
+  }
+
+  onEvaluationError(error: any): void {
+    // Reagir a erros do formulário se necessário
+    if (error.status === 403) {
+      this.checkEvaluationLimit(); // Atualizar status do limite
+    }
+  }
+
+  // ✅ NOVO MÉTODO: Mostrar modal de upgrade
+  showUpgradeModal(): void {
+    this.showUpgradeMessage = true;
+  }
+
+  // ✅ NOVO MÉTODO: Fechar modal de upgrade
+  closeUpgradeModal(): void {
+    this.showUpgradeMessage = false;
+  }
+
 }

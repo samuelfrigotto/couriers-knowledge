@@ -43,5 +43,9 @@ export class EvaluationService {
     return this.http.get(`${this.apiUrl}/evaluations/share/${id}`);
   }
 
+  getEvaluationStatus(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/evaluations/status`);
+  }
+
 
 }

@@ -26,6 +26,37 @@ exports.createEvaluation = async (req, res) => {
     }
 
     try {
+        // ✅ NOVA VERIFICAÇÃO: Limite de avaliações para usuários gratuitos
+        // 1. Buscar o status da conta do usuário
+        const userQuery = `SELECT account_status FROM users WHERE id = $1`;
+        const { rows: userRows } = await db.query(userQuery, [authorId]);
+        
+        if (userRows.length === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+
+        const userAccountStatus = userRows[0].account_status || 'Free';
+
+        // 2. Se for usuário gratuito, verificar limite de avaliações
+        if (userAccountStatus === 'Free') {
+            const countQuery = `SELECT COUNT(*) as total FROM evaluations WHERE author_id = $1`;
+            const { rows: countRows } = await db.query(countQuery, [authorId]);
+            const currentEvaluationCount = parseInt(countRows[0].total, 10);
+
+            const EVALUATION_LIMIT = 21;
+
+            if (currentEvaluationCount >= EVALUATION_LIMIT) {
+                return res.status(403).json({ 
+                    message: 'Limite de avaliações atingido',
+                    details: `Usuários gratuitos podem criar no máximo ${EVALUATION_LIMIT} avaliações. Considere fazer upgrade para Premium.`,
+                    currentCount: currentEvaluationCount,
+                    limit: EVALUATION_LIMIT,
+                    upgrade: true
+                });
+            }
+        }
+
+        // --- CONTINUA COM A LÓGICA ORIGINAL ---
         const playerSummaries = await steamService.getPlayerSummaries([targetSteamId]);
         const playerName = playerSummaries.length > 0 ? playerSummaries[0].personaname : 'Jogador Desconhecido';
 
@@ -42,8 +73,15 @@ exports.createEvaluation = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *; 
         `;
-        // Adicionando os novos valores
-        const values = [authorId, playerId, rating, notes, matchId || null, role || null, hero_id || null, tags || null];
+        
+        // Limpar e validar dados antes de inserir
+        const cleanMatchId = (matchId && matchId !== '' && matchId !== 'null') ? matchId : null;
+        const cleanRole = (role && role !== '' && role !== 'null') ? role : null;
+        const cleanHeroId = (hero_id && hero_id !== '' && hero_id !== 'null') ? parseInt(hero_id, 10) : null;
+        const cleanNotes = (notes && notes.trim() !== '') ? notes.trim() : null;
+        const cleanTags = (tags && Array.isArray(tags) && tags.length > 0) ? tags : null;
+
+        const values = [authorId, playerId, rating, cleanNotes, cleanMatchId, cleanRole, cleanHeroId, cleanTags];
         const { rows: evaluationRows } = await db.query(evaluationQuery, values);
 
         res.status(201).json(evaluationRows[0]);
@@ -199,4 +237,44 @@ exports.getSharedEvaluation = async (req, res) => {
     console.error('Erro ao buscar avaliação para compartilhamento:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
+};
+
+
+exports.getEvaluationStatus = async (req, res) => {
+    const authorId = req.user.id;
+
+    try {
+        // Buscar informações do usuário e contagem de avaliações
+        const userQuery = `SELECT account_status FROM users WHERE id = $1`;
+        const countQuery = `SELECT COUNT(*) as total FROM evaluations WHERE author_id = $1`;
+
+        const [userResult, countResult] = await Promise.all([
+            db.query(userQuery, [authorId]),
+            db.query(countQuery, [authorId])
+        ]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+
+        const userAccountStatus = userResult.rows[0].account_status || 'Free';
+        const currentCount = parseInt(countResult.rows[0].total, 10);
+        
+        const EVALUATION_LIMIT = 200;
+        const isPremium = userAccountStatus === 'Premium';
+        const limitReached = !isPremium && currentCount >= EVALUATION_LIMIT;
+
+        res.status(200).json({
+            accountStatus: userAccountStatus,
+            currentCount,
+            limit: isPremium ? null : EVALUATION_LIMIT,
+            limitReached,
+            isPremium,
+            canCreateNew: !limitReached
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar status de avaliações:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
 };
