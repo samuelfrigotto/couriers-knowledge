@@ -5,6 +5,8 @@ import { RecentMatchesComponent } from './recent-matches/recent-matches.componen
 import { ProfileComponent } from './profile/profile.component';
 import { LiveMatchComponent } from './live-match/live-match.component';
 import { FriendsComponent } from './friends/friends.component';
+import { GetPremiumComponent } from './get-premium/get-premium.component';
+import { PaymentSuccessComponent } from './payment-success/payment-success.component';
 
 export const USER_ROUTES: Routes = [
   {
@@ -17,8 +19,8 @@ export const USER_ROUTES: Routes = [
       { path: 'friends', component: FriendsComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'live', component: LiveMatchComponent },
-
-
+      {path: 'get-premium',component: GetPremiumComponent },
+      { path: 'payment-success', component: PaymentSuccessComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

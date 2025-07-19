@@ -1,0 +1,80 @@
+<!-- get-premium.component.html -->
+<div class="floating-elements">
+  <div class="floating-circle circle-1"></div>
+  <div class="floating-circle circle-2"></div>
+  <div class="floating-circle circle-3"></div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>Desbloqueie Todo o Potencial</h1>
+    <p>Escolha o plano perfeito para você e eleve sua experiência a um novo patamar com recursos exclusivos e sem limitações.</p>
+  </div>
+
+  <div class="plans-grid">
+    <div
+      *ngFor="let plan of plans"
+      class="plan-card"
+      [class.popular]="plan.popular"
+      [class.coming-soon]="plan.comingSoon"
+    >
+      <h3 class="plan-name">{{ plan.name }}</h3>
+
+      <div class="plan-price" *ngIf="plan.price; else comingSoonPrice">
+        R$ {{ plan.price | number:'1.2-2' }}
+      </div>
+      <ng-template #comingSoonPrice>
+        <div class="plan-price">Em breve</div>
+      </ng-template>
+
+      <div class="plan-period">{{ plan.period }}</div>
+
+      <div class="plan-total">
+        <div class="plan-total-label">{{ plan.comingSoon ? 'Status' : 'Total no período' }}</div>
+        <div class="plan-total-price">{{ plan.total }}</div>
+      </div>
+
+      <ul class="plan-features">
+        <li *ngFor="let feature of plan.features">
+          <span [class]="feature.included ? 'check-icon' : 'x-icon'">
+            {{ feature.included ? '✓' : '✗' }}
+          </span>
+          {{ feature.text }}
+        </li>
+      </ul>
+
+      <button
+        [class]="'plan-button ' + plan.buttonClass"
+        [disabled]="plan.comingSoon"
+        (click)="onPlanSelect(plan)"
+      >
+        {{ plan.buttonText }}
+      </button>
+    </div>
+  </div>
+
+  <div class="comparison-section">
+    <h2 class="comparison-title">Premium vs Gratuito</h2>
+    <div class="comparison-grid">
+      <div class="plan-limits">
+        <h3 class="limits-title">Limitações do Plano Gratuito</h3>
+        <ul class="limits-list">
+          <li *ngFor="let limitation of freePlanLimitations">
+            <span class="x-icon">✗</span>
+            {{ limitation }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="plan-benefits">
+        <h3 class="benefits-title">Vantagens do Premium</h3>
+        <ul class="benefits-list">
+          <li *ngFor="let benefit of premiumBenefits">
+            <span class="check-icon">✓</span>
+            {{ benefit }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

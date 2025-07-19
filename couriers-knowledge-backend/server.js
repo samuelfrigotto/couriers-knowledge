@@ -1,6 +1,5 @@
-// server.js
+// server.js - CORREÇÃO DO WEBHOOK
 
-// 1. Importar as dependências
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -15,11 +14,16 @@ const evaluationRoutes = require('./src/api/routes/evaluation.routes');
 const steamRoutes = require('./src/api/routes/steam.routes');
 const gsiRoutes = require('./src/api/routes/gsi.routes');
 const friendsRoutes = require('./src/api/routes/friends.routes');
+const stripeRoutes = require('./src/api/routes/stripe.routes'); 
 
 // 2. Inicializar o aplicativo Express
 const app = express();
 
 // 3. Configurar os Middlewares
+
+// ⚠️ IMPORTANTE: WEBHOOK PRIMEIRO, ANTES DE QUALQUER MIDDLEWARE
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(cors());
 app.use(express.json());
 
@@ -34,13 +38,11 @@ app.use(passport.session());
 require('./src/config/passport');
 // --- FIM DA CONFIGURAÇÃO ---
 
-
 // 4. Definir a porta a partir do ambiente ou usar um valor padrão
 const PORT = process.env.PORT || 3001;
 
 // 5. Rota de teste
 app.get('/', (req, res) => {
-  // ATUALIZAÇÃO DO NOME AQUI
   res.json({ message: "Bem-vindo à API do Courier's Knowledge! O servidor está funcionando." });
 });
 
@@ -52,9 +54,9 @@ app.use('/api', evaluationRoutes);
 app.use('/api', steamRoutes);
 app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // 6. Iniciar o servidor
 app.listen(PORT, () => {
-  // ATUALIZAÇÃO DO NOME AQUI
   console.log(`🚀 Servidor Courier's Knowledge rodando na porta ${PORT}`);
 });
