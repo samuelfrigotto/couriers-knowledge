@@ -236,95 +236,192 @@ router.get('/subscription-status', authMiddleware.verifyToken, async (req, res) 
 });
 
 
-// Webhook FINAL - Versão limpa e completa
+// Substitua a seção do webhook no stripe.routes.js por esta versão com mais logs
+
 router.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('✅ Webhook verificado:', event.type);
+    console.log('✅ Webhook verificado:', event.type, '| ID:', event.id);
   } catch (err) {
     console.error('❌ Webhook signature failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {
+    console.log(`🔄 Processando evento: ${event.type}`);
+    
     switch (event.type) {
+      // Substitua APENAS o case 'checkout.session.completed' no webhook por esta versão corrigida:
+
       case 'checkout.session.completed':
         const session = event.data.object;
         console.log('🎉 Checkout completado:', session.id);
+        console.log('📋 Session data:', {
+            customer: session.customer,
+            subscription: session.subscription,
+            metadata: session.metadata,
+            payment_status: session.payment_status
+        });
         
         const userId = session.metadata?.user_id;
         if (!userId) {
-          console.error('❌ User ID não encontrado no metadata');
-          break;
+            console.error('❌ User ID não encontrado no metadata da session');
+            console.error('📋 Metadata disponível:', session.metadata);
+            break;
         }
+
+        console.log(`👤 Processando para usuário ID: ${userId}`);
 
         // Buscar dados da subscription para pegar a data de expiração
         if (session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(session.subscription);
-          
-          // Converter timestamp do Stripe para Date
-          const expirationDate = new Date(subscription.current_period_end * 1000);
-          
-          console.log(`👤 Ativando Premium para usuário ${userId} até ${expirationDate}`);
+            console.log(`📋 Buscando subscription: ${session.subscription}`);
+            
+            try {
+            const subscription = await stripe.subscriptions.retrieve(session.subscription);
+            console.log('✅ Subscription encontrada:', {
+                id: subscription.id,
+                status: subscription.status,
+                items_count: subscription.items?.data?.length || 0,
+                customer: subscription.customer
+            });
+            
+            // CORREÇÃO: Buscar current_period_end nos items da subscription
+            let expirationTimestamp = null;
+            
+            if (subscription.items && subscription.items.data && subscription.items.data.length > 0) {
+                // Pegar o current_period_end do primeiro item
+                expirationTimestamp = subscription.items.data[0].current_period_end;
+                console.log('📅 current_period_end encontrado nos items:', expirationTimestamp);
+            }
+            
+            // Fallback: tentar no nível raiz (caso futuro)
+            if (!expirationTimestamp && subscription.current_period_end) {
+                expirationTimestamp = subscription.current_period_end;
+                console.log('📅 current_period_end encontrado no nível raiz:', expirationTimestamp);
+            }
+            
+            if (!expirationTimestamp) {
+                console.error('❌ current_period_end não encontrado nem nos items nem no nível raiz');
+                console.error('📋 Items disponíveis:', subscription.items?.data?.map(item => ({
+                id: item.id,
+                current_period_end: item.current_period_end,
+                current_period_start: item.current_period_start
+                })));
+                break;
+            }
+            
+            // Converter timestamp do Stripe para Date
+            const expirationDate = new Date(expirationTimestamp * 1000);
+            
+            // Verificar se a data é válida
+            if (isNaN(expirationDate.getTime())) {
+                console.error('❌ Data de expiração inválida');
+                console.error('📋 expirationTimestamp raw:', expirationTimestamp);
+                console.error('📋 Tipo:', typeof expirationTimestamp);
+                break;
+            }
+            
+            console.log(`👤 Ativando Premium para usuário ${userId} até ${expirationDate.toISOString()}`);
+            console.log(`📅 Data legível: ${expirationDate.toLocaleString('pt-BR')}`);
 
-          const updateQuery = `
-            UPDATE users 
-            SET 
-              account_status = 'Premium',
-              premium_expires_at = $1,
-              stripe_customer_id = $2,
-              stripe_subscription_id = $3,
-              subscription_status = 'active',
-              updated_at = CURRENT_TIMESTAMP
-            WHERE id = $4
-            RETURNING *;
-          `;
+            const updateQuery = `
+                UPDATE users 
+                SET 
+                account_status = 'Premium',
+                premium_expires_at = $1,
+                stripe_customer_id = $2,
+                stripe_subscription_id = $3,
+                subscription_status = 'active',
+                updated_at = CURRENT_TIMESTAMP
+                WHERE id = $4
+                RETURNING *;
+            `;
 
-          const result = await db.query(updateQuery, [
-            expirationDate,
-            session.customer,
-            session.subscription,
-            userId
-          ]);
+            console.log('🔄 Executando query SQL...');
 
-          if (result.rows.length > 0) {
-            console.log('✅ Premium ativado com sucesso!');
-            console.log(`📅 Expira em: ${expirationDate}`);
-          } else {
-            console.error(`❌ Usuário ${userId} não encontrado`);
-          }
+            const result = await db.query(updateQuery, [
+                expirationDate,
+                session.customer,
+                session.subscription,
+                userId
+            ]);
+
+            if (result.rows.length > 0) {
+                console.log('✅ Premium ativado com sucesso!');
+                console.log('📊 Dados atualizados:', {
+                id: result.rows[0].id,
+                account_status: result.rows[0].account_status,
+                premium_expires_at: result.rows[0].premium_expires_at,
+                stripe_customer_id: result.rows[0].stripe_customer_id,
+                stripe_subscription_id: result.rows[0].stripe_subscription_id,
+                subscription_status: result.rows[0].subscription_status
+                });
+                
+                // Verificar no banco para confirmar
+                console.log('🔍 Verificando no banco...');
+                const verifyQuery = 'SELECT account_status, premium_expires_at FROM users WHERE id = $1';
+                const verifyResult = await db.query(verifyQuery, [userId]);
+                if (verifyResult.rows.length > 0) {
+                console.log('✅ Confirmado no banco:', verifyResult.rows[0]);
+                }
+            } else {
+                console.error(`❌ Usuário ${userId} não encontrado no banco de dados`);
+                
+                // Debug: verificar se o usuário existe
+                const checkUserQuery = 'SELECT id, steam_username FROM users WHERE id = $1';
+                const checkResult = await db.query(checkUserQuery, [userId]);
+                if (checkResult.rows.length > 0) {
+                console.log('👤 Usuário existe:', checkResult.rows[0]);
+                } else {
+                console.error('❌ Usuário realmente não existe no banco');
+                }
+            }
+            } catch (stripeError) {
+            console.error('❌ Erro ao buscar subscription no Stripe:', stripeError.message);
+            console.error('📋 Stack:', stripeError.stack);
+            }
+        } else {
+            console.error('❌ Session não possui subscription ID');
+            console.error('📋 Session completa:', JSON.stringify(session, null, 2));
         }
         break;
-        
+
+
       case 'customer.subscription.updated':
         const updatedSub = event.data.object;
         console.log('🔄 Assinatura atualizada:', updatedSub.id);
         
-        // Atualizar status e data de expiração
-        const newExpirationDate = new Date(updatedSub.current_period_end * 1000);
-        
-        const updateSubQuery = `
-          UPDATE users 
-          SET 
-            subscription_status = $1,
-            premium_expires_at = $2,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE stripe_subscription_id = $3
-          RETURNING *;
-        `;
+        try {
+          // Atualizar status e data de expiração
+          const newExpirationDate = new Date(updatedSub.current_period_end * 1000);
+          
+          const updateSubQuery = `
+            UPDATE users 
+            SET 
+              subscription_status = $1,
+              premium_expires_at = $2,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE stripe_subscription_id = $3
+            RETURNING *;
+          `;
 
-        const updateResult = await db.query(updateSubQuery, [
-          updatedSub.status,
-          newExpirationDate,
-          updatedSub.id
-        ]);
+          const updateResult = await db.query(updateSubQuery, [
+            updatedSub.status,
+            newExpirationDate,
+            updatedSub.id
+          ]);
 
-        if (updateResult.rows.length > 0) {
-          console.log(`✅ Assinatura atualizada: ${updatedSub.status}`);
-          console.log(`📅 Nova data de expiração: ${newExpirationDate}`);
+          if (updateResult.rows.length > 0) {
+            console.log(`✅ Assinatura atualizada: ${updatedSub.status}`);
+            console.log(`📅 Nova data de expiração: ${newExpirationDate.toISOString()}`);
+          } else {
+            console.log(`⚠️ Nenhum usuário encontrado com subscription_id: ${updatedSub.id}`);
+          }
+        } catch (updateError) {
+          console.error('❌ Erro ao atualizar subscription:', updateError.message);
         }
         break;
         
@@ -332,20 +429,26 @@ router.post('/webhook', async (req, res) => {
         const deletedSub = event.data.object;
         console.log('❌ Assinatura cancelada:', deletedSub.id);
         
-        const cancelQuery = `
-          UPDATE users 
-          SET 
-            account_status = 'Free',
-            subscription_status = 'cancelled',
-            updated_at = CURRENT_TIMESTAMP
-          WHERE stripe_subscription_id = $1
-          RETURNING *;
-        `;
+        try {
+          const cancelQuery = `
+            UPDATE users 
+            SET 
+              account_status = 'Free',
+              subscription_status = 'cancelled',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE stripe_subscription_id = $1
+            RETURNING *;
+          `;
 
-        const cancelResult = await db.query(cancelQuery, [deletedSub.id]);
-        
-        if (cancelResult.rows.length > 0) {
-          console.log('✅ Premium cancelado, usuário voltou para Free');
+          const cancelResult = await db.query(cancelQuery, [deletedSub.id]);
+          
+          if (cancelResult.rows.length > 0) {
+            console.log('✅ Premium cancelado, usuário voltou para Free');
+          } else {
+            console.log(`⚠️ Nenhum usuário encontrado com subscription_id: ${deletedSub.id}`);
+          }
+        } catch (cancelError) {
+          console.error('❌ Erro ao cancelar subscription:', cancelError.message);
         }
         break;
         
@@ -353,18 +456,24 @@ router.post('/webhook', async (req, res) => {
         const failedInvoice = event.data.object;
         console.log('💳 Pagamento falhou:', failedInvoice.id);
         
-        // Marcar como past_due mas não cancelar imediatamente
-        const failQuery = `
-          UPDATE users 
-          SET 
-            subscription_status = 'past_due',
-            updated_at = CURRENT_TIMESTAMP
-          WHERE stripe_customer_id = $1
-          RETURNING *;
-        `;
+        try {
+          // Marcar como past_due mas não cancelar imediatamente
+          const failQuery = `
+            UPDATE users 
+            SET 
+              subscription_status = 'past_due',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE stripe_customer_id = $1
+            RETURNING *;
+          `;
 
-        await db.query(failQuery, [failedInvoice.customer]);
-        console.log('⚠️ Usuário marcado como past_due');
+          const failResult = await db.query(failQuery, [failedInvoice.customer]);
+          if (failResult.rows.length > 0) {
+            console.log('⚠️ Usuário marcado como past_due');
+          }
+        } catch (failError) {
+          console.error('❌ Erro ao marcar como past_due:', failError.message);
+        }
         break;
         
       default:
@@ -374,10 +483,19 @@ router.post('/webhook', async (req, res) => {
     res.json({ received: true, event_type: event.type });
     
   } catch (error) {
-    console.error('❌ Erro ao processar webhook:', error);
-    res.status(500).json({ error: 'Erro interno' });
+    console.error('❌ ERRO CRÍTICO ao processar webhook:', error);
+    console.error('📋 Stack trace:', error.stack);
+    console.error('📋 Event type:', event?.type);
+    console.error('📋 Event ID:', event?.id);
+    res.status(500).json({ 
+      error: 'Erro interno',
+      event_type: event?.type,
+      event_id: event?.id,
+      message: error.message 
+    });
   }
 });
+
 
 
 module.exports = router;
