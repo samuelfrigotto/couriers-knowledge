@@ -44,8 +44,37 @@ export class LiveMatchComponent implements OnInit {
   evaluationStatus: any = null;
   isLimitReached = false;
 
+  // Instruções e dicas
+  instructions: string[] = [];
+  systemTips: string[] = [];
+
   ngOnInit(): void {
+    this.loadInstructions();
     this.checkEvaluationLimit();
+  }
+
+  /**
+   * Carrega as instruções e dicas do sistema
+   */
+  private loadInstructions(): void {
+    this.instructions = this.statusService.getStatusInstructions();
+    this.systemTips = this.statusService.getSystemTips();
+  }
+
+  /**
+   * Verifica o limite de avaliações do usuário
+   */
+  private checkEvaluationLimit(): void {
+    this.evaluationService.getEvaluationStatus().subscribe({
+      next: (status) => {
+        this.evaluationStatus = status;
+        this.isLimitReached = status.isLimitReached || false;
+      },
+      error: (error) => {
+        console.error('Erro ao verificar limite de avaliações:', error);
+        this.isLimitReached = false;
+      }
+    });
   }
 
   /**
@@ -72,44 +101,42 @@ export class LiveMatchComponent implements OnInit {
             `${response.statistics.evaluatedPlayers}/${response.statistics.humanPlayers} jogadores com avaliações`,
             'Status Analisado!'
           );
-          console.log('✅ Status processado:', response);
         } else {
           this.error = response.error || 'Erro ao processar status';
-          this.toastr.error(this.error, 'Erro');
+          this.toastr.error(this.error, 'Erro no Parse');
         }
         this.isProcessing = false;
       },
-      error: (err) => {
-        console.error('❌ Erro ao analisar status:', err);
-        this.error = err.error?.error || 'Erro ao comunicar com o servidor';
-        this.toastr.error(this.error!, 'Erro');
+      error: (error) => {
+        this.error = 'Erro de conexão com o servidor';
+        this.toastr.error(this.error, 'Erro de Rede');
         this.isProcessing = false;
+        console.error('Erro ao analisar status:', error);
       }
     });
   }
 
   /**
-   * Limpa os dados e volta para o formulário
+   * Reseta o formulário para uma nova análise
    */
   resetForm(): void {
     this.statusInput = '';
     this.matchData = null;
     this.error = null;
     this.showInstructions = true;
+    this.closeAllModals();
   }
 
   /**
-   * Abre modal com detalhes das avaliações de um jogador
+   * Mostra detalhes de um jogador
    */
   showPlayerDetails(player: StatusPlayer): void {
-    if (!player.hasEvaluations) return;
-
     this.selectedPlayerForDetails = player;
     this.isDetailModalVisible = true;
   }
 
   /**
-   * Fecha modal de detalhes
+   * Fecha o modal de detalhes
    */
   closeDetailModal(): void {
     this.isDetailModalVisible = false;
@@ -121,26 +148,22 @@ export class LiveMatchComponent implements OnInit {
    */
   evaluatePlayer(player: StatusPlayer): void {
     if (this.isLimitReached) {
-      this.toastr.error(
-        'Limite de avaliações atingido! Considere fazer upgrade para Premium.',
-        'Limite Atingido',
-        { timeOut: 8000 }
-      );
+      this.toastr.warning('Limite de avaliações atingido', 'Limite Atingido');
       return;
     }
 
-    // Preparar dados iniciais para o formulário
-    // Como não temos Steam ID, só passamos o nome
+    // Preparar dados para o formulário de avaliação
+    // Como o componente de avaliação espera 'evaluationData', criamos um objeto compatível
     this.selectedPlayerForEvaluation = {
       targetPlayerName: player.name,
-      // Outros campos ficarão em branco para o usuário preencher
+      // Outros campos podem ser adicionados conforme necessário
     };
 
     this.isEvaluationModalVisible = true;
   }
 
   /**
-   * Fecha modal de avaliação
+   * Fecha o modal de avaliação
    */
   closeEvaluationModal(): void {
     this.isEvaluationModalVisible = false;
@@ -148,54 +171,27 @@ export class LiveMatchComponent implements OnInit {
   }
 
   /**
-   * Callback quando avaliação é salva
+   * Fecha todos os modais
+   */
+  closeAllModals(): void {
+    this.closeDetailModal();
+    this.closeEvaluationModal();
+  }
+
+  /**
+   * Callback quando uma avaliação é salva
    */
   onEvaluationSaved(): void {
     this.closeEvaluationModal();
-    this.checkEvaluationLimit();
+    this.toastr.success('Avaliação salva com sucesso!', 'Sucesso');
 
-    // Reprocessar status para atualizar avaliações
-    if (this.statusInput) {
+    // Recarregar os dados para mostrar a nova avaliação
+    if (this.statusInput && this.matchData) {
       this.analyzeStatus();
     }
-  }
 
-  /**
-   * Callback para erros no formulário de avaliação
-   */
-  onEvaluationError(error: any): void {
-    if (error.status === 403) {
-      this.checkEvaluationLimit();
-    }
-  }
-
-  /**
-   * Verifica limite de avaliações
-   */
-  private checkEvaluationLimit(): void {
-    this.evaluationService.getEvaluationStatus().subscribe({
-      next: (status) => {
-        this.evaluationStatus = status;
-        this.isLimitReached = status.limitReached;
-      },
-      error: (err) => {
-        console.error('Erro ao verificar limite de avaliações:', err);
-      }
-    });
-  }
-
-  /**
-   * Retorna instruções de uso
-   */
-  get instructions(): string[] {
-    return this.statusService.getStatusInstructions();
-  }
-
-  /**
-   * Retorna dicas do sistema
-   */
-  get systemTips(): string[] {
-    return this.statusService.getSystemTips();
+    // Verificar novamente o limite
+    this.checkEvaluationLimit();
   }
 
   /**
@@ -206,17 +202,10 @@ export class LiveMatchComponent implements OnInit {
   }
 
   /**
-   * Retorna cor da rating
+   * Retorna cor baseada na rating
    */
   getRatingColor(rating: number): string {
     return this.statusService.getRatingColor(rating);
-  }
-
-  /**
-   * Retorna classe CSS da rating
-   */
-  getRatingClass(rating: number): string {
-    return this.statusService.getRatingClass(rating);
   }
 
   /**
@@ -224,18 +213,107 @@ export class LiveMatchComponent implements OnInit {
    */
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 
-    if (diffDays === 1) {
-      return 'Hoje';
-    } else if (diffDays === 2) {
-      return 'Ontem';
-    } else if (diffDays <= 7) {
-      return `${diffDays} dias atrás`;
-    } else {
-      return date.toLocaleDateString('pt-BR');
+  /**
+   * Verifica se um jogador é bot
+   */
+  isBot(player: StatusPlayer): boolean {
+    return player.isBot;
+  }
+
+  /**
+   * Retorna classe CSS baseada no time
+   */
+  getTeamClass(player: StatusPlayer): string {
+    return player.team === 'radiant' ? 'radiant' : 'dire';
+  }
+
+  /**
+   * Verifica se há avaliações para mostrar
+   */
+  hasEvaluations(): boolean {
+    return (this.matchData?.evaluationsSummary?.totalFound ?? 0) > 0;
+  }
+
+  /**
+   * Retorna estatísticas da partida
+   */
+  getMatchStatistics() {
+    return this.matchData?.statistics || {
+      totalPlayers: 0,
+      humanPlayers: 0,
+      botPlayers: 0,
+      evaluatedPlayers: 0
+    };
+  }
+
+  /**
+   * Verifica se está processando
+   */
+  isLoading(): boolean {
+    return this.isProcessing;
+  }
+
+  /**
+   * Verifica se há erro
+   */
+  hasError(): boolean {
+    return !!this.error;
+  }
+
+  /**
+   * Limpa erro
+   */
+  clearError(): void {
+    this.error = null;
+  }
+
+  /**
+   * Retorna mensagem de status para o usuário
+   */
+  getStatusMessage(): string {
+    if (this.isProcessing) {
+      return 'Processando status do Dota 2...';
     }
+
+    if (this.error) {
+      return this.error;
+    }
+
+    if (this.matchData) {
+      const stats = this.matchData.statistics;
+      return `Análise completa: ${stats.evaluatedPlayers}/${stats.humanPlayers} jogadores com avaliações`;
+    }
+
+    return 'Cole o comando status do Dota 2 para começar';
+  }
+
+  /**
+   * Verifica se pode analisar o status
+   */
+  canAnalyze(): boolean {
+    return !!this.statusInput && !this.isProcessing;
+  }
+
+  /**
+   * Verifica se pode limpar o campo
+   */
+  canClear(): boolean {
+    return !!this.statusInput && !this.isProcessing;
+  }
+
+  /**
+   * Verifica se pode fazer nova análise
+   */
+  canReset(): boolean {
+    return !!this.matchData;
   }
 }

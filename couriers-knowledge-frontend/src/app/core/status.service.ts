@@ -152,12 +152,12 @@ export class StatusService {
    */
   getStatusInstructions(): string[] {
     return [
-      '1. Abra o Dota 2 e entre em uma partida',
-      '2. Abra o console (tecla ` ou ~)',
-      '3. Digite o comando: status',
-      '4. Copie todo o texto que aparecer',
-      '5. Cole aqui no campo abaixo',
-      '6. Clique em "Analisar Status"'
+      'Abra o Dota 2 e entre em uma partida',
+      'Abra o console (precisa estar habilitado nas configurações)',
+      'Digite o comando: status',
+      'Copie todo o texto que aparecer',
+      'Cole aqui no campo abaixo',
+      'Clique em "Analisar Status"'
     ];
   }
 
@@ -169,8 +169,8 @@ export class StatusService {
       'O sistema compara nomes exatos dos jogadores',
       'Nomes são atualizados automaticamente da Steam',
       'Funciona melhor em partidas com jogadores reais',
-      'Bots são ignorados na análise',
-      'Suas avaliações aparecem instantaneamente'
+      'Copie do console do Dota 2, a partir da linha "status Server: Running"',
+      'Até a linha "[Client] #end"'
     ];
   }
 }

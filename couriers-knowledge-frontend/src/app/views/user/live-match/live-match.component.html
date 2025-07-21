@@ -137,7 +137,7 @@
                 <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
               </div>
 
-              <div class="tags-preview" *ngIf="player.stats.allTags.length > 0">
+              <div class="tags-preview" *ngIf="player.stats.allTags && player.stats.allTags.length > 0">
                 <span
                   *ngFor="let tag of player.stats.allTags.slice(0, 3)"
                   class="tag-mini">
@@ -176,7 +176,7 @@
       <div class="team-section dire">
         <h3 class="team-title">
           <span class="team-icon">🌙</span>
-          Temidos
+          Sombrios
         </h3>
 
         <div class="players-list">
@@ -211,7 +211,7 @@
                 <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
               </div>
 
-              <div class="tags-preview" *ngIf="player.stats.allTags.length > 0">
+              <div class="tags-preview" *ngIf="player.stats.allTags && player.stats.allTags.length > 0">
                 <span
                   *ngFor="let tag of player.stats.allTags.slice(0, 3)"
                   class="tag-mini">
@@ -283,7 +283,7 @@
         </div>
         <div class="summary-stat" *ngIf="selectedPlayerForDetails!.stats!.mostCommonRole">
           <span class="label">Função Mais Comum:</span>
-          <span class="value">{{ selectedPlayerForDetails!.stats!.mostCommonRole.toUpperCase() }}</span>
+          <span class="value">{{ selectedPlayerForDetails!.stats!.mostCommonRole!.toUpperCase() }}</span>
         </div>
       </div>
 
@@ -298,19 +298,17 @@
           </div>
 
           <div class="evaluation-context" *ngIf="evaluation.hero_id || evaluation.role">
-            <span *ngIf="evaluation.hero_id">
-              <img
-                [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
-                class="hero-icon-tiny"
-                [alt]="gameDataService.getHeroById(evaluation.hero_id)?.localized_name">
-              {{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}
-            </span>
-            <span *ngIf="evaluation.role" class="role-info">
-              como {{ evaluation.role.toUpperCase() }}
-            </span>
+            <img
+              *ngIf="evaluation.hero_id"
+              [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
+              [alt]="gameDataService.getHeroById(evaluation.hero_id)"
+              class="hero-icon-tiny">
+            <span *ngIf="evaluation.role" class="role-info">{{ evaluation.role.toUpperCase() }}</span>
           </div>
 
-          <p *ngIf="evaluation.notes" class="evaluation-notes">{{ evaluation.notes }}</p>
+          <div *ngIf="evaluation.notes" class="evaluation-notes">
+            {{ evaluation.notes }}
+          </div>
 
           <div class="evaluation-tags" *ngIf="evaluation.tags && evaluation.tags.length > 0">
             <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
@@ -322,10 +320,19 @@
 </div>
 
 <!-- Modal de Avaliação -->
-<app-evaluation-form
-  *ngIf="isEvaluationModalVisible"
-  [evaluationData]="selectedPlayerForEvaluation"
-  (closeModal)="closeEvaluationModal()"
-  (evaluationSaved)="onEvaluationSaved()"
-  (evaluationError)="onEvaluationError($event)">
-</app-evaluation-form>
+<div class="modal-overlay" *ngIf="isEvaluationModalVisible" (click)="closeEvaluationModal()">
+  <div class="modal-content evaluation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Avaliar {{ selectedPlayerForEvaluation?.name }}</h3>
+      <button class="close-btn" (click)="closeEvaluationModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <app-evaluation-form
+        [evaluationData]="selectedPlayerForEvaluation"
+        (evaluationSaved)="onEvaluationSaved()"
+        (closeModal)="closeEvaluationModal()">
+      </app-evaluation-form>
+    </div>
+  </div>
+</div>
