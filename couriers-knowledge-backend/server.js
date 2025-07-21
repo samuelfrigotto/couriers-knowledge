@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
+const apiLimitsResetJob = require('./src/jobs/resetApiLimits');
 
 // Importa as rotas
 const healthRoutes = require('./src/api/routes/health.routes');
@@ -55,6 +56,10 @@ app.use('/api', steamRoutes);
 app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/stripe', stripeRoutes);
+
+
+
+apiLimitsResetJob.start();
 
 // 6. Iniciar o servidor
 app.listen(PORT, () => {

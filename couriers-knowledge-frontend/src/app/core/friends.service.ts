@@ -106,6 +106,33 @@ export class FriendsService {
   }
 
   /**
+   * Verifica se um amigo está usando o app.
+   * Nota: Esta função assume que o objeto 'friend' possui uma propriedade 'status'.
+   * A lógica do app deve garantir que essa propriedade exista ao chamar a função.
+   */
+  isFriendUsingApp(friend: any): boolean {
+    // Esta função foi implementada conforme solicitado.
+    // Para verificar de forma mais robusta, você poderia passar o steam_id
+    // e checar na lista 'usingApp' do 'friendsStatusSubject'.
+    // Ex: isFriendUsingAppById(id: string) {
+    //   const status = this.friendsStatusSubject.value;
+    //   return status?.usingApp.some(f => f.steam_id === id) ?? false;
+    // }
+    return friend.status === 'using-app';
+  }
+
+  /**
+   * Retorna uma lista de amigos que não usam o app mas que já foram convidados.
+   */
+  getInvitedFriends(): FriendStatus[] {
+    const friendsData = this.friendsStatusSubject.value;
+    if (!friendsData) {
+        return [];
+    }
+    return friendsData.notUsingApp.filter(f => f.already_invited);
+  }
+
+  /**
    * Copia texto para a área de transferência
    */
   async copyToClipboard(text: string): Promise<boolean> {

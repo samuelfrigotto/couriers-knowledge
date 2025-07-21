@@ -1,15 +1,25 @@
 // frontend/src/app/views/user/dashboard/dashboard.component.ts
 // ATUALIZAÇÃO: Adicionar filtro permanente de jogador - VERSÃO CORRIGIDA
 
-import { Component, HostListener , OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms'; // ✅ CORREÇÃO 1: Adicionado FormControl ao import
+import {
+  FormBuilder,
+  FormGroup,
+  FormControl,
+  ReactiveFormsModule,
+} from '@angular/forms'; // ✅ CORREÇÃO 1: Adicionado FormControl ao import
 import { EvaluationService } from '../../../core/evaluation.service';
 import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
 import { GameDataService, Hero } from '../../../core/game-data.service';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  startWith,
+} from 'rxjs/operators';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
 
 @Component({
@@ -21,10 +31,10 @@ import { RatingDisplayComponent } from '../../../components/rating-display/ratin
     ReactiveFormsModule,
     DecimalPipe,
     DatePipe,
-    RatingDisplayComponent
+    RatingDisplayComponent,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit {
   private evaluationService = inject(EvaluationService);
@@ -62,16 +72,36 @@ export class DashboardComponent implements OnInit {
       minRating: [null],
       maxRating: [null],
       notes: [''],
-      tags: ['']
+      tags: [''],
     });
   }
 
   ngOnInit(): void {
     this.heroes$ = this.gameDataService.heroes$.pipe(
-      map(heroesMap => Object.values(heroesMap).sort((a, b) => a.localized_name.localeCompare(b.localized_name)))
+      map((heroesMap) => {
+        // Adicionar o ID ao objeto do herói
+        const heroesArray = Object.entries(heroesMap)
+          .map(([id, hero]) => ({
+            ...hero,
+            id: parseInt(id, 10), // Adicionar o ID como número
+          }))
+          .sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+
+        return heroesArray;
+      })
     );
 
-    // ✅ CORREÇÃO 3: Inicializar filteredBySearch antes de configurar listeners
+    // Garantir que heroId seja inicializado corretamente
+    this.filterForm = this.fb.group({
+      playerName: [''],
+      heroId: [null], // ← Importante: null em vez de string vazia
+      role: [null],
+      minRating: [null],
+      maxRating: [null],
+      notes: [''],
+      tags: [''],
+    });
+
     this.filteredBySearch = [];
     this.setupPermanentSearchListener();
     this.loadAllEvaluations();
@@ -89,33 +119,33 @@ export class DashboardComponent implements OnInit {
 
   loadAllEvaluations(): void {
     this.isLoading = true;
-    this.evaluationService.getMyEvaluations().pipe(
-      map(evaluations => evaluations.sort(this.customSort))
-    ).subscribe({
-      next: (sortedData) => {
-        this.allEvaluations = sortedData;
-        // ✅ CORREÇÃO 4: Garantir que filteredBySearch seja inicializado
-        this.filteredBySearch = [...this.allEvaluations];
-        this.applyAllFilters();
-        this.setupFilterListener();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        this.toastr.error('Falha ao buscar avaliações.');
-        this.isLoading = false;
-      }
-    });
+    this.evaluationService
+      .getMyEvaluations()
+      .pipe(map((evaluations) => evaluations.sort(this.customSort)))
+      .subscribe({
+        next: (sortedData) => {
+          this.allEvaluations = sortedData;
+          // ✅ CORREÇÃO 4: Garantir que filteredBySearch seja inicializado
+          this.filteredBySearch = [...this.allEvaluations];
+          this.applyAllFilters();
+          this.setupFilterListener();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.toastr.error('Falha ao buscar avaliações.');
+          this.isLoading = false;
+        },
+      });
   }
 
   // Configurar listener do filtro permanente
   setupPermanentSearchListener(): void {
-    this.permanentSearchControl.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.applyPermanentSearch(searchTerm || '');
-      this.applyAllFilters();
-    });
+    this.permanentSearchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((searchTerm) => {
+        this.applyPermanentSearch(searchTerm || '');
+        this.applyAllFilters();
+      });
   }
 
   // Aplicar filtro de busca permanente
@@ -126,17 +156,21 @@ export class DashboardComponent implements OnInit {
     }
 
     const term = searchTerm.toLowerCase().trim();
-    this.filteredBySearch = this.allEvaluations.filter(evaluation => {
+    this.filteredBySearch = this.allEvaluations.filter((evaluation) => {
       const playerName = (evaluation.targetPlayerName || '').toLowerCase();
       const steamId = (evaluation.target_player_steam_id || '').toLowerCase();
       const matchId = (evaluation.match_id || '').toString().toLowerCase();
 
-      return playerName.includes(term) ||
-             steamId.includes(term) ||
-             matchId.includes(term);
+      return (
+        playerName.includes(term) ||
+        steamId.includes(term) ||
+        matchId.includes(term)
+      );
     });
 
-    console.log(`🔍 Busca permanente: "${searchTerm}" - ${this.filteredBySearch.length} resultados`);
+    console.log(
+      `🔍 Busca permanente: "${searchTerm}" - ${this.filteredBySearch.length} resultados`
+    );
   }
 
   // Limpar busca permanente
@@ -146,50 +180,71 @@ export class DashboardComponent implements OnInit {
   }
 
   setupFilterListener(): void {
-    this.filterForm.valueChanges.pipe(
-      debounceTime(250),
-      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
-    ).subscribe(() => {
-      this.applyAllFilters();
-    });
+    this.filterForm.valueChanges
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(
+          (prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)
+        )
+      )
+      .subscribe(() => {
+        this.applyAllFilters();
+      });
   }
 
-  // ✅ CORREÇÃO 5: Melhorar a lógica de aplicação de filtros
   applyAllFilters(): void {
     const filters = this.filterForm.value;
 
-    // Começar com dados filtrados pela busca permanente (com verificação de segurança)
+    // Começar com dados filtrados pela busca permanente
     const searchTerm = this.permanentSearchControl.value || '';
-    let filtered = searchTerm.trim() && this.filteredBySearch.length >= 0 ?
-      [...this.filteredBySearch] :
-      [...this.allEvaluations];
+    let filtered =
+      searchTerm.trim() && this.filteredBySearch.length >= 0
+        ? [...this.filteredBySearch]
+        : [...this.allEvaluations];
 
     // Aplicar filtros do formulário
     if (filters.playerName) {
       const term = filters.playerName.toLowerCase();
-      filtered = filtered.filter(e => (e.targetPlayerName || '').toLowerCase().includes(term));
+      filtered = filtered.filter((e) =>
+        (e.targetPlayerName || '').toLowerCase().includes(term)
+      );
     }
+
+    // Filtro de herói - comparação correta de tipos
     if (filters.heroId) {
-      filtered = filtered.filter(e => e.hero_id === Number(filters.heroId));
+      const selectedHeroId = Number(filters.heroId);
+
+      if (!isNaN(selectedHeroId)) {
+        filtered = filtered.filter((e) => {
+          const evaluationHeroId = Number(e.hero_id);
+          return evaluationHeroId === selectedHeroId;
+        });
+      }
     }
+
     if (filters.role) {
-      filtered = filtered.filter(e => e.role === filters.role);
+      filtered = filtered.filter((e) => e.role === filters.role);
     }
 
     const { minRating, maxRating } = this.filterForm.value;
     if (minRating !== null || maxRating !== null) {
       const min = minRating === null ? 1 : Number(minRating);
       const max = maxRating === null ? 5 : Number(maxRating);
-      filtered = filtered.filter(e => e.rating >= min && e.rating <= max);
+      filtered = filtered.filter((e) => e.rating >= min && e.rating <= max);
     }
 
     if (filters.notes) {
       const term = filters.notes.toLowerCase();
-      filtered = filtered.filter(e => (e.notes || '').toLowerCase().includes(term));
+      filtered = filtered.filter((e) =>
+        (e.notes || '').toLowerCase().includes(term)
+      );
     }
+
     if (filters.tags) {
       const term = filters.tags.toLowerCase();
-      filtered = filtered.filter(e => (e.tags || []).some((tag: string) => tag.toLowerCase().includes(term)));
+      filtered = filtered.filter((e) =>
+        (e.tags || []).some((tag: string) => tag.toLowerCase().includes(term))
+      );
     }
 
     this.displayedEvaluations = filtered;
@@ -222,7 +277,7 @@ export class DashboardComponent implements OnInit {
       minRating: null,
       maxRating: null,
       notes: '',
-      tags: ''
+      tags: '',
     });
 
     // Limpar também a busca permanente
@@ -243,7 +298,7 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.toastr.error('Ocorreu um erro ao tentar atualizar os nomes.');
         this.isRefreshing = false;
-      }
+      },
     });
   }
 
@@ -265,16 +320,18 @@ export class DashboardComponent implements OnInit {
 
   deleteEvaluation(evaluationId: number): void {
     if (confirm('Tem certeza de que deseja excluir esta avaliação?')) {
-      this.evaluationService.deleteEvaluation(evaluationId.toString()).subscribe({
-        next: () => {
-          this.toastr.success('Avaliação excluída com sucesso!');
-          this.loadAllEvaluations();
-          this.activeActionMenu = null;
-        },
-        error: (err) => {
-          this.toastr.error('Falha ao excluir avaliação.');
-        }
-      });
+      this.evaluationService
+        .deleteEvaluation(evaluationId.toString())
+        .subscribe({
+          next: () => {
+            this.toastr.success('Avaliação excluída com sucesso!');
+            this.loadAllEvaluations();
+            this.activeActionMenu = null;
+          },
+          error: (err) => {
+            this.toastr.error('Falha ao excluir avaliação.');
+          },
+        });
     }
   }
 
@@ -292,16 +349,21 @@ export class DashboardComponent implements OnInit {
   async shareEvaluation(evaluation: any): Promise<void> {
     try {
       this.activeActionMenu = null;
-      const heroName = evaluation.hero_id ?
-        this.gameDataService.getHeroById(evaluation.hero_id)?.localized_name || 'Herói não informado' :
-        'Herói não informado';
+      const heroName = evaluation.hero_id
+        ? this.gameDataService.getHeroById(evaluation.hero_id)
+            ?.localized_name || 'Herói não informado'
+        : 'Herói não informado';
 
       const rating = Number(evaluation.rating);
-      const formattedRating = (rating % 1 === 0) ? rating.toFixed(0) : rating.toFixed(1);
-      const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+      const formattedRating =
+        rating % 1 === 0 ? rating.toFixed(0) : rating.toFixed(1);
+      const ratingStars =
+        '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
 
       let shareText = `[Courier's Knowledge] Avaliação de jogador:\n`;
-      shareText += `- Jogador: ${evaluation.targetPlayerName || 'Jogador Desconhecido'}`;
+      shareText += `- Jogador: ${
+        evaluation.targetPlayerName || 'Jogador Desconhecido'
+      }`;
       if (evaluation.target_player_steam_id) {
         shareText += ` (ID: ${evaluation.target_player_steam_id})`;
       }
@@ -312,12 +374,15 @@ export class DashboardComponent implements OnInit {
       }
       shareText += `- Nota: ${formattedRating}/5 (${ratingStars})\n`;
       shareText += `- Anotações: "${evaluation.notes || 'Nenhuma.'}"\n`;
-      shareText += `- Tags: ${evaluation.tags && evaluation.tags.length > 0 ? '#' + evaluation.tags.join(' #') : 'Nenhuma.'}\n`;
+      shareText += `- Tags: ${
+        evaluation.tags && evaluation.tags.length > 0
+          ? '#' + evaluation.tags.join(' #')
+          : 'Nenhuma.'
+      }\n`;
       shareText += `\nAnote e avalie seus jogos com o Courier's Knowledge!`;
 
       await navigator.clipboard.writeText(shareText);
       this.toastr.success('Avaliação copiada para a área de transferência!');
-
     } catch (err) {
       console.error('Erro ao compartilhar avaliação:', err);
       this.toastr.error('Não foi possível copiar a avaliação.');
@@ -326,9 +391,9 @@ export class DashboardComponent implements OnInit {
 
   toggleActionMenu(event: MouseEvent, evaluationId: number): void {
     event.stopPropagation();
-    this.activeActionMenu = this.activeActionMenu === evaluationId ? null : evaluationId;
+    this.activeActionMenu =
+      this.activeActionMenu === evaluationId ? null : evaluationId;
   }
-
 
   private checkEvaluationLimit(): void {
     this.evaluationService.getEvaluationStatus().subscribe({
@@ -346,7 +411,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao verificar limite de avaliações:', err);
-      }
+      },
     });
   }
 
@@ -356,7 +421,7 @@ export class DashboardComponent implements OnInit {
       'Limite Atingido',
       {
         timeOut: 10000,
-        closeButton: true
+        closeButton: true,
       }
     );
   }
@@ -377,5 +442,4 @@ export class DashboardComponent implements OnInit {
   closeUpgradeModal(): void {
     this.showUpgradeMessage = false;
   }
-
 }

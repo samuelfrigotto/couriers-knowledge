@@ -1,12 +1,19 @@
 // frontend/src/app/views/user/friends/friends.component.ts
-// VERSÃO CORRIGIDA - Todos os erros de tipagem resolvidos
+// VERSÃO LIMPA E CORRIGIDA
 
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, map, Observable, combineLatest } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { FriendsService, FriendStatus, FriendsStatusResponse } from '../../../core/friends.service';
+import { SteamChatService } from '../../../core/steam-chat.service';
+
+// ✅ NOVO: Interface para o amigo unificado
+interface UnifiedFriendStatus extends FriendStatus {
+  status: 'using-app' | 'not-using-app';
+}
+
 
 @Component({
   selector: 'app-friends',
@@ -17,37 +24,56 @@ import { FriendsService, FriendStatus, FriendsStatusResponse } from '../../../co
 })
 export class FriendsComponent implements OnInit, OnDestroy {
   // Injeção de dependências
-  private friendsService = inject(FriendsService);
+  protected friendsService = inject(FriendsService);
+  private steamChatService = inject(SteamChatService); // ✅ NOVO SERVIÇO
   private toastr = inject(ToastrService);
   private destroy$ = new Subject<void>();
 
-  // Estado do componente
-  friendsData: FriendsStatusResponse | null = null;
-  isLoading = false;
-  activeTab: 'using-app' | 'not-using-app' | 'invited' | 'statistics' = 'not-using-app';
+  // ✅ OBSERVABLES PÚBLICOS PARA O TEMPLATE
+  public friendsData$: Observable<FriendsStatusResponse | null>;
+  public allFriends$: Observable<UnifiedFriendStatus[]>;
+  public invitedFriends$: Observable<FriendStatus[]>;
+
+
+    // Estado do componente
+  activeTab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics' = 'all-friends';
 
   // Estados para interações
-  invitingFriends = new Set<string>(); // Steam IDs sendo convidados
-  copiedInvites = new Set<string>(); // Steam IDs com link copiado recentemente
+  invitingFriends = new Set<string>();
+  copiedInvites = new Set<string>();
+  openingSteamChat = new Set<string>();
+
+  constructor() {
+    // Inicializa os Observables
+    this.friendsData$ = this.friendsService.friendsStatus$;
+
+    // ✅ Observable para a lista de todos os amigos, combinada e ordenada
+    this.allFriends$ = this.friendsData$.pipe(
+      map(data => {
+        if (!data) return [];
+        const allFriends = [
+          ...data.usingApp.map(friend => ({ ...friend, status: 'using-app' as const })),
+          ...data.notUsingApp.map(friend => ({ ...friend, status: 'not-using-app' as const }))
+        ];
+        return allFriends.sort((a, b) => {
+          if (a.status !== b.status) return a.status === 'using-app' ? -1 : 1;
+          return a.steam_username.localeCompare(b.steam_username);
+        });
+      })
+    );
+
+    // ✅ Observable para a lista de amigos convidados
+    this.invitedFriends$ = this.friendsData$.pipe(
+      map(data => data ? data.notUsingApp.filter(f => f.already_invited) : [])
+    );
+  }
 
   ngOnInit(): void {
     console.log('🚀 Iniciando componente Friends');
-    this.loadFriendsData();
-
-    // Observa mudanças no estado de loading
-    this.friendsService.isLoading$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(loading => {
-        this.isLoading = loading;
-      });
-
-    // Observa mudanças nos dados de amigos
-    this.friendsService.friendsStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.friendsData = data;
-        console.log('📊 Dados de amigos atualizados:', data);
-      });
+    // Carrega os dados se eles ainda não existirem no serviço
+    if (!this.friendsService.hasData()) {
+      this.loadFriendsData();
+    }
   }
 
   ngOnDestroy(): void {
@@ -59,22 +85,20 @@ export class FriendsComponent implements OnInit, OnDestroy {
    * Carrega dados dos amigos
    */
   loadFriendsData(): void {
-    console.log('🔍 Carregando dados dos amigos...');
-
-    this.friendsService.getFriendsStatus()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.friendsData = data;
-          this.toastr.success(`${data.total_friends} amigos carregados da Steam!`, 'Sucesso');
-          console.log('✅ Dados carregados:', data);
-        },
-        error: (error) => {
-          console.error('❌ Erro ao carregar amigos:', error);
-          this.toastr.error('Não foi possível carregar seus amigos. Verifique se seu perfil Steam não está privado.', 'Erro');
-        }
-      });
-  }
+      console.log('🔍 Carregando dados dos amigos...');
+      this.friendsService.getFriendsStatus()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (data) => {
+            this.toastr.success(`${data.total_friends} amigos carregados!`, '', { timeOut: 2000 });
+            console.log('✅ Dados carregados:', data);
+          },
+          error: (error) => {
+            console.error('❌ Erro ao carregar amigos:', error);
+            this.toastr.error('Erro ao carregar amigos', '', { timeOut: 3000 });
+          }
+        });
+    }
 
   /**
    * Força atualização dos dados
@@ -85,9 +109,58 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convida um amigo específico
+   * ✅ CORRIGIDO: Convida um amigo e abre o Steam Chat automaticamente
+   * Agora espera a cópia ser completada antes de abrir o Steam
    */
-  inviteFriend(friend: FriendStatus): void {
+  async inviteFriendWithSteamChat(friend: FriendStatus): Promise<void> {
+    if (this.invitingFriends.has(friend.steam_id)) return;
+
+    console.log('📩💬 Convidando amigo e abrindo Steam Chat:', friend.steam_username);
+    this.invitingFriends.add(friend.steam_id);
+    this.openingSteamChat.add(friend.steam_id);
+
+    this.friendsService.inviteFriend(friend.steam_id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (response) => {
+          console.log('✅ Convite gerado:', response);
+          const copySuccess = await this.friendsService.copyToClipboard(response.invite_data.invite_message);
+
+          if (copySuccess) {
+            setTimeout(() => this.openSteamChatWithMessage(friend, response.invite_data.invite_message), 200);
+            this.toastr.success(`Steam abrindo! Mensagem copiada.`, '', { timeOut: 4000 });
+          } else {
+            this.openSteamChatWithMessage(friend, response.invite_data.invite_message);
+            this.toastr.warning('Steam abrindo. Copie a mensagem manualmente.', '', { timeOut: 4000 });
+          }
+          // O serviço já força um refresh, então a UI irá atualizar reativamente
+        },
+        error: (error) => {
+          console.error('❌ Erro ao convidar:', error);
+          const errorMessage = error.error?.message || 'Erro ao gerar convite';
+          this.toastr.error(errorMessage, '', { timeOut: 4000 });
+        },
+        complete: () => {
+          this.invitingFriends.delete(friend.steam_id);
+          this.openingSteamChat.delete(friend.steam_id);
+        }
+      });
+  }
+
+  /**
+   * ✅ NOVO MÉTODO: Abre Steam Chat com mensagem pré-preenchida
+   */
+  private openSteamChatWithMessage(friend: FriendStatus, inviteMessage: string): void {
+      this.steamChatService.openSteamChat({
+        steamId: friend.steam_id,
+        message: inviteMessage,
+        playerName: friend.steam_username
+      });
+    }
+  /**
+   * Método original de convite (mantido para compatibilidade)
+   */
+   inviteFriend(friend: FriendStatus): void {
     if (this.invitingFriends.has(friend.steam_id)) {
       console.log('⚠️ Já enviando convite para:', friend.steam_username);
       return;
@@ -100,20 +173,14 @@ export class FriendsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.toastr.success(`Convite gerado para ${friend.steam_username}!`, 'Convite Enviado');
+          this.toastr.success(`Convite gerado!`, '', { timeOut: 3000 });
           console.log('✅ Convite gerado:', response);
 
           // Copia automaticamente a mensagem de convite
           this.copyInviteMessage(response.invite_data.invite_message, friend.steam_id);
 
-          // Atualiza dados locais (o service já faz refresh automático)
-          if (this.friendsData) {
-            const friendIndex = this.friendsData.notUsingApp.findIndex(f => f.steam_id === friend.steam_id);
-            if (friendIndex !== -1) {
-              this.friendsData.notUsingApp[friendIndex].already_invited = true;
-              this.friendsData.notUsingApp[friendIndex].invited_at = new Date().toISOString();
-            }
-          }
+          // REMOVIDO: Bloco de atualização de dados locais.
+          // O service já chama o refresh, e a UI vai atualizar reativamente.
         },
         error: (error) => {
           console.error('❌ Erro ao convidar:', error);
@@ -134,39 +201,74 @@ export class FriendsComponent implements OnInit, OnDestroy {
 
     if (success) {
       this.copiedInvites.add(friendSteamId);
-      this.toastr.info('Mensagem copiada! Cole no chat da Steam com seu amigo.', 'Copiado');
+      this.toastr.info('Mensagem copiada!', '', { timeOut: 2000 });
 
       // Remove indicador de "copiado" após 3 segundos
       setTimeout(() => {
         this.copiedInvites.delete(friendSteamId);
       }, 3000);
     } else {
-      this.toastr.warning('Não foi possível copiar automaticamente. Copie manualmente.', 'Aviso');
+      this.toastr.warning('Copie manualmente', '', { timeOut: 3000 });
     }
   }
-
   /**
-   * Abre perfil Steam do amigo
+   * ✅ ATUALIZADO: Abre perfil Steam do amigo usando novo serviço
    */
   openSteamProfile(friend: FriendStatus): void {
-    const url = friend.profile_url || `https://steamcommunity.com/profiles/${friend.steam_id}`;
-    this.friendsService.openExternalUrl(url);
-    this.toastr.info(`Abrindo perfil de ${friend.steam_username}`, 'Steam');
+    this.steamChatService.openSteamProfile(friend.steam_id, friend.steam_username);
   }
 
   /**
-   * Muda aba ativa - CORRIGIDO: incluído 'invited'
+   * ✅ NOVO MÉTODO: Abre Steam Chat sem gerar convite
    */
-  setActiveTab(tab: 'using-app' | 'not-using-app' | 'invited' | 'statistics'): void {
-    this.activeTab = tab;
-    console.log('📑 Aba ativa:', tab);
+  openSteamChatDirect(friend: FriendStatus): void {
+    this.openingSteamChat.add(friend.steam_id);
+
+    // Mensagem simples para chat direto
+    const directMessage = `Olá ${friend.steam_username}! 👋
+
+Que tal experimentar o Courier's Knowledge? É um app incrível para anotar e avaliar jogadores de Dota 2!
+
+✅ Organize suas experiências
+✅ Melhore suas partidas
+✅ Compartilhe com amigos
+
+Dá uma olhada: https://couriers-knowledge.com
+
+🎮 #Dota2`;
+
+    this.steamChatService.openSteamChat({
+      steamId: friend.steam_id,
+      message: directMessage,
+      playerName: friend.steam_username
+    });
+
+    setTimeout(() => {
+      this.openingSteamChat.delete(friend.steam_id);
+    }, 2000);
+
+    this.toastr.info(`Chat abrindo...`, '', { timeOut: 2000 });
   }
 
+  /**
+   * Muda aba ativa
+   */
+  // Linha 140 (aproximadamente)
+  setActiveTab(tab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics'): void {
+    this.activeTab = tab;
+  }
   /**
    * Verifica se um amigo está sendo convidado
    */
   isInviting(steamId: string): boolean {
     return this.invitingFriends.has(steamId);
+  }
+
+  /**
+   * ✅ NOVO: Verifica se Steam Chat está sendo aberto
+   */
+  isOpeningSteamChat(steamId: string): boolean {
+    return this.openingSteamChat.has(steamId);
   }
 
   /**
@@ -177,11 +279,15 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Retorna texto do botão de convite baseado no estado
+   * ✅ ATUALIZADO: Retorna texto do botão baseado no estado
    */
   getInviteButtonText(friend: FriendStatus): string {
     if (this.isInviting(friend.steam_id)) {
       return 'Gerando...';
+    }
+
+    if (this.isOpeningSteamChat(friend.steam_id)) {
+      return 'Abrindo Steam...';
     }
 
     if (this.wasRecentlyCopied(friend.steam_id)) {
@@ -189,17 +295,17 @@ export class FriendsComponent implements OnInit, OnDestroy {
     }
 
     if (friend.already_invited) {
-      return 'Convidar novamente';
+      return 'Reconvidar + Steam';
     }
 
-    return 'Convidar';
+    return 'Convidar + Steam';
   }
 
   /**
-   * Retorna classe CSS do botão de convite
+   * ✅ ATUALIZADO: Retorna classe CSS do botão
    */
   getInviteButtonClass(friend: FriendStatus): string {
-    if (this.isInviting(friend.steam_id)) {
+    if (this.isInviting(friend.steam_id) || this.isOpeningSteamChat(friend.steam_id)) {
       return 'btn-loading';
     }
 
@@ -217,18 +323,21 @@ export class FriendsComponent implements OnInit, OnDestroy {
   /**
    * Formata data para exibição
    */
-  formatDate(dateString: string): string {
+  formatDate(dateString?: string): string {
+    if (!dateString) {
+      return ''; // Retorna uma string vazia se a data for nula
+    }
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
+    if (diffDays <= 1) { // Lógica ajustada para incluir "Hoje" corretamente
       return 'Hoje';
     } else if (diffDays === 2) {
       return 'Ontem';
     } else if (diffDays <= 7) {
-      return `${diffDays} dias atrás`;
+      return `${diffDays - 1} dias atrás`;
     } else {
       return date.toLocaleDateString('pt-BR');
     }
@@ -237,17 +346,8 @@ export class FriendsComponent implements OnInit, OnDestroy {
   /**
    * Retorna classe do status online
    */
-  getOnlineStatusClass(isOnline: boolean): string {
-    return isOnline ? 'online' : 'offline';
-  }
-
-  /**
-   * Retorna texto do status online
-   */
-  getOnlineStatusText(isOnline: boolean): string {
-    return isOnline ? 'Online' : 'Offline';
-  }
-
+  getOnlineStatusClass = (isOnline?: boolean) => isOnline ? 'online' : 'offline';
+  getOnlineStatusText = (isOnline?: boolean) => isOnline ? 'Online' : 'Offline';
   /**
    * TrackBy function para performance do *ngFor
    */
@@ -255,19 +355,4 @@ export class FriendsComponent implements OnInit, OnDestroy {
     return friend.steam_id;
   }
 
-  /**
-   * Conta quantos amigos foram convidados (para usar no template)
-   */
-  getInvitedFriendsCount(): number {
-    if (!this.friendsData) return 0;
-    return this.friendsData.notUsingApp.filter(f => f.already_invited).length;
-  }
-
-  /**
-   * Retorna apenas os amigos que foram convidados - ADICIONADO
-   */
-  getInvitedFriends(): FriendStatus[] {
-    if (!this.friendsData) return [];
-    return this.friendsData.notUsingApp.filter(f => f.already_invited);
-  }
 }

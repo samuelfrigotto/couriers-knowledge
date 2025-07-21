@@ -1,5 +1,5 @@
 /* frontend/src/app/views/user/friends/friends.component.css */
-/* CSS baseado no padrão dark theme do projeto */
+/* VERSÃO ATUALIZADA - Com estilos Steam Chat */
 
 :host {
   color: var(--text-color);
@@ -164,6 +164,48 @@
   font-weight: 500;
 }
 
+/* ===== NOVO: BANNER STEAM INTEGRATION ===== */
+.steam-integration-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #1b2838 0%, #2c3e50 100%);
+  border: 2px solid #66c0f4;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+  animation: steamGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes steamGlow {
+  0% { box-shadow: 0 0 5px rgba(102, 192, 244, 0.3); }
+  100% { box-shadow: 0 0 20px rgba(102, 192, 244, 0.6); }
+}
+
+.banner-icon {
+  font-size: 3rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+.banner-content h4 {
+  color: #66c0f4;
+  margin: 0 0 8px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.banner-content p {
+  margin: 0;
+  color: #a0aec0;
+  line-height: 1.4;
+}
+
 /* ===== TABS ===== */
 .tabs-container {
   margin-bottom: 32px;
@@ -239,7 +281,7 @@
 /* ===== FRIENDS GRID ===== */
 .friends-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 15px;
 }
 
@@ -368,21 +410,27 @@
   font-weight: 500;
 }
 
-/* ===== FRIEND ACTIONS ===== */
+/* ===== ATUALIZADO: FRIEND ACTIONS ===== */
 .friend-actions {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   flex-shrink: 0;
+  min-width: 140px;
 }
 
-.action-btn, .invite-btn {
-  padding: 8px 12px;
+.action-btn {
+  padding: 6px 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .steam-btn {
@@ -394,13 +442,61 @@
   background-color: var(--steam-hover-color);
 }
 
-.btn-primary {
-  background-color: #3a86ff;
+/* ===== NOVO: STEAM CHAT BUTTON ===== */
+.steam-chat-btn {
+  background: linear-gradient(135deg, #66c0f4 0%, #417a9b 100%);
   color: white;
+  border: 1px solid #66c0f4;
 }
 
-.btn-primary:hover {
-  background-color: #2a6dcc;
+.steam-chat-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7ed0ff 0%, #5a9bc4 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 192, 244, 0.3);
+}
+
+.steam-chat-btn:disabled {
+  background: #4a5568;
+  color: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== NOVO: ESTILO PARA ABA TODOS OS AMIGOS ===== */
+.using-app-text {
+  color: #48bb78;
+  font-weight: 500;
+}
+
+/* ===== ATUALIZADO: BOTÕES SEM EMOJIS ===== */
+.invite-btn-main {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  text-align: center;
+}
+
+/* ===== REMOVIDO: btn-icon e btn-text (não são mais necessários) ===== */
+
+.btn-primary {
+  background: linear-gradient(135deg, #3a86ff 0%, #2a6dcc 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(58, 134, 255, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4a96ff 0%, #3a7ddc 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(58, 134, 255, 0.3);
 }
 
 .btn-secondary {
@@ -409,7 +505,7 @@
   border: 1px solid #4a5568;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background-color: #4a5568;
   color: var(--text-color);
 }
@@ -418,11 +514,28 @@
   background-color: #4a5568;
   color: white;
   cursor: not-allowed;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 .btn-success {
-  background-color: #48bb78;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
+}
+
+.invite-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 /* ===== STATISTICS DETAILED ===== */
@@ -462,11 +575,13 @@
 }
 
 .stat-icon {
-  font-size: 0.8rem;
+  font-size: 1.2rem;
   font-weight: bold;
   color: #3a86ff;
-  text-transform: uppercase;
   min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stat-info {
@@ -514,6 +629,64 @@
   font-size: 0.9rem;
 }
 
+/* ===== NOVO: STEAM STATS SECTION ===== */
+.steam-stats-section {
+  margin-top: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(27, 40, 56, 0.3) 0%, rgba(44, 62, 80, 0.2) 100%);
+  border-radius: 12px;
+  border: 1px solid #66c0f4;
+}
+
+.steam-stats-section h4 {
+  color: #66c0f4;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.steam-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.steam-info-card {
+  background: rgba(102, 192, 244, 0.1);
+  border: 1px solid rgba(102, 192, 244, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.steam-info-card:hover {
+  background: rgba(102, 192, 244, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(102, 192, 244, 0.2);
+}
+
+.steam-info-card .info-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.steam-info-card h5 {
+  color: #66c0f4;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.steam-info-card p {
+  color: #a0aec0;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .friends-container {
@@ -533,6 +706,16 @@
   .stats-summary {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+  }
+
+  .steam-integration-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .banner-icon {
+    font-size: 2.5rem;
   }
 
   .tabs {
@@ -555,11 +738,21 @@
 
   .friend-actions {
     width: 100%;
+    flex-direction: row;
     justify-content: center;
+    min-width: auto;
   }
 
   .stats-detailed {
     grid-template-columns: 1fr;
+  }
+
+  .steam-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steam-stats-section {
+    padding: 20px;
   }
 }
 
@@ -583,5 +776,167 @@
   .friend-avatar img {
     width: 48px;
     height: 48px;
+  }
+
+  .friend-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-btn, .invite-btn-main {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+
+  .steam-integration-banner {
+    padding: 16px;
+  }
+
+  .banner-content h4 {
+    font-size: 1.1rem;
+  }
+
+  .banner-content p {
+    font-size: 0.9rem;
+  }
+}
+
+/* ===== ANIMAÇÕES ADICIONAIS ===== */
+@keyframes steamEffect {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.steam-chat-btn.active {
+  background: linear-gradient(-45deg, #66c0f4, #417a9b, #7ed0ff, #5a9bc4);
+  background-size: 400% 400%;
+  animation: steamEffect 2s ease infinite;
+}
+
+/* ===== LOADING STATES ===== */
+.btn-loading .btn-text::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ===== TOOLTIPS PERSONALIZADOS ===== */
+.action-btn[title]:hover::after,
+.invite-btn-main[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== ESTADOS DE SUCESSO ===== */
+.friend-card.success-invite {
+  border-color: #48bb78;
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.2) 0%, rgba(56, 161, 105, 0.1) 100%);
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+  }
+}
+
+/* ===== MELHORIAS DE ACESSIBILIDADE ===== */
+.action-btn:focus,
+.invite-btn-main:focus,
+.tab:focus,
+.primary-btn:focus {
+  outline: 2px solid #3a86ff;
+  outline-offset: 2px;
+}
+
+.friend-card:focus-within {
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+}
+
+/* ===== DARK MODE ESPECÍFICO ===== */
+@media (prefers-color-scheme: dark) {
+  .steam-integration-banner {
+    background: linear-gradient(135deg, #1b2838 0%, #2c3e50 100%);
+  }
+
+  .steam-info-card {
+    background: rgba(102, 192, 244, 0.08);
+  }
+
+  .friend-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ===== EFEITOS DE ALTA PERFORMANCE ===== */
+.friend-card,
+.action-btn,
+.invite-btn-main,
+.stat-card {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* ===== MICROINTERAÇÕES ===== */
+.friend-actions .action-btn:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.friend-actions .action-btn:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.friend-actions .invite-btn-main {
+  animation-delay: 0.3s;
+}
+
+.friend-card:hover .action-btn,
+.friend-card:hover .invite-btn-main {
+  animation: slideInUp 0.3s ease-out both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

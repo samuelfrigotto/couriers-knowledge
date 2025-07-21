@@ -15,28 +15,48 @@
             placeholder="Buscar jogador..."
             [formControl]="permanentSearchControl"
             class="permanent-search-input"
-            #searchInput>
+            #searchInput
+          />
           <button
             *ngIf="permanentSearchControl.value"
             class="clear-search-btn"
             (click)="clearPermanentSearch()"
-            title="Limpar busca">
+            title="Limpar busca"
+          >
             ×
           </button>
         </div>
         <!-- ✅ CORREÇÃO: Adicionadas verificações de segurança -->
-        <div *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length > 0" class="search-results-count">
+        <div
+          *ngIf="
+            permanentSearchControl.value &&
+            filteredBySearch &&
+            filteredBySearch.length > 0
+          "
+          class="search-results-count"
+        >
           {{ filteredBySearch.length }} resultado(s) encontrado(s)
         </div>
-        <div *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length === 0" class="search-no-results">
+        <div
+          *ngIf="
+            permanentSearchControl.value &&
+            filteredBySearch &&
+            filteredBySearch.length === 0
+          "
+          class="search-no-results"
+        >
           Nenhum jogador encontrado
         </div>
       </div>
     </div>
 
     <div class="header-actions">
-      <button class="refresh-button" (click)="refreshNames()" [disabled]="isRefreshing">
-        {{ isRefreshing ? 'Atualizando...' : 'Atualizar Nomes' }}
+      <button
+        class="refresh-button"
+        (click)="refreshNames()"
+        [disabled]="isRefreshing"
+      >
+        {{ isRefreshing ? "Atualizando..." : "Atualizar Nomes" }}
       </button>
 
       <!-- ✅ BOTÃO COM VERIFICAÇÃO DE LIMITE -->
@@ -46,16 +66,24 @@
           [class.disabled]="isLimitReached"
           [disabled]="isLimitReached"
           (click)="openFormModal()"
-          [title]="isLimitReached ? 'Limite de avaliações atingido. Faça upgrade para Premium!' : 'Criar nova avaliação'">
+          [title]="
+            isLimitReached
+              ? 'Limite de avaliações atingido. Faça upgrade para Premium!'
+              : 'Criar nova avaliação'
+          "
+        >
           + Nova Avaliação
         </button>
 
         <!-- ✅ INDICADOR DE LIMITE -->
         <div *ngIf="evaluationStatus" class="evaluation-counter">
           <span [class.warning]="isLimitReached">
-            {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
+            {{ evaluationStatus.currentCount
+            }}{{ evaluationStatus.limit ? "/" + evaluationStatus.limit : "" }}
             <small *ngIf="!evaluationStatus.isPremium">avaliações</small>
-            <small *ngIf="evaluationStatus.isPremium" class="premium-badge">Premium</small>
+            <small *ngIf="evaluationStatus.isPremium" class="premium-badge"
+              >Premium</small
+            >
           </span>
         </div>
       </div>
@@ -66,57 +94,141 @@
   <!-- Header de filtros existente (mantido) -->
   <div class="list-header" [formGroup]="filterForm" *ngIf="!isLoading">
     <div class="col-player header-col">
-      <div class="header-title" (click)="toggleFilter('playerName', $event)" [class.active]="activeFilter === 'playerName'">Jogador <span>▼</span></div>
-      <div class="filter-popover" *ngIf="activeFilter === 'playerName'" (click)="$event.stopPropagation()">
-        <input type="text" placeholder="Buscar por nome..." formControlName="playerName" autofocus>
+      <div
+        class="header-title"
+        (click)="toggleFilter('playerName', $event)"
+        [class.active]="activeFilter === 'playerName'"
+      >
+        Jogador <span>▼</span>
+      </div>
+      <div
+        class="filter-popover"
+        *ngIf="activeFilter === 'playerName'"
+        (click)="$event.stopPropagation()"
+      >
+        <input
+          type="text"
+          placeholder="Buscar por nome..."
+          formControlName="playerName"
+          autofocus
+        />
       </div>
     </div>
+
     <div class="col-hero header-col">
-      <div class="header-title" (click)="toggleFilter('heroId', $event)" [class.active]="activeFilter === 'heroId'">Herói / Função <span>▼</span></div>
-      <div class="filter-popover" *ngIf="activeFilter === 'heroId'" (click)="$event.stopPropagation()">
+      <div
+        class="header-title"
+        (click)="toggleFilter('heroId', $event)"
+        [class.active]="activeFilter === 'heroId'"
+      >
+        Herói / Função <span>▼</span>
+      </div>
+      <div
+        class="filter-popover"
+        *ngIf="activeFilter === 'heroId'"
+        (click)="$event.stopPropagation()"
+      >
         <select formControlName="heroId">
           <option [ngValue]="null">Todos os Heróis</option>
-          <option *ngFor="let hero of (heroes$ | async)" [value]="hero.id">{{ hero.localized_name }}</option>
+          <option *ngFor="let hero of heroes$ | async" [ngValue]="hero.id">
+            {{ hero.localized_name }}
+          </option>
         </select>
+
         <select formControlName="role">
           <option [ngValue]="null">Todas as Funções</option>
-          <option *ngFor="let role of roles" [value]="role">{{ role.toUpperCase() }}</option>
+          <option *ngFor="let role of roles" [value]="role">
+            {{ role.toUpperCase() }}
+          </option>
         </select>
       </div>
     </div>
+
     <div class="col-notes header-col">
-      <div class="header-title" (click)="toggleFilter('notes', $event)" [class.active]="activeFilter === 'notes'">Anotação <span>▼</span></div>
-      <div class="filter-popover" *ngIf="activeFilter === 'notes'" (click)="$event.stopPropagation()">
-        <input type="text" placeholder="Buscar nas anotações..." formControlName="notes" autofocus>
+      <div
+        class="header-title"
+        (click)="toggleFilter('notes', $event)"
+        [class.active]="activeFilter === 'notes'"
+      >
+        Anotação <span>▼</span>
+      </div>
+      <div
+        class="filter-popover"
+        *ngIf="activeFilter === 'notes'"
+        (click)="$event.stopPropagation()"
+      >
+        <input
+          type="text"
+          placeholder="Buscar nas anotações..."
+          formControlName="notes"
+          autofocus
+        />
       </div>
     </div>
     <div class="col-tags header-col">
-      <div class="header-title" (click)="toggleFilter('tags', $event)" [class.active]="activeFilter === 'tags'">Tags <span>▼</span></div>
-      <div class="filter-popover" [class.align-right]="true" *ngIf="activeFilter === 'tags'" (click)="$event.stopPropagation()">
-        <input type="text" placeholder="Buscar por tag..." formControlName="tags" autofocus>
+      <div
+        class="header-title"
+        (click)="toggleFilter('tags', $event)"
+        [class.active]="activeFilter === 'tags'"
+      >
+        Tags <span>▼</span>
+      </div>
+      <div
+        class="filter-popover"
+        [class.align-right]="true"
+        *ngIf="activeFilter === 'tags'"
+        (click)="$event.stopPropagation()"
+      >
+        <input
+          type="text"
+          placeholder="Buscar por tag..."
+          formControlName="tags"
+          autofocus
+        />
       </div>
     </div>
 
     <div class="col-rating header-col">
-      <div class="header-title" (click)="toggleFilter('rating', $event)" [class.active]="activeFilter === 'rating'">Nota <span>▼</span></div>
-      <div class="filter-popover" [class.align-right]="true" *ngIf="activeFilter === 'rating'" (click)="$event.stopPropagation()">
+      <div
+        class="header-title"
+        (click)="toggleFilter('rating', $event)"
+        [class.active]="activeFilter === 'rating'"
+      >
+        Nota <span>▼</span>
+      </div>
+      <div
+        class="filter-popover"
+        [class.align-right]="true"
+        *ngIf="activeFilter === 'rating'"
+        (click)="$event.stopPropagation()"
+      >
         <div class="rating-range-filter">
           <label for="minRating">De:</label>
           <select formControlName="minRating" id="minRating">
             <option [ngValue]="null">1</option>
-            <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
+            <option *ngFor="let n of [1, 2, 3, 4, 5]" [value]="n">
+              {{ n }}
+            </option>
           </select>
           <label for="maxRating">Até:</label>
           <select formControlName="maxRating" id="maxRating">
             <option [ngValue]="null">5</option>
-            <option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{ n }}</option>
+            <option *ngFor="let n of [1, 2, 3, 4, 5]" [value]="n">
+              {{ n }}
+            </option>
           </select>
         </div>
-        </div>
+      </div>
     </div>
 
     <div class="col-actions">
-        <button class="clear-filters-button" (click)="resetFilters()" title="Limpar Filtros">&times;</button>
+      <button
+        class="clear-filters-button"
+        (click)="resetFilters()"
+        title="Limpar Filtros"
+      >
+        &times;
+      </button>
     </div>
   </div>
 
@@ -124,27 +236,46 @@
   <div *ngIf="isLoading" class="loading-message">
     <p>Carregando avaliações...</p>
   </div>
-  <div *ngIf="!isLoading && displayedEvaluations.length === 0" class="no-evaluations">
+  <div
+    *ngIf="!isLoading && displayedEvaluations.length === 0"
+    class="no-evaluations"
+  >
     <p>Nenhuma avaliação encontrada com os filtros atuais.</p>
   </div>
 
   <!-- Lista de avaliações -->
-  <div class="evaluation-list-body" *ngIf="!isLoading && displayedEvaluations.length > 0">
+  <div
+    class="evaluation-list-body"
+    *ngIf="!isLoading && displayedEvaluations.length > 0"
+  >
     <div *ngFor="let evaluation of displayedEvaluations" class="list-item">
       <div class="col-player" data-label="Jogador:">
         <div class="player-info-wrapper">
-          <span class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</span>
-          <small class="match-id" *ngIf="evaluation.match_id">Partida: {{ evaluation.match_id }}</small>
+          <span class="player-name">{{
+            evaluation.targetPlayerName || "Jogador Desconhecido"
+          }}</span>
+          <small class="match-id" *ngIf="evaluation.match_id"
+            >Partida: {{ evaluation.match_id }}</small
+          >
         </div>
       </div>
       <div class="col-hero" data-label="Herói/Função:">
         <div class="hero-role-wrapper">
           <div *ngIf="evaluation.hero_id" class="hero-info">
-            <img [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)" class="hero-icon">
-            <span>{{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}</span>
+            <img
+              [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
+              class="hero-icon"
+            />
+            <span>{{
+              gameDataService.getHeroById(evaluation.hero_id)?.localized_name
+            }}</span>
           </div>
-          <div *ngIf="evaluation.role" class="role-badge">{{ evaluation.role.toUpperCase() }}</div>
-          <div *ngIf="!evaluation.hero_id && !evaluation.role" class="no-info">-</div>
+          <div *ngIf="evaluation.role" class="role-badge">
+            {{ evaluation.role.toUpperCase() }}
+          </div>
+          <div *ngIf="!evaluation.hero_id && !evaluation.role" class="no-info">
+            -
+          </div>
         </div>
       </div>
       <div class="col-notes" data-label="Anotação:">
@@ -155,25 +286,43 @@
       </div>
       <div class="col-tags" data-label="Tags:">
         <div class="tags-wrapper">
-          <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
-          <span *ngIf="!evaluation.tags || evaluation.tags.length === 0" class="no-info">Sem tags</span>
+          <span *ngFor="let tag of evaluation.tags" class="tag-badge"
+            >#{{ tag }}</span
+          >
+          <span
+            *ngIf="!evaluation.tags || evaluation.tags.length === 0"
+            class="no-info"
+            >Sem tags</span
+          >
         </div>
       </div>
       <div class="col-rating" data-label="Nota:">
         <app-rating-display [rating]="evaluation.rating"></app-rating-display>
       </div>
       <div class="col-actions">
-        <button class="action-menu-trigger" (click)="toggleActionMenu($event, evaluation.id)">
+        <button
+          class="action-menu-trigger"
+          (click)="toggleActionMenu($event, evaluation.id)"
+        >
           ⋮
         </button>
         <div class="action-popover" *ngIf="activeActionMenu === evaluation.id">
-          <button class="popover-action-btn" (click)="editEvaluation(evaluation)">
+          <button
+            class="popover-action-btn"
+            (click)="editEvaluation(evaluation)"
+          >
             Editar
           </button>
-          <button class="popover-action-btn" (click)="shareEvaluation(evaluation)">
+          <button
+            class="popover-action-btn"
+            (click)="shareEvaluation(evaluation)"
+          >
             Compartilhar
           </button>
-          <button class="popover-action-btn delete" (click)="deleteEvaluation(evaluation.id)">
+          <button
+            class="popover-action-btn delete"
+            (click)="deleteEvaluation(evaluation.id)"
+          >
             Excluir
           </button>
         </div>
@@ -187,8 +336,7 @@
     [evaluationData]="selectedEvaluation"
     (closeModal)="onFormClosed()"
     (evaluationSaved)="onFormSubmitted()"
-    (evaluationError)="onEvaluationError($event)">
+    (evaluationError)="onEvaluationError($event)"
+  >
   </app-evaluation-form>
-
-
 </div>

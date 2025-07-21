@@ -126,18 +126,26 @@ exports.getUserStats = async (req, res) => {
     const userSteamId = req.user.steam_id;
 
     try {
+        console.log(`🔍 Buscando estatísticas para usuário ${authorId} (Steam: ${userSteamId})`);
+
+        // ✅ QUERIES SIMPLIFICADAS E CORRIGIDAS
         const [
             evaluationsResult, 
             userResult, 
             cachedMatchesResult,
+            // ✅ CORREÇÃO: Query direta usando evaluated_steam_id
             receivedEvaluationsResult,
             selfEvaluationsResult
         ] = await Promise.all([
+            // Avaliações feitas pelo usuário
             db.query('SELECT rating, tags, evaluated_steam_id FROM evaluations WHERE author_id = $1', [authorId]),
-            // AQUI ESTAVA O BUG: Faltava pedir a coluna 'api_calls_today'
+            // Dados do usuário
             db.query('SELECT steam_username, avatar_url, created_at, account_status, api_calls_today FROM users WHERE id = $1', [authorId]),
+            // Partidas em cache
             db.query('SELECT * FROM matches WHERE user_id = $1 ORDER BY start_time DESC LIMIT 20', [authorId]),
+            // ✅ CORREÇÃO: Buscar avaliações recebidas usando evaluated_steam_id diretamente
             db.query('SELECT rating FROM evaluations WHERE evaluated_steam_id = $1 AND author_id != $2', [userSteamId, authorId]),
+            // Autoavaliações (avaliações que o usuário fez de si mesmo)
             db.query('SELECT rating FROM evaluations WHERE author_id = $1 AND evaluated_steam_id = $2', [authorId, userSteamId]),
         ]);
 
@@ -147,16 +155,27 @@ exports.getUserStats = async (req, res) => {
         const receivedEvaluations = receivedEvaluationsResult.rows;
         const selfEvaluations = selfEvaluationsResult.rows;
 
+        console.log(`📊 Dados coletados:`);
+        console.log(`   - Avaliações feitas: ${evaluations.length}`);
+        console.log(`   - Avaliações recebidas: ${receivedEvaluations.length}`);
+        console.log(`   - Autoavaliações: ${selfEvaluations.length}`);
+        console.log(`   - Partidas em cache: ${detailedMatches.length}`);
+
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
         
-        // --- INÍCIO DO CÁLCULO DA "ANÁLISE DE TILT" ---
+        // --- CÁLCULO DA ANÁLISE DE TILT (CORRIGIDO) ---
+        console.log(`🔍 Calculando análise de tilt...`);
+        
+        // Jogadores mal avaliados (nota <= 2.0)
         const lowRatedPlayerSteamIds = new Set(
             evaluations
-                .filter(e => parseFloat(e.rating) <= 2.0)
+                .filter(e => parseFloat(e.rating) <= 2.0 && e.evaluated_steam_id)
                 .map(e => e.evaluated_steam_id)
         );
+
+        console.log(`👥 Jogadores mal avaliados identificados: ${lowRatedPlayerSteamIds.size}`);
 
         let matchesWithLowRatedTeammates = 0;
         let winsWithLowRatedTeammates = 0;
@@ -166,9 +185,15 @@ exports.getUserStats = async (req, res) => {
                 const userPlayerInfo = match.players.find(p => p.steam_id_64 === userSteamId);
                 if (!userPlayerInfo) return;
 
-                const teammates = match.players.filter(p => p.is_radiant === userPlayerInfo.is_radiant && p.steam_id_64 !== userSteamId);
+                const teammates = match.players.filter(p => 
+                    p.is_radiant === userPlayerInfo.is_radiant && 
+                    p.steam_id_64 !== userSteamId &&
+                    p.steam_id_64 // Garantir que tem steam_id
+                );
                 
-                const hasLowRatedTeammate = teammates.some(t => lowRatedPlayerSteamIds.has(t.steam_id_64));
+                const hasLowRatedTeammate = teammates.some(t => 
+                    lowRatedPlayerSteamIds.has(t.steam_id_64)
+                );
 
                 if (hasLowRatedTeammate) {
                     matchesWithLowRatedTeammates++;
@@ -181,9 +206,11 @@ exports.getUserStats = async (req, res) => {
 
         const tiltWinRate = matchesWithLowRatedTeammates > 0 
             ? Math.round((winsWithLowRatedTeammates / matchesWithLowRatedTeammates) * 100) 
-            : null; // Retorna null se nunca jogou com um jogador mal avaliado
-        // --- FIM DO CÁLCULO ---
+            : null;
 
+        console.log(`🎯 Partidas com jogadores mal avaliados: ${matchesWithLowRatedTeammates}`);
+        console.log(`🏆 Vitórias nessas partidas: ${winsWithLowRatedTeammates}`);
+        console.log(`📊 Taxa de vitória com tóxicos: ${tiltWinRate}%`);
 
         // --- CÁLCULO DAS ATUALIZAÇÕES DIÁRIAS ---
         const userCreationDate = new Date(user.created_at);
@@ -194,41 +221,69 @@ exports.getUserStats = async (req, res) => {
         if (user.account_status === 'Premium') {
             totalUpdatesLimit = 30;
         } else if (userCreationDate > threeDaysAgo) {
-            totalUpdatesLimit = 3; // Novo usuário
+            totalUpdatesLimit = 3;
         } else {
-            totalUpdatesLimit = 5; // Usuário padrão
+            totalUpdatesLimit = 5;
         }
 
         const callsPerUpdate = 4;
         const totalCallsLimit = totalUpdatesLimit * callsPerUpdate;
         const remainingUpdates = Math.floor((totalCallsLimit - (user.api_calls_today || 0)) / callsPerUpdate);
         
-        // --- CÁLCULO DAS OUTRAS ESTATÍSTICAS ---
+        // --- ESTATÍSTICAS BÁSICAS ---
         const totalEvaluations = evaluations.length;
-        const averageRating = totalEvaluations > 0 ? parseFloat((evaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalEvaluations).toFixed(2)) : 0;
+        const averageRating = totalEvaluations > 0 ? 
+            parseFloat((evaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalEvaluations).toFixed(2)) : 0;
+        
         const tagCounts = (evaluations.flatMap(e => e.tags).filter(Boolean)).reduce((acc, tag) => {
             acc[tag] = (acc[tag] || 0) + 1;
             return acc;
         }, {});
         const mostUsedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a).slice(0, 5).map(([tag]) => tag);
 
-        let totalPossiblePlayers = 0;
-        const evaluatedPlayersInMatches = new Set(evaluations.map(e => e.evaluated_steam_id));
+        // ✅ CORREÇÃO: Porcentagem real de jogadores avaliados
+        console.log(`🔍 Calculando porcentagem real de jogadores avaliados...`);
+        
+        // Contar jogadores únicos avaliados (usando evaluated_steam_id)
+        const uniqueEvaluatedPlayers = new Set(
+            evaluations
+                .filter(e => e.evaluated_steam_id)
+                .map(e => e.evaluated_steam_id)
+        );
+
+        // Contar jogadores únicos nas partidas (excluindo o próprio usuário)
+        const uniquePlayersInMatches = new Set();
         detailedMatches.forEach(match => {
             if (match && match.players) {
                 match.players.forEach(player => {
                     if (player.steam_id_64 && player.steam_id_64 !== userSteamId) {
-                        totalPossiblePlayers++;
+                        uniquePlayersInMatches.add(player.steam_id_64);
                     }
                 });
             }
         });
-        const evaluationPercentage = totalPossiblePlayers > 0 ? Math.round((evaluatedPlayersInMatches.size / totalPossiblePlayers) * 100) : 0;
 
-        const totalReceivedEvaluations = receivedEvaluations.length;
-        const receivedAverageRating = totalReceivedEvaluations > 0 ? parseFloat((receivedEvaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalReceivedEvaluations).toFixed(2)) : 0;
-        const selfAverageRating = selfEvaluations.length > 0 ? parseFloat((selfEvaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / selfEvaluations.length).toFixed(2)) : 0;
+        const totalUniquePlayersInMatches = uniquePlayersInMatches.size;
+        const totalUniqueEvaluatedPlayers = uniqueEvaluatedPlayers.size;
         
+        const evaluationPercentage = totalUniquePlayersInMatches > 0 ? 
+            Math.round((totalUniqueEvaluatedPlayers / totalUniquePlayersInMatches) * 100) : 0;
+
+        console.log(`👥 Jogadores únicos nas partidas: ${totalUniquePlayersInMatches}`);
+        console.log(`✅ Jogadores únicos avaliados: ${totalUniqueEvaluatedPlayers}`);
+        console.log(`📊 Porcentagem real: ${evaluationPercentage}%`);
+
+        // ✅ ESTATÍSTICAS DE AVALIAÇÕES RECEBIDAS
+        const totalReceivedEvaluations = receivedEvaluations.length;
+        const receivedAverageRating = totalReceivedEvaluations > 0 ? 
+            parseFloat((receivedEvaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalReceivedEvaluations).toFixed(2)) : 0;
+        
+        const selfAverageRating = selfEvaluations.length > 0 ? 
+            parseFloat((selfEvaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / selfEvaluations.length).toFixed(2)) : 0;
+        
+        console.log(`📊 Avaliações recebidas: ${totalReceivedEvaluations} (média: ${receivedAverageRating})`);
+
+        // --- OUTRAS ESTATÍSTICAS (KDA, heróis, etc.) ---
         let winsLast20 = 0;
         let totalDuration = 0;
         let totalKills = 0;
@@ -239,24 +294,18 @@ exports.getUserStats = async (req, res) => {
         
         detailedMatches.forEach(match => {
             if (match && match.players) {
-                // Soma da duração e vitórias
                 totalDuration += match.duration;
                 if(match.user_won) winsLast20++;
                 
-                // Encontra os dados do jogador na partida
                 const userPlayerInfo = match.players.find(p => p.steam_id_64 === userSteamId);
                 
                 if (userPlayerInfo) {
-                    // Contagem do herói mais usado
                     heroCounts[userPlayerInfo.hero_id] = (heroCounts[userPlayerInfo.hero_id] || 0) + 1;
-                    
-                    // Soma do KDA
                     totalKills += userPlayerInfo.kills || 0;
                     totalDeaths += userPlayerInfo.deaths || 0;
                     totalAssists += userPlayerInfo.assists || 0;
                 }
 
-                // Contagem do herói mais enfrentado
                 match.players.forEach(player => {
                     if (player.steam_id_64 !== userSteamId) {
                         opponentHeroCounts[player.hero_id] = (opponentHeroCounts[player.hero_id] || 0) + 1;
@@ -265,7 +314,6 @@ exports.getUserStats = async (req, res) => {
             }
         });
 
-        // Cálculos das médias (agora corretos)
         const matchCount = detailedMatches.length;
         const averageMatchTime = matchCount > 0 ? Math.round(totalDuration / matchCount) : 0;
         const mostUsedHeroId = Object.entries(heroCounts).sort(([,a],[,b]) => b-a)[0]?.[0];
@@ -276,6 +324,7 @@ exports.getUserStats = async (req, res) => {
             assists: (totalAssists / matchCount).toFixed(1)
         } : null;
 
+        // ✅ RESULTADO FINAL
         const stats = {
             steamUsername: user.steam_username,
             avatarUrl: user.avatar_url,
@@ -290,19 +339,24 @@ exports.getUserStats = async (req, res) => {
             mostUsedHeroId: mostUsedHeroId ? parseInt(mostUsedHeroId) : null,
             mostFacedHeroId: mostFacedHeroId ? parseInt(mostFacedHeroId) : null,
             selfAverageRating,
-            totalReceivedEvaluations,
-            receivedAverageRating,
-            // NOVOS CAMPOS ADICIONADOS:
+            totalReceivedEvaluations,    // ✅ Corrigido
+            receivedAverageRating,       // ✅ Corrigido
             remainingUpdates: Math.max(0, remainingUpdates),
             totalUpdates: totalUpdatesLimit,
-            tiltWinRate,
+            tiltWinRate,                 // ✅ Corrigido
             averageKda: averageKda
         };
+
+        console.log(`✅ Estatísticas finais calculadas:`);
+        console.log(`   - Avaliações recebidas: ${totalReceivedEvaluations}`);
+        console.log(`   - Média recebidas: ${receivedAverageRating}`);
+        console.log(`   - % jogadores avaliados: ${evaluationPercentage}%`);
+        console.log(`   - Taxa vitória c/ tóxicos: ${tiltWinRate}%`);
 
         res.status(200).json(stats);
 
     } catch (error) {
-        console.error('Erro ao buscar estatísticas do usuário no cache:', error);
+        console.error('❌ Erro ao buscar estatísticas do usuário:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
