@@ -1,147 +1,241 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommonModule, JsonPipe } from '@angular/common';
-import { GsiService } from '../../../core/gsi.service';
+// couriers-knowledge-frontend/src/app/views/user/live-match/live-match.component.ts
+
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { StatusService, StatusParseResponse, StatusPlayer } from '../../../core/status.service';
 import { GameDataService } from '../../../core/game-data.service';
-import { Observable, Subscription } from 'rxjs';
-import { AuthService } from '../../../core/auth.service';
 import { EvaluationService } from '../../../core/evaluation.service';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
+import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-live-match',
   standalone: true,
-  imports: [CommonModule, JsonPipe, RatingDisplayComponent],
+  imports: [CommonModule, FormsModule, RatingDisplayComponent, EvaluationFormComponent],
   templateUrl: './live-match.component.html',
-  styleUrl: './live-match.component.css'
+  styleUrls: ['./live-match.component.css']
 })
-export class LiveMatchComponent implements OnInit, OnDestroy {
-  private gsiService = inject(GsiService);
-  private authService = inject(AuthService);
+export class LiveMatchComponent implements OnInit {
+  private statusService = inject(StatusService);
   public gameDataService = inject(GameDataService);
   private evaluationService = inject(EvaluationService);
   private toastr = inject(ToastrService);
 
-  public gsiDataSubscription!: Subscription;
-  public gsiData: any = null;
-  public playerStats: { [key: string]: any } = {};
+  // Estado do formulário
+  statusInput = '';
+  isProcessing = false;
+  showInstructions = true;
 
-  public currentUserSteamId: string | null;
+  // Dados da partida
+  matchData: StatusParseResponse | null = null;
+  error: string | null = null;
 
-  public isDetailModalVisible = false;
-  public selectedPlayerForDetails: any = null;
-  public selectedPlayerEvaluations: any[] = [];
+  // Modal de avaliação
+  isEvaluationModalVisible = false;
+  selectedPlayerForEvaluation: any = null;
 
-  constructor() {
-    this.currentUserSteamId = this.authService.getDecodedToken()?.steam_id || null;
+  // Modal de detalhes
+  isDetailModalVisible = false;
+  selectedPlayerForDetails: StatusPlayer | null = null;
+
+  // Estado dos limites
+  evaluationStatus: any = null;
+  isLimitReached = false;
+
+  ngOnInit(): void {
+    this.checkEvaluationLimit();
   }
 
-  ngOnInit() {
-    this.gsiDataSubscription = this.gsiService.gsiData$.subscribe(newData => {
-      if (newData) {
-        const combinedData = { ...this.gsiData, ...newData };
+  /**
+   * Processa o comando status colado pelo usuário
+   */
+  analyzeStatus(): void {
+    // Validação inicial
+    const validation = this.statusService.validateStatusInput(this.statusInput);
+    if (!validation.valid) {
+      this.error = validation.error || 'Input inválido';
+      this.toastr.error(this.error, 'Erro de Validação');
+      return;
+    }
 
-        if (combinedData.player && combinedData.hero) {
-          const userSlotKey = `player${combinedData.player.player_slot}`;
+    this.isProcessing = true;
+    this.error = null;
 
-          if (!combinedData[userSlotKey]) {
-            combinedData[userSlotKey] = {};
-          }
-
-          combinedData[userSlotKey] = {
-            ...combinedData[userSlotKey],
-            ...combinedData.player,
-            hero: combinedData.hero
-          };
-
-          // ================================================================= //
-          // AQUI ESTÁ A CORREÇÃO: Adicione esta linha!                        //
-          // Ela remove o objeto "player" duplicado após a fusão dos dados.   //
-          delete combinedData.player;                                          //
-          // ================================================================= //
+    this.statusService.parseStatus(this.statusInput).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.matchData = response;
+          this.showInstructions = false;
+          this.toastr.success(
+            `${response.statistics.evaluatedPlayers}/${response.statistics.humanPlayers} jogadores com avaliações`,
+            'Status Analisado!'
+          );
+          console.log('✅ Status processado:', response);
+        } else {
+          this.error = response.error || 'Erro ao processar status';
+          this.toastr.error(this.error, 'Erro');
         }
-
-        this.gsiData = combinedData;
-
-        // O restante da função continua igual...
-        const playerKeys = Object.keys(this.gsiData).filter(key => key.startsWith('player'));
-        if (playerKeys.length > 0) {
-          const steamIds = playerKeys
-            .map(key => this.gsiData[key].steamid)
-            .filter(id => id && id !== '0');
-
-          if (steamIds.length > 0) {
-            this.gsiService.getPlayerStats(steamIds).subscribe(stats => {
-              this.playerStats = { ...this.playerStats, ...stats };
-            });
-          }
-        }
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        console.error('❌ Erro ao analisar status:', err);
+        this.error = err.error?.error || 'Erro ao comunicar com o servidor';
+        this.toastr.error(this.error!, 'Erro');
+        this.isProcessing = false;
       }
     });
   }
-  ngOnDestroy() {
-    if (this.gsiDataSubscription) {
-      this.gsiDataSubscription.unsubscribe();
+
+  /**
+   * Limpa os dados e volta para o formulário
+   */
+  resetForm(): void {
+    this.statusInput = '';
+    this.matchData = null;
+    this.error = null;
+    this.showInstructions = true;
+  }
+
+  /**
+   * Abre modal com detalhes das avaliações de um jogador
+   */
+  showPlayerDetails(player: StatusPlayer): void {
+    if (!player.hasEvaluations) return;
+
+    this.selectedPlayerForDetails = player;
+    this.isDetailModalVisible = true;
+  }
+
+  /**
+   * Fecha modal de detalhes
+   */
+  closeDetailModal(): void {
+    this.isDetailModalVisible = false;
+    this.selectedPlayerForDetails = null;
+  }
+
+  /**
+   * Abre modal para avaliar um jogador
+   */
+  evaluatePlayer(player: StatusPlayer): void {
+    if (this.isLimitReached) {
+      this.toastr.error(
+        'Limite de avaliações atingido! Considere fazer upgrade para Premium.',
+        'Limite Atingido',
+        { timeOut: 8000 }
+      );
+      return;
+    }
+
+    // Preparar dados iniciais para o formulário
+    // Como não temos Steam ID, só passamos o nome
+    this.selectedPlayerForEvaluation = {
+      targetPlayerName: player.name,
+      // Outros campos ficarão em branco para o usuário preencher
+    };
+
+    this.isEvaluationModalVisible = true;
+  }
+
+  /**
+   * Fecha modal de avaliação
+   */
+  closeEvaluationModal(): void {
+    this.isEvaluationModalVisible = false;
+    this.selectedPlayerForEvaluation = null;
+  }
+
+  /**
+   * Callback quando avaliação é salva
+   */
+  onEvaluationSaved(): void {
+    this.closeEvaluationModal();
+    this.checkEvaluationLimit();
+
+    // Reprocessar status para atualizar avaliações
+    if (this.statusInput) {
+      this.analyzeStatus();
     }
   }
 
-  showPlayerEvaluationDetails(player: any, event: MouseEvent) {
-    event.stopPropagation();
-    if (!player || !player.steamid) return;
+  /**
+   * Callback para erros no formulário de avaliação
+   */
+  onEvaluationError(error: any): void {
+    if (error.status === 403) {
+      this.checkEvaluationLimit();
+    }
+  }
 
-    this.selectedPlayerForDetails = player;
-    this.evaluationService.getEvaluationsForPlayer(player.steamid).subscribe(evaluations => {
-      this.selectedPlayerEvaluations = evaluations;
-      this.isDetailModalVisible = true;
+  /**
+   * Verifica limite de avaliações
+   */
+  private checkEvaluationLimit(): void {
+    this.evaluationService.getEvaluationStatus().subscribe({
+      next: (status) => {
+        this.evaluationStatus = status;
+        this.isLimitReached = status.limitReached;
+      },
+      error: (err) => {
+        console.error('Erro ao verificar limite de avaliações:', err);
+      }
     });
   }
 
-  closeDetailModal() {
-    this.isDetailModalVisible = false;
-    this.selectedPlayerForDetails = null;
-    this.selectedPlayerEvaluations = [];
+  /**
+   * Retorna instruções de uso
+   */
+  get instructions(): string[] {
+    return this.statusService.getStatusInstructions();
   }
 
-  getGameStateText(state: string): string {
-    if (!state) return 'Desconectado';
-    const states: { [key: string]: string } = {
-      'DOTA_GAMERULES_STATE_INIT': 'Inicializando',
-      'DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD': 'Aguardando Jogadores',
-      'DOTA_GAMERULES_STATE_HERO_SELECTION': 'Seleção de Heróis',
-      'DOTA_GAMERULES_STATE_STRATEGY_TIME': 'Tempo de Estratégia',
-      'DOTA_GAMERULES_STATE_PRE_GAME': 'Pré-Jogo',
-      'DOTA_GAMERULES_STATE_GAME_IN_PROGRESS': 'Partida em Andamento',
-      'DOTA_GAMERULES_STATE_POST_GAME': 'Pós-Jogo',
-      'DOTA_GAMERULES_STATE_DISCONNECT': 'Desconectado'
-    };
-    return states[state] || 'Estado Desconhecido';
+  /**
+   * Retorna dicas do sistema
+   */
+  get systemTips(): string[] {
+    return this.statusService.getSystemTips();
   }
 
-  getGameStateClass(state: string): string {
-    if (state === 'DOTA_GAMERULES_STATE_GAME_IN_PROGRESS') return 'in-progress';
-    if (state === 'DOTA_GAMERULES_STATE_POST_GAME') return 'post-game';
-    return 'pre-game';
+  /**
+   * Formata rating para exibição
+   */
+  formatRating(rating: number): string {
+    return this.statusService.formatRating(rating);
   }
 
-  getPlayersByTeam(data: any, teamName: 'radiant' | 'dire'): any[] {
-    if (!data) return [];
-
-    return Object.keys(data)
-      .filter(key => key.startsWith('player'))
-      .map(key => data[key])
-      .filter(player => player && player.team_name === teamName);
+  /**
+   * Retorna cor da rating
+   */
+  getRatingColor(rating: number): string {
+    return this.statusService.getRatingColor(rating);
   }
 
-  isUser(player: any): boolean {
-    return player.steamid === this.currentUserSteamId;
+  /**
+   * Retorna classe CSS da rating
+   */
+  getRatingClass(rating: number): string {
+    return this.statusService.getRatingClass(rating);
   }
 
-  // FUNÇÃO RESTAURADA
-  formatAverageRating(rating: string): string {
-    const num = parseFloat(rating);
-    if (num % 1 === 0) {
-      return num.toFixed(0);
+  /**
+   * Formata data para exibição
+   */
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Hoje';
+    } else if (diffDays === 2) {
+      return 'Ontem';
+    } else if (diffDays <= 7) {
+      return `${diffDays} dias atrás`;
+    } else {
+      return date.toLocaleDateString('pt-BR');
     }
-    return num.toFixed(1);
   }
 }

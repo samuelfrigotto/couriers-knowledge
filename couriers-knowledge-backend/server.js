@@ -16,6 +16,8 @@ const steamRoutes = require('./src/api/routes/steam.routes');
 const gsiRoutes = require('./src/api/routes/gsi.routes');
 const friendsRoutes = require('./src/api/routes/friends.routes');
 const stripeRoutes = require('./src/api/routes/stripe.routes'); 
+const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
+
 
 // 2. Inicializar o aplicativo Express
 const app = express();
@@ -56,6 +58,7 @@ app.use('/api', steamRoutes);
 app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/status', statusRoutes); 
 
 
 

@@ -278,3 +278,57 @@ exports.getEvaluationStatus = async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
+
+
+
+exports.getEvaluationsByPlayerName = async (req, res) => {
+    const authorId = req.user.id;
+    const { playerName } = req.params;
+
+    try {
+        if (!playerName || playerName.trim().length === 0) {
+            return res.status(400).json({ message: 'Nome do jogador é obrigatório.' });
+        }
+
+        // Buscar avaliações onde o nome atual (last_known_name) corresponde ao nome fornecido
+        const query = `
+            SELECT 
+                e.id, e.rating, e.notes, e.match_id, e.created_at, 
+                e.role, e.hero_id, e.tags, e.evaluated_steam_id,
+                p.steam_id AS "targetSteamId",
+                p.last_known_name AS "targetPlayerName"
+            FROM evaluations e
+            JOIN players p ON e.player_id = p.id
+            WHERE e.author_id = $1 
+            AND LOWER(p.last_known_name) = LOWER($2)
+            ORDER BY e.created_at DESC;
+        `;
+
+        const { rows } = await db.query(query, [authorId, playerName.trim()]);
+
+        // Adicionar metadados úteis
+        const response = {
+            playerName: playerName.trim(),
+            evaluationsCount: rows.length,
+            evaluations: rows
+        };
+
+        if (rows.length > 0) {
+            // Calcular média das avaliações
+            const totalRating = rows.reduce((sum, eval) => sum + parseFloat(eval.rating), 0);
+            response.averageRating = parseFloat((totalRating / rows.length).toFixed(1));
+            
+            // Steam ID mais recente (caso haja múltiplas avaliações)
+            response.steamId = rows[0].targetSteamId;
+        }
+
+        res.status(200).json(response);
+
+    } catch (error) {
+        console.error('Erro ao buscar avaliações por nome do jogador:', error);
+        res.status(500).json({ 
+            message: 'Erro interno do servidor.',
+            error: error.message 
+        });
+    }
+};

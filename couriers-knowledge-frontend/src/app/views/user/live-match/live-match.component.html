@@ -1,79 +1,331 @@
+<!-- couriers-knowledge-frontend/src/app/views/user/live-match/live-match.component.html -->
+
 <div class="live-match-container">
   <h1>Partida Ao Vivo</h1>
 
-  <ng-container *ngIf="gsiData; else waiting">
-    <div class="live-header">
-      <div class="game-state-badge" [ngClass]="getGameStateClass(gsiData.map?.game_state)">
-        {{ getGameStateText(gsiData.map?.game_state) }}
+  <!-- Formulário de Status -->
+  <div *ngIf="showInstructions || !matchData" class="status-form-section">
+    <div class="instructions-card">
+      <h3>📋 Como usar</h3>
+      <ol class="instructions-list">
+        <li *ngFor="let instruction of instructions">{{ instruction }}</li>
+      </ol>
+
+      <div class="tips-section">
+        <h4>💡 Dicas</h4>
+        <ul class="tips-list">
+          <li *ngFor="let tip of systemTips">{{ tip }}</li>
+        </ul>
       </div>
     </div>
 
-    <div class="teams-display-container">
-      <div class="team-display radiant">
-        <h2>Iluminados</h2>
-        <div class="players-container">
-          <div *ngFor="let player of getPlayersByTeam(gsiData, 'radiant')" class="player-live-card">
-            <img class="hero-portrait-live" [src]="player.hero && player.hero.id !== 0 ? gameDataService.getHeroImageUrl(player.hero.id) : (isUser(player) ? 'assets/images/courier1.png' : 'assets/images/courier3.png')" alt="Retrato do Herói">
-            <div class="player-info-live">
-                <span class="player-name-live">{{ player.name }}</span>
-                <div class="player-stats-live" *ngIf="playerStats[player.steamid]">
-                    <span class="eval-count">({{ playerStats[player.steamid].evaluationCount }} {{ playerStats[player.steamid].evaluationCount === 1 ? 'anotação' : 'anotações' }})</span>
-                </div>
-            </div>
-            <button class="rating-details-btn" *ngIf="playerStats[player.steamid]" (click)="showPlayerEvaluationDetails(player, $event)">
-              {{ formatAverageRating(playerStats[player.steamid].averageRating) }}/5
-            </button>
-          </div>
+    <div class="status-input-card">
+      <h3>🎮 Cole o comando status aqui</h3>
+
+      <div class="textarea-wrapper">
+        <textarea
+          [(ngModel)]="statusInput"
+          placeholder="Cole aqui o resultado completo do comando 'status' do Dota 2..."
+          class="status-textarea"
+          rows="10"
+          [disabled]="isProcessing">
+        </textarea>
+
+        <div class="input-actions">
+          <button
+            class="clear-btn"
+            (click)="statusInput = ''"
+            *ngIf="statusInput && !isProcessing"
+            title="Limpar">
+            🗑️ Limpar
+          </button>
         </div>
       </div>
-      <div class="team-display dire">
-        <h2>Temidos</h2>
-        <div class="players-container">
-            <div *ngFor="let player of getPlayersByTeam(gsiData, 'dire')" class="player-live-card">
-              <img class="hero-portrait-live" [src]="player.hero && player.hero.id !== 0 ? gameDataService.getHeroImageUrl(player.hero.id) : (isUser(player) ? 'assets/images/courier1.png' : 'assets/images/courier3.png')" alt="Retrato do Herói">
-              <div class="player-info-live">
-                  <span class="player-name-live">{{ player.name }}</span>
-                  <div class="player-stats-live" *ngIf="playerStats[player.steamid]">
-                      <span class="eval-count">({{ playerStats[player.steamid].evaluationCount }} {{ playerStats[player.steamid].evaluationCount === 1 ? 'anotação' : 'anotações' }})</span>
-                  </div>
+
+      <div class="form-actions">
+        <button
+          class="analyze-btn"
+          [disabled]="!statusInput || isProcessing"
+          (click)="analyzeStatus()">
+          <span *ngIf="!isProcessing">🔍 Analisar Status</span>
+          <span *ngIf="isProcessing">⏳ Processando...</span>
+        </button>
+
+        <button
+          class="reset-btn"
+          *ngIf="matchData"
+          (click)="resetForm()">
+          🔄 Nova Análise
+        </button>
+      </div>
+
+      <!-- Error Display -->
+      <div *ngIf="error" class="error-message">
+        <span class="error-icon">❌</span>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados da Partida -->
+  <div *ngIf="matchData && !showInstructions" class="match-results">
+    <!-- Header da Partida -->
+    <div class="match-header">
+      <div class="game-state">
+        <h2>{{ matchData.gameState.translated }}</h2>
+        <small>{{ matchData.gameState.raw }}</small>
+      </div>
+
+      <div class="match-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ matchData.statistics.humanPlayers }}</span>
+          <span class="stat-label">Humanos</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ matchData.statistics.botPlayers }}</span>
+          <span class="stat-label">Bots</span>
+        </div>
+        <div class="stat-item highlight">
+          <span class="stat-number">{{ matchData.statistics.evaluatedPlayers }}</span>
+          <span class="stat-label">Avaliados</span>
+        </div>
+      </div>
+
+      <button class="reset-btn-small" (click)="resetForm()" title="Nova análise">
+        🔄
+      </button>
+    </div>
+
+    <!-- Times -->
+    <div class="teams-container">
+      <!-- Time Radiant -->
+      <div class="team-section radiant">
+        <h3 class="team-title">
+          <span class="team-icon">☀️</span>
+          Iluminados
+        </h3>
+
+        <div class="players-list">
+          <div
+            *ngFor="let player of matchData.teams.radiant"
+            class="player-card"
+            [class.has-evaluations]="player.hasEvaluations"
+            [class.is-bot]="player.isBot">
+
+            <!-- Player Info -->
+            <div class="player-info">
+              <div class="player-name">
+                {{ player.name }}
+                <span *ngIf="player.isBot" class="bot-badge">BOT</span>
               </div>
-              <button class="rating-details-btn" *ngIf="playerStats[player.steamid]" (click)="showPlayerEvaluationDetails(player, $event)">
-                {{ formatAverageRating(playerStats[player.steamid].averageRating) }}/5
+
+              <div class="player-details">
+                <span class="slot">Slot {{ player.slot }}</span>
+                <span class="ping" *ngIf="!player.isBot">{{ player.ping }}ms</span>
+                <span class="state">{{ player.state }}</span>
+              </div>
+            </div>
+
+            <!-- Evaluation Stats -->
+            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+              <div class="rating-display">
+                <span
+                  class="rating-value"
+                  [style.color]="getRatingColor(player.stats.averageRating)">
+                  {{ formatRating(player.stats.averageRating) }}/5
+                </span>
+                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
+              </div>
+
+              <div class="tags-preview" *ngIf="player.stats.allTags.length > 0">
+                <span
+                  *ngFor="let tag of player.stats.allTags.slice(0, 3)"
+                  class="tag-mini">
+                  #{{ tag }}
+                </span>
+                <span *ngIf="player.stats.allTags.length > 3" class="more-tags">
+                  +{{ player.stats.allTags.length - 3 }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="player-actions">
+              <button
+                *ngIf="player.hasEvaluations"
+                class="details-btn"
+                (click)="showPlayerDetails(player)"
+                title="Ver avaliações">
+                📋 Detalhes
+              </button>
+
+              <button
+                *ngIf="!player.isBot"
+                class="evaluate-btn"
+                [disabled]="isLimitReached"
+                (click)="evaluatePlayer(player)"
+                [title]="isLimitReached ? 'Limite de avaliações atingido' : 'Avaliar jogador'">
+                ⭐ Avaliar
               </button>
             </div>
           </div>
-      </div>
-    </div>
-  </ng-container>
-
-  <ng-template #waiting>
-    <div class="waiting-container">
-      <p class="waiting-message">Aguardando dados do Dota 2... Inicie uma partida para começar.</p>
-    </div>
-  </ng-template>
-</div>
-
-<div class="modal-overlay" *ngIf="isDetailModalVisible" (click)="closeDetailModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2 *ngIf="selectedPlayerForDetails">Anotações sobre {{ selectedPlayerForDetails.name }}</h2>
-    <div *ngIf="selectedPlayerEvaluations.length > 0; else noEvals">
-      <div *ngFor="let eval of selectedPlayerEvaluations" class="evaluation-detail-item">
-        <div class="eval-header">
-          <app-rating-display [rating]="eval.rating"></app-rating-display>
-          <span class="eval-date">{{ eval.created_at | date:'dd/MM/yy' }}</span>
-        </div>
-        <div class="eval-context" *ngIf="eval.hero_id || eval.role">
-          Jogando de <img [src]="gameDataService.getHeroImageUrl(eval.hero_id)" class="hero-icon-tiny"> <strong>{{ gameDataService.getHeroById(eval.hero_id)?.localized_name }}</strong> como <strong>{{ eval.role?.toUpperCase() }}</strong>
-        </div>
-        <p class="eval-notes">{{ eval.notes }}</p>
-        <div class="eval-tags">
-          <span *ngFor="let tag of eval.tags" class="tag-badge">{{ tag }}</span>
         </div>
       </div>
+
+      <!-- Time Dire -->
+      <div class="team-section dire">
+        <h3 class="team-title">
+          <span class="team-icon">🌙</span>
+          Temidos
+        </h3>
+
+        <div class="players-list">
+          <div
+            *ngFor="let player of matchData.teams.dire"
+            class="player-card"
+            [class.has-evaluations]="player.hasEvaluations"
+            [class.is-bot]="player.isBot">
+
+            <!-- Player Info -->
+            <div class="player-info">
+              <div class="player-name">
+                {{ player.name }}
+                <span *ngIf="player.isBot" class="bot-badge">BOT</span>
+              </div>
+
+              <div class="player-details">
+                <span class="slot">Slot {{ player.slot }}</span>
+                <span class="ping" *ngIf="!player.isBot">{{ player.ping }}ms</span>
+                <span class="state">{{ player.state }}</span>
+              </div>
+            </div>
+
+            <!-- Evaluation Stats -->
+            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+              <div class="rating-display">
+                <span
+                  class="rating-value"
+                  [style.color]="getRatingColor(player.stats.averageRating)">
+                  {{ formatRating(player.stats.averageRating) }}/5
+                </span>
+                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
+              </div>
+
+              <div class="tags-preview" *ngIf="player.stats.allTags.length > 0">
+                <span
+                  *ngFor="let tag of player.stats.allTags.slice(0, 3)"
+                  class="tag-mini">
+                  #{{ tag }}
+                </span>
+                <span *ngIf="player.stats.allTags.length > 3" class="more-tags">
+                  +{{ player.stats.allTags.length - 3 }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="player-actions">
+              <button
+                *ngIf="player.hasEvaluations"
+                class="details-btn"
+                (click)="showPlayerDetails(player)"
+                title="Ver avaliações">
+                📋 Detalhes
+              </button>
+
+              <button
+                *ngIf="!player.isBot"
+                class="evaluate-btn"
+                [disabled]="isLimitReached"
+                (click)="evaluatePlayer(player)"
+                [title]="isLimitReached ? 'Limite de avaliações atingido' : 'Avaliar jogador'">
+                ⭐ Avaliar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <ng-template #noEvals>
-        <p>Nenhuma avaliação encontrada para este jogador.</p>
-    </ng-template>
-    <button class="modal-close-btn" (click)="closeDetailModal()">Fechar</button>
+
+    <!-- Summary -->
+    <div class="match-summary" *ngIf="matchData.evaluationsSummary.totalFound > 0">
+      <h4>📊 Resumo das Avaliações</h4>
+      <p>
+        Encontradas <strong>{{ matchData.evaluationsSummary.totalFound }}</strong> avaliações
+        para <strong>{{ matchData.evaluationsSummary.playersWithEvaluations }}</strong> jogadores:
+        <em>{{ matchData.evaluationsSummary.playerNames.join(', ') }}</em>
+      </p>
+    </div>
   </div>
 </div>
+
+<!-- Modal de Detalhes -->
+<div class="modal-overlay" *ngIf="isDetailModalVisible" (click)="closeDetailModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Avaliações de {{ selectedPlayerForDetails?.name }}</h3>
+      <button class="close-btn" (click)="closeDetailModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="selectedPlayerForDetails?.stats" class="player-summary">
+        <div class="summary-stat">
+          <span class="label">Nota Média:</span>
+          <span
+            class="value"
+            [style.color]="getRatingColor(selectedPlayerForDetails!.stats!.averageRating)">
+            {{ formatRating(selectedPlayerForDetails!.stats!.averageRating) }}/5
+          </span>
+        </div>
+        <div class="summary-stat">
+          <span class="label">Total de Avaliações:</span>
+          <span class="value">{{ selectedPlayerForDetails!.stats!.totalEvaluations }}</span>
+        </div>
+        <div class="summary-stat" *ngIf="selectedPlayerForDetails!.stats!.mostCommonRole">
+          <span class="label">Função Mais Comum:</span>
+          <span class="value">{{ selectedPlayerForDetails!.stats!.mostCommonRole.toUpperCase() }}</span>
+        </div>
+      </div>
+
+      <div class="evaluations-list">
+        <div
+          *ngFor="let evaluation of selectedPlayerForDetails?.evaluations"
+          class="evaluation-item">
+
+          <div class="evaluation-header">
+            <app-rating-display [rating]="evaluation.rating"></app-rating-display>
+            <span class="evaluation-date">{{ formatDate(evaluation.created_at) }}</span>
+          </div>
+
+          <div class="evaluation-context" *ngIf="evaluation.hero_id || evaluation.role">
+            <span *ngIf="evaluation.hero_id">
+              <img
+                [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
+                class="hero-icon-tiny"
+                [alt]="gameDataService.getHeroById(evaluation.hero_id)?.localized_name">
+              {{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}
+            </span>
+            <span *ngIf="evaluation.role" class="role-info">
+              como {{ evaluation.role.toUpperCase() }}
+            </span>
+          </div>
+
+          <p *ngIf="evaluation.notes" class="evaluation-notes">{{ evaluation.notes }}</p>
+
+          <div class="evaluation-tags" *ngIf="evaluation.tags && evaluation.tags.length > 0">
+            <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Avaliação -->
+<app-evaluation-form
+  *ngIf="isEvaluationModalVisible"
+  [evaluationData]="selectedPlayerForEvaluation"
+  (closeModal)="closeEvaluationModal()"
+  (evaluationSaved)="onEvaluationSaved()"
+  (evaluationError)="onEvaluationError($event)">
+</app-evaluation-form>

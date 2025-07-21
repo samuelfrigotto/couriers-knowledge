@@ -30,4 +30,6 @@ router.get('/evaluations/tags', authMiddleware.verifyToken, evaluationController
 // Rota para buscar quantas avaliações um usuário fez
 router.get('/evaluations/status', authMiddleware.verifyToken, evaluationController.getEvaluationStatus);
 
+router.get('/evaluations/by-name/:playerName', authMiddleware.verifyToken, evaluationController.getEvaluationsByPlayerName);
+
 module.exports = router;
