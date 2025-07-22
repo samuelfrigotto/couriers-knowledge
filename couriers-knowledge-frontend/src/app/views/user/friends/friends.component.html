@@ -68,9 +68,17 @@
     </div>
 
     <div *ngIf="activeTab === 'all-friends'" class="tab-content">
-      <div *ngIf="friends.total_friends === 0" class="empty-state">
-        <h3>Nenhum amigo encontrado</h3>
-        <p>Verifique se seu perfil Steam não está privado.</p>
+      <div *ngIf="friends.total_friends === 0">
+          <app-empty-state
+            [config]="{
+              type: 'friends',
+              title: 'Lista de amigos vazia',
+              subtitle: 'Verifique se seu perfil Steam não está privado ou se você possui amigos adicionados',
+              actionText: 'Atualizar Lista',
+              showAction: true
+            }"
+            (emptyStateAction)="refreshFriends()">
+          </app-empty-state>
       </div>
       <div *ngIf="allFriends$ | async as allFriends" class="friends-grid">
         <div *ngFor="let friend of allFriends; trackBy: trackByFriend" class="friend-card" [class.using-app]="friend.status === 'using-app'">

@@ -14,11 +14,13 @@ import { EvaluationService } from '../../../core/evaluation.service';
 // Componentes e Pipes
 import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
 import { FilterByPropertyPipe } from '../../../pipes/filter-by-property.pipe';
+import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
+
 
 @Component({
   selector: 'app-recent-matches',
   standalone: true,
-  imports: [CommonModule, EvaluationFormComponent, DecimalPipe, DatePipe, FilterByPropertyPipe],
+  imports: [CommonModule, EvaluationFormComponent, DecimalPipe, DatePipe, FilterByPropertyPipe, EmptyStateComponent],
   templateUrl: './recent-matches.component.html',
   styleUrls: ['./recent-matches.component.css']
 })
@@ -173,5 +175,14 @@ export class RecentMatchesComponent {
 
     // Abre em nova aba
     window.open(stratzUrl, '_blank', 'noopener,noreferrer');
+  }
+
+
+  onEmptyStateAction(event: any): void {
+    if (event.detail.type === 'matches') {
+      // Redirecionar para configuração do GSI ou tutorial
+      console.log('Ação do empty state:', event.detail);
+      // this.router.navigate(['/gsi-setup']);
+    }
   }
 }

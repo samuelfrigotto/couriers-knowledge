@@ -21,6 +21,8 @@ import {
   startWith,
 } from 'rxjs/operators';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
+import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,6 +34,7 @@ import { RatingDisplayComponent } from '../../../components/rating-display/ratin
     DecimalPipe,
     DatePipe,
     RatingDisplayComponent,
+    EmptyStateComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -41,6 +44,7 @@ export class DashboardComponent implements OnInit {
   public gameDataService = inject(GameDataService);
   private toastr = inject(ToastrService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   private allEvaluations: any[] = [];
   public displayedEvaluations: any[] = [];
@@ -441,5 +445,9 @@ export class DashboardComponent implements OnInit {
   // ✅ NOVO MÉTODO: Fechar modal de upgrade
   closeUpgradeModal(): void {
     this.showUpgradeMessage = false;
+  }
+
+  goToRecentMatches(): void {
+    this.router.navigate(['/recent-matches']);
   }
 }

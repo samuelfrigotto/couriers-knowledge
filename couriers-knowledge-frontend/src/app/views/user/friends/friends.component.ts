@@ -8,6 +8,8 @@ import { ToastrService } from 'ngx-toastr';
 
 import { FriendsService, FriendStatus, FriendsStatusResponse } from '../../../core/friends.service';
 import { SteamChatService } from '../../../core/steam-chat.service';
+import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
+
 
 // ✅ NOVO: Interface para o amigo unificado
 interface UnifiedFriendStatus extends FriendStatus {
@@ -18,7 +20,7 @@ interface UnifiedFriendStatus extends FriendStatus {
 @Component({
   selector: 'app-friends',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EmptyStateComponent],
   templateUrl: './friends.component.html',
   styleUrls: ['./friends.component.css']
 })

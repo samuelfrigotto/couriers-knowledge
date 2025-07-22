@@ -153,7 +153,31 @@
   <!-- Lista de partidas (mantida igual) -->
   <ng-template #matchList>
     <h1>Partidas Recentes</h1>
-    <div *ngIf="isLoading$ | async" class="loading-message">Carregando histórico de partidas...</div>
+    <!-- Estado de carregamento -->
+  <div *ngIf="isLoading$ | async">
+    <app-empty-state
+      [config]="{
+        type: 'matches',
+        title: 'Carregando suas partidas...',
+        subtitle: 'Buscando seu histórico de partidas recentes',
+        showAction: false
+      }">
+    </app-empty-state>
+  </div>
+
+  <!-- Estado vazio quando não há partidas -->
+  <div *ngIf="(matches$ | async)?.length === 0 && !(isLoading$ | async)">
+    <app-empty-state
+      [config]="{
+        type: 'matches',
+        title: 'Nenhuma partida encontrada',
+        subtitle: 'Suas partidas aparecerão aqui quando você começar a jogar',
+        actionText: 'Configurar GSI',
+        showAction: true
+      }"
+      (emptyStateAction)="onEmptyStateAction($event)">
+    </app-empty-state>
+  </div>
 
     <div class="match-list-container" *ngIf="matches$ | async as matches">
       <div *ngIf="matches.length > 0" class="match-row-header">

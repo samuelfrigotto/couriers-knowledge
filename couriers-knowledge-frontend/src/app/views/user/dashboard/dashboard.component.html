@@ -234,14 +234,29 @@
 
   <!-- Estados de carregamento e sem dados -->
   <div *ngIf="isLoading" class="loading-message">
-    <p>Carregando avaliações...</p>
+    <app-empty-state
+      [config]="{
+        type: 'evaluations',
+        title: 'Carregando avaliações...',
+        subtitle: 'Buscando suas avaliações mais recentes',
+        showAction: false
+      }">
+    </app-empty-state>
   </div>
-  <div
-    *ngIf="!isLoading && displayedEvaluations.length === 0"
-    class="no-evaluations"
-  >
-    <p>Nenhuma avaliação encontrada com os filtros atuais.</p>
+
+  <div *ngIf="!isLoading && displayedEvaluations.length === 0">
+    <app-empty-state
+      [config]="{
+        type: 'evaluations',
+        title: 'Nenhuma avaliação encontrada',
+        subtitle: 'Comece avaliando jogadores nas suas partidas para construir sua base de conhecimento',
+        actionText: 'Ver Partidas Recentes',
+        showAction: true
+      }"
+      (emptyStateAction)="goToRecentMatches()">
+    </app-empty-state>
   </div>
+
 
   <!-- Lista de avaliações -->
   <div
