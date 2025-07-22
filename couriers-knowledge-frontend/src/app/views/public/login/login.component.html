@@ -1,10 +1,25 @@
+<!-- login.component.html - VERSÃO ATUALIZADA -->
 <div class="login-container">
   <div class="login-box">
-    <h1>Courier's Knowledge</h1>
-    <p>Suas anotações sobre cada jogador, em todo lugar.</p>
+    <!-- Logo principal com animação sutil -->
+    <div class="logo-container">
+      <img src="../../../../assets/images/bege-com-legenda.png"
+           alt="Courier's Knowledge"
+           class="login-logo">
+    </div>
+
+    <!-- Subtitle mantido -->
+    <p class="subtitle">Sua base de conhecimento de Dota 2 reunida em um só lugar!</p>
+
+    <!-- Botão Steam com melhor alinhamento -->
     <button class="steam-login-button" (click)="login()">
-      <img src="assets/steam-logo.svg" alt="Steam Logo" />
+      <img src="assets/steam-logo.svg" alt="Steam Logo" class="steam-icon" />
       <span>Login com Steam</span>
     </button>
+
+    <!-- Footer com créditos -->
+    <div class="login-footer">
+      <small>Os segredos dos jogadores, repassados de entregador para entregador.</small>
+    </div>
   </div>
 </div>

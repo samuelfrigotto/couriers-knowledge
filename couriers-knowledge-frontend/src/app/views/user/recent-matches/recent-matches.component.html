@@ -1,7 +1,10 @@
 <div class="matches-container">
   <div *ngIf="selectedMatch; else matchList" class="details-view">
+    <!-- Header modernizado -->
     <div class="details-header">
-      <button class="back-button" (click)="backToMatches()">&larr; Voltar para Partidas</button>
+      <button class="back-button" (click)="backToMatches()">
+        ← Voltar para Partidas
+      </button>
       <div class="details-title">
         <h2>
           {{ selectedMatch.radiant_win ? 'Vitória do Time Iluminado' : 'Vitória do Time Temido' }}
@@ -18,9 +21,17 @@
     <div *ngIf="isDetailsLoading" class="loading-message">Carregando detalhes...</div>
 
     <div *ngIf="!isDetailsLoading" class="teams-container">
+      <!-- Time Iluminado (Radiant) -->
       <div class="team-column">
+        <div class="team-header">
+          <h3 class="team-title">Time Iluminado</h3>
+        </div>
+
         <div *ngFor="let player of selectedMatch.players | filter:true:'is_radiant'" class="player-detail-card">
-          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)" class="hero-portrait-detail">
+          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+               class="hero-portrait-detail"
+               [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
+
           <div class="player-info-detail">
             <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
             <div class="kda">
@@ -28,20 +39,52 @@
               <span>{{ player.deaths }}</span> /
               <span>{{ player.assists }}</span>
             </div>
+            <div class="player-gold">
+              <span class="gold-value">{{ player.net_worth | number }}</span>
+              <span class="gold-label">Gold</span>
+            </div>
           </div>
-          <div class="items-grid">
-            <img *ngFor="let itemId of player.items" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
-            <img *ngFor="let itemId of player.backpack" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon backpack" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+
+          <!-- Container dos itens -->
+          <div class="items-container">
+            <!-- Inventário principal (6 itens em linha) -->
+            <div class="items-grid">
+              <img *ngFor="let itemId of player.items"
+                   [src]="gameDataService.getItemImageUrl(itemId)"
+                   class="item-icon"
+                   [class.empty-slot]="itemId === 0"
+                   [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            </div>
+
+            <!-- Mochila (3 itens em preto e branco) -->
+            <div class="backpack-grid">
+              <img *ngFor="let itemId of player.backpack"
+                   [src]="gameDataService.getItemImageUrl(itemId)"
+                   class="item-icon"
+                   [class.empty-slot]="itemId === 0"
+                   [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            </div>
           </div>
-          <button class="evaluate-button" [disabled]="player.is_already_evaluated || !player.steam_id_64" (click)="evaluatePlayer(player)">
+
+          <button class="evaluate-button"
+                  [disabled]="player.is_already_evaluated || !player.steam_id_64"
+                  (click)="evaluatePlayer(player)">
             {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
           </button>
         </div>
       </div>
 
+      <!-- Time Temido (Dire) -->
       <div class="team-column">
+        <div class="team-header">
+          <h3 class="team-title">Time Temido</h3>
+        </div>
+
         <div *ngFor="let player of selectedMatch.players | filter:false:'is_radiant'" class="player-detail-card">
-          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)" class="hero-portrait-detail">
+          <img [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+               class="hero-portrait-detail"
+               [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
+
           <div class="player-info-detail">
             <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
             <div class="kda">
@@ -49,19 +92,65 @@
               <span>{{ player.deaths }}</span> /
               <span>{{ player.assists }}</span>
             </div>
+            <div class="player-gold">
+              <span class="gold-value">{{ player.net_worth | number }}</span>
+              <span class="gold-label">Gold</span>
+            </div>
           </div>
-          <div class="items-grid">
-            <img *ngFor="let itemId of player.items" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
-            <img *ngFor="let itemId of player.backpack" [src]="gameDataService.getItemImageUrl(itemId)" class="item-icon backpack" [class.empty-slot]="itemId === 0" [alt]="gameDataService.getItemById(itemId)?.localized_name">
+
+          <!-- Container dos itens -->
+          <div class="items-container">
+            <!-- Inventário principal (6 itens em linha) -->
+            <div class="items-grid">
+              <img *ngFor="let itemId of player.items"
+                   [src]="gameDataService.getItemImageUrl(itemId)"
+                   class="item-icon"
+                   [class.empty-slot]="itemId === 0"
+                   [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            </div>
+
+            <!-- Mochila (3 itens em preto e branco) -->
+            <div class="backpack-grid">
+              <img *ngFor="let itemId of player.backpack"
+                   [src]="gameDataService.getItemImageUrl(itemId)"
+                   class="item-icon"
+                   [class.empty-slot]="itemId === 0"
+                   [alt]="gameDataService.getItemById(itemId)?.localized_name">
+            </div>
           </div>
-          <button class="evaluate-button" [disabled]="player.is_already_evaluated || !player.steam_id_64" (click)="evaluatePlayer(player)">
+
+          <button class="evaluate-button"
+                  [disabled]="player.is_already_evaluated || !player.steam_id_64"
+                  (click)="evaluatePlayer(player)">
             {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
           </button>
         </div>
       </div>
     </div>
+
+    <div class="advanced-analysis-card" (click)="openStratzAnalysis(selectedMatch.match_id)">
+      <div class="analysis-content">
+        <div class="analysis-icon">
+          📊
+        </div>
+        <div class="analysis-text">
+          <h4>Análise Avançada da Partida</h4>
+          <p>Clique aqui para ver estatísticas detalhadas, gráficos de economia, timeline e muito mais no Stratz</p>
+        </div>
+        <div class="analysis-arrow">
+          →
+        </div>
+      </div>
+      <div class="analysis-footer">
+        <span class="powered-by">Powered by Stratz</span>
+        <span class="match-id">Match ID: {{ selectedMatch.match_id }}</span>
+      </div>
+    </div>
+
+
   </div>
 
+  <!-- Lista de partidas (mantida igual) -->
   <ng-template #matchList>
     <h1>Partidas Recentes</h1>
     <div *ngIf="isLoading$ | async" class="loading-message">Carregando histórico de partidas...</div>
@@ -78,7 +167,9 @@
            [ngClass]="{ 'win': match.user_won, 'loss': !match.user_won }"
            (click)="viewMatchDetails(match.match_id)">
         <div class="match-player-col">
-          <img [src]="gameDataService.getHeroImageUrl(match.user_hero_id)" class="hero-icon-medium" [alt]="gameDataService.getHeroById(match.user_hero_id)?.localized_name">
+          <img [src]="gameDataService.getHeroImageUrl(match.user_hero_id)"
+               class="hero-icon-medium"
+               [alt]="gameDataService.getHeroById(match.user_hero_id)?.localized_name">
           <span class="hero-name">{{ gameDataService.getHeroById(match.user_hero_id)?.localized_name }}</span>
         </div>
         <div class="match-result-col">

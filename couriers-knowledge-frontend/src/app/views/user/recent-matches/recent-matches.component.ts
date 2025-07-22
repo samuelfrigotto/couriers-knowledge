@@ -1,5 +1,4 @@
 // Arquivo: couriers-knowledge-frontend/src/app/views/user/recent-matches/recent-matches.component.ts
-// SUBSTITUIR o arquivo completo por esta versão
 
 import { Component, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
@@ -10,7 +9,7 @@ import { ToastrService } from 'ngx-toastr';
 import { SteamService } from '../../../core/steam.service';
 import { GameDataService } from '../../../core/game-data.service';
 import { MatchDataService } from '../../../core/match-data.service';
-import { EvaluationService } from '../../../core/evaluation.service'; // ✅ ADICIONAR
+import { EvaluationService } from '../../../core/evaluation.service';
 
 // Componentes e Pipes
 import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
@@ -29,7 +28,7 @@ export class RecentMatchesComponent {
   private toastr = inject(ToastrService);
   private steamService = inject(SteamService);
   private matchDataService = inject(MatchDataService);
-  private evaluationService = inject(EvaluationService); // ✅ ADICIONAR
+  private evaluationService = inject(EvaluationService);
 
   // --- ESTADO REATIVO PARA A LISTA ---
   matches$: Observable<any[]>;
@@ -43,7 +42,7 @@ export class RecentMatchesComponent {
   isFormVisible = false;
   evaluationInitialData: any = null;
 
-  // ✅ ADICIONAR: Controle de limite de avaliações
+  // --- CONTROLE DE LIMITE DE AVALIAÇÕES ---
   public evaluationStatus: any = null;
   public isLimitReached = false;
 
@@ -51,11 +50,13 @@ export class RecentMatchesComponent {
     this.matches$ = this.matchDataService.matches$;
     this.isLoading$ = this.matchDataService.isLoading$;
 
-    // ✅ ADICIONAR: Verificar limite ao inicializar
+    // Verificar limite ao inicializar
     this.checkEvaluationLimit();
   }
 
-  // ✅ NOVO MÉTODO: Verificar limite de avaliações
+  /**
+   * Verifica o limite de avaliações do usuário
+   */
   private checkEvaluationLimit(): void {
     this.evaluationService.getEvaluationStatus().subscribe({
       next: (status) => {
@@ -68,6 +69,9 @@ export class RecentMatchesComponent {
     });
   }
 
+  /**
+   * Visualiza os detalhes de uma partida específica
+   */
   viewMatchDetails(matchId: string): void {
     this.isDetailsLoading = true;
     this.selectedMatch = { match_id: matchId };
@@ -79,67 +83,95 @@ export class RecentMatchesComponent {
       error: (err) => {
         this.isDetailsLoading = false;
         this.selectedMatch = null;
-        this.toastr.error('Não foi possível carregar os detalhes desta partida.', 'Erro de API');
+        this.toastr.error('Não foi possível carregar os detalhes desta partida.');
+        console.error('Erro ao carregar detalhes:', err);
       }
     });
   }
 
+  /**
+   * Volta para a lista de partidas
+   */
   backToMatches(): void {
     this.selectedMatch = null;
   }
 
-  // ✅ MODIFICAR: Adicionar verificação de limite
+  /**
+   * Abre o formulário de avaliação para um jogador específico
+   */
   evaluatePlayer(player: any): void {
+    if (this.isLimitReached) {
+      this.toastr.warning('Você atingiu o limite de avaliações. Considere assinar o Premium para avaliar mais jogadores.');
+      return;
+    }
+
+    if (!player.steam_id_64) {
+      this.toastr.error('Não é possível avaliar jogadores anônimos.');
+      return;
+    }
+
     if (player.is_already_evaluated) {
       this.toastr.info('Você já avaliou este jogador nesta partida.');
       return;
     }
-    if (!player.steam_id_64) {
-      this.toastr.warning('Não é possível avaliar um jogador anônimo.');
-      return;
-    }
 
-    // ✅ NOVO: Verificar limite antes de abrir formulário
-    if (this.isLimitReached) {
-      this.toastr.error(
-        'Você atingiu o limite de avaliações do plano gratuito. Faça upgrade para Premium para avaliações ilimitadas!',
-        'Limite Atingido',
-        {
-          timeOut: 10000,
-          closeButton: true
-        }
-      );
-      return;
-    }
-
+    // Configurar dados iniciais para o formulário
     this.evaluationInitialData = {
-      targetSteamId: player.steam_id_64,
+      playerName: player.personaname || 'Jogador Anônimo',
+      steamId: player.steam_id_64,
       matchId: this.selectedMatch.match_id,
-      hero_id: player.hero_id
+      heroId: player.hero_id
     };
+
     this.isFormVisible = true;
   }
 
+  /**
+   * Fecha o formulário de avaliação
+   */
   closeForm(): void {
     this.isFormVisible = false;
     this.evaluationInitialData = null;
   }
 
-  // ✅ MODIFICAR: Atualizar limite após salvar
+  /**
+   * Callback executado quando uma avaliação é salva com sucesso
+   */
   onEvaluationSaved(): void {
+    this.toastr.success('Avaliação salva com sucesso!');
     this.closeForm();
-    if (this.selectedMatch) {
-      this.viewMatchDetails(this.selectedMatch.match_id);
+
+    // Atualizar o status do jogador como avaliado
+    if (this.selectedMatch && this.evaluationInitialData) {
+      const player = this.selectedMatch.players.find((p: any) =>
+        p.steam_id_64 === this.evaluationInitialData.steamId
+      );
+      if (player) {
+        player.is_already_evaluated = true;
+      }
     }
-    // ✅ ADICIONAR: Atualizar status do limite
+
+    // Recarregar status de limite
     this.checkEvaluationLimit();
   }
 
-  // ✅ NOVO MÉTODO: Tratar erros do formulário
+  /**
+   * Callback executado quando ocorre erro ao salvar avaliação
+   */
   onEvaluationError(error: any): void {
-    // Este método será chamado se o formulário emitir erro
-    if (error.status === 403) {
-      this.checkEvaluationLimit(); // Atualizar status
-    }
+    this.toastr.error(error.message || 'Erro ao salvar avaliação.');
+    console.error('Erro na avaliação:', error);
+  }
+
+  /**
+   * Abre a análise da partida no Stratz
+   * @param matchId ID da partida
+   */
+  openStratzAnalysis(matchId: string): void {
+    // URL do Stratz para análise detalhada da partida
+    const stratzUrl = `https://stratz.com/matches/${matchId}`;
+
+    // Abre em nova aba
+    window.open(stratzUrl, '_blank', 'noopener,noreferrer');
   }
 }
