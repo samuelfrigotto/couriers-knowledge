@@ -330,8 +330,8 @@
     <div class="modal-body">
       <app-evaluation-form
         [evaluationData]="selectedPlayerForEvaluation"
-        (evaluationSaved)="onEvaluationSaved()"
-        (closeModal)="closeEvaluationModal()">
+        (formSubmitted)="onEvaluationSaved()"
+        (formClosed)="closeEvaluationModal()">
       </app-evaluation-form>
     </div>
   </div>

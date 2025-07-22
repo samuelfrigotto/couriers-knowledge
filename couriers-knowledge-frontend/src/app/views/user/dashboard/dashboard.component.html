@@ -1,11 +1,11 @@
-<!-- frontend/src/app/views/user/dashboard/dashboard.component.html -->
-<!-- VERSÃO CORRIGIDA - Estrutura HTML arrumada -->
+<!-- DASHBOARD.COMPONENT.HTML COMPLETO COM IMPORT/EXPORT -->
 
 <div class="dashboard-container">
-  <!-- Header principal com filtro sempre visível -->
+  <!-- Header principal -->
   <div class="dashboard-header">
     <div class="header-left">
       <h1>Minhas Avaliações</h1>
+
       <!-- Filtro de jogador sempre visível -->
       <div class="permanent-search-filter">
         <div class="search-input-wrapper">
@@ -26,23 +26,16 @@
             ×
           </button>
         </div>
-        <!-- ✅ CORREÇÃO: Adicionadas verificações de segurança -->
+
+        <!-- Resultados da busca -->
         <div
-          *ngIf="
-            permanentSearchControl.value &&
-            filteredBySearch &&
-            filteredBySearch.length > 0
-          "
+          *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length > 0"
           class="search-results-count"
         >
           {{ filteredBySearch.length }} resultado(s) encontrado(s)
         </div>
         <div
-          *ngIf="
-            permanentSearchControl.value &&
-            filteredBySearch &&
-            filteredBySearch.length === 0
-          "
+          *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length === 0"
           class="search-no-results"
         >
           Nenhum jogador encontrado
@@ -51,6 +44,60 @@
     </div>
 
     <div class="header-actions">
+      <!-- Botões de Import/Export -->
+      <div class="import-export-actions">
+        <button
+          class="export-btn"
+          (click)="openExportModal()"
+          title="Exportar avaliações"
+        >
+          <i class="icon">📤</i>
+          Exportar
+        </button>
+
+        <button
+          class="import-btn"
+          (click)="openImportModal()"
+          title="Importar avaliações"
+        >
+          <i class="icon">📥</i>
+          Importar
+        </button>
+      </div>
+
+      <!-- Modo de seleção -->
+      <button
+        class="selection-toggle-btn"
+        [class.active]="isSelectionMode"
+        (click)="toggleSelectionMode()"
+        title="Ativar/desativar modo de seleção"
+      >
+        <i class="icon">☑️</i>
+        {{ isSelectionMode ? 'Sair da Seleção' : 'Selecionar' }}
+      </button>
+
+      <!-- Controles de seleção múltipla -->
+      <div *ngIf="isSelectionMode" class="selection-controls">
+        <span class="selection-count">
+          {{ getSelectedCount() }}/{{ getTotalDisplayed() }} selecionados
+        </span>
+        <button
+          class="select-all-btn"
+          (click)="selectAllEvaluations()"
+          [disabled]="getSelectedCount() === getTotalDisplayed()"
+        >
+          Todos
+        </button>
+        <button
+          class="clear-selection-btn"
+          (click)="clearAllSelections()"
+          [disabled]="getSelectedCount() === 0"
+        >
+          Limpar
+        </button>
+      </div>
+
+      <!-- Botão de atualizar nomes -->
       <button
         class="refresh-button"
         (click)="refreshNames()"
@@ -59,7 +106,7 @@
         {{ isRefreshing ? "Atualizando..." : "Atualizar Nomes" }}
       </button>
 
-      <!-- ✅ BOTÃO COM VERIFICAÇÃO DE LIMITE -->
+      <!-- Botão de nova avaliação -->
       <div class="new-evaluation-button-wrapper">
         <button
           class="new-evaluation-btn"
@@ -75,283 +122,438 @@
           + Nova Avaliação
         </button>
 
-        <!-- ✅ INDICADOR DE LIMITE -->
+        <!-- Indicador de limite -->
         <div *ngIf="evaluationStatus" class="evaluation-counter">
           <span [class.warning]="isLimitReached">
-            {{ evaluationStatus.currentCount
-            }}{{ evaluationStatus.limit ? "/" + evaluationStatus.limit : "" }}
-            <small *ngIf="!evaluationStatus.isPremium">avaliações</small>
-            <small *ngIf="evaluationStatus.isPremium" class="premium-badge"
-              >Premium</small
-            >
+            {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
+          </span>
+          <span *ngIf="!evaluationStatus.isPremium" class="plan-label">
+            ({{ evaluationStatus.isPremium ? 'Premium' : 'Gratuito' }})
           </span>
         </div>
       </div>
     </div>
   </div>
-  <!-- ✅ CORREÇÃO: Fechar dashboard-header aqui -->
 
-  <!-- Header de filtros existente (mantido) -->
-  <div class="list-header" [formGroup]="filterForm" *ngIf="!isLoading">
-    <div class="col-player header-col">
-      <div
-        class="header-title"
-        (click)="toggleFilter('playerName', $event)"
-        [class.active]="activeFilter === 'playerName'"
-      >
-        Jogador <span>▼</span>
-      </div>
-      <div
-        class="filter-popover"
-        *ngIf="activeFilter === 'playerName'"
-        (click)="$event.stopPropagation()"
-      >
-        <input
-          type="text"
-          placeholder="Buscar por nome..."
-          formControlName="playerName"
-          autofocus
-        />
-      </div>
+  <!-- Lista de avaliações -->
+  <div class="evaluations-content">
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Carregando suas avaliações...</p>
     </div>
 
-    <div class="col-hero header-col">
-      <div
-        class="header-title"
-        (click)="toggleFilter('heroId', $event)"
-        [class.active]="activeFilter === 'heroId'"
-      >
-        Herói / Função <span>▼</span>
-      </div>
-      <div
-        class="filter-popover"
-        *ngIf="activeFilter === 'heroId'"
-        (click)="$event.stopPropagation()"
-      >
-        <select formControlName="heroId">
-          <option [ngValue]="null">Todos os Heróis</option>
-          <option *ngFor="let hero of heroes$ | async" [ngValue]="hero.id">
-            {{ hero.localized_name }}
-          </option>
-        </select>
-
-        <select formControlName="role">
-          <option [ngValue]="null">Todas as Funções</option>
-          <option *ngFor="let role of roles" [value]="role">
-            {{ role.toUpperCase() }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <div class="col-notes header-col">
-      <div
-        class="header-title"
-        (click)="toggleFilter('notes', $event)"
-        [class.active]="activeFilter === 'notes'"
-      >
-        Anotação <span>▼</span>
-      </div>
-      <div
-        class="filter-popover"
-        *ngIf="activeFilter === 'notes'"
-        (click)="$event.stopPropagation()"
-      >
-        <input
-          type="text"
-          placeholder="Buscar nas anotações..."
-          formControlName="notes"
-          autofocus
-        />
-      </div>
-    </div>
-    <div class="col-tags header-col">
-      <div
-        class="header-title"
-        (click)="toggleFilter('tags', $event)"
-        [class.active]="activeFilter === 'tags'"
-      >
-        Tags <span>▼</span>
-      </div>
-      <div
-        class="filter-popover"
-        [class.align-right]="true"
-        *ngIf="activeFilter === 'tags'"
-        (click)="$event.stopPropagation()"
-      >
-        <input
-          type="text"
-          placeholder="Buscar por tag..."
-          formControlName="tags"
-          autofocus
-        />
-      </div>
-    </div>
-
-    <div class="col-rating header-col">
-      <div
-        class="header-title"
-        (click)="toggleFilter('rating', $event)"
-        [class.active]="activeFilter === 'rating'"
-      >
-        Nota <span>▼</span>
-      </div>
-      <div
-        class="filter-popover"
-        [class.align-right]="true"
-        *ngIf="activeFilter === 'rating'"
-        (click)="$event.stopPropagation()"
-      >
-        <div class="rating-range-filter">
-          <label for="minRating">De:</label>
-          <select formControlName="minRating" id="minRating">
-            <option [ngValue]="null">1</option>
-            <option *ngFor="let n of [1, 2, 3, 4, 5]" [value]="n">
-              {{ n }}
-            </option>
-          </select>
-          <label for="maxRating">Até:</label>
-          <select formControlName="maxRating" id="maxRating">
-            <option [ngValue]="null">5</option>
-            <option *ngFor="let n of [1, 2, 3, 4, 5]" [value]="n">
-              {{ n }}
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-actions">
-      <button
-        class="clear-filters-button"
-        (click)="resetFilters()"
-        title="Limpar Filtros"
-      >
-        &times;
-      </button>
-    </div>
-  </div>
-
-  <!-- Estados de carregamento e sem dados -->
-  <div *ngIf="isLoading" class="loading-message">
+    <!-- Lista vazia -->
     <app-empty-state
-      [config]="{
-        type: 'evaluations',
-        title: 'Carregando avaliações...',
-        subtitle: 'Buscando suas avaliações mais recentes',
-        showAction: false
-      }">
-    </app-empty-state>
-  </div>
-
-  <div *ngIf="!isLoading && displayedEvaluations.length === 0">
-    <app-empty-state
+      *ngIf="!isLoading && displayedEvaluations.length === 0"
       [config]="{
         type: 'evaluations',
         title: 'Nenhuma avaliação encontrada',
-        subtitle: 'Comece avaliando jogadores nas suas partidas para construir sua base de conhecimento',
-        actionText: 'Ver Partidas Recentes',
-        showAction: true
+        subtitle: 'Comece avaliando seus companheiros de equipe para acompanhar o desempenho deles!',
+        actionText: isLimitReached ? '' : 'Criar Primeira Avaliação',
+        showAction: !isLimitReached
       }"
-      (emptyStateAction)="goToRecentMatches()">
+      (actionClick)="openFormModal()">
     </app-empty-state>
-  </div>
 
-
-  <!-- Lista de avaliações -->
-  <div
-    class="evaluation-list-body"
-    *ngIf="!isLoading && displayedEvaluations.length > 0"
-  >
-    <div *ngFor="let evaluation of displayedEvaluations" class="list-item">
-      <div class="col-player" data-label="Jogador:">
-        <div class="player-info-wrapper">
-          <span class="player-name">{{
-            evaluation.targetPlayerName || "Jogador Desconhecido"
-          }}</span>
-          <small class="match-id" *ngIf="evaluation.match_id"
-            >Partida: {{ evaluation.match_id }}</small
-          >
+    <!-- Lista com dados -->
+    <div *ngIf="!isLoading && displayedEvaluations.length > 0" class="evaluations-list">
+      <!-- Cabeçalho da lista -->
+      <div class="list-header">
+        <div class="header-col col-selection" *ngIf="isSelectionMode">
+          <!-- Empty for checkbox column -->
+        </div>
+        <div class="header-col col-player">
+          <div class="header-title">
+            Jogador
+          </div>
+        </div>
+        <div class="header-col col-hero">
+          <div class="header-title">
+            Herói & Função
+          </div>
+        </div>
+        <div class="header-col col-rating">
+          <div class="header-title">
+            Avaliação
+          </div>
+        </div>
+        <div class="header-col col-notes">
+          <div class="header-title">
+            Anotações
+          </div>
+        </div>
+        <div class="header-col col-tags">
+          <div class="header-title">
+            Tags
+          </div>
+        </div>
+        <div class="header-col col-actions">
+          <!-- Actions column -->
         </div>
       </div>
-      <div class="col-hero" data-label="Herói/Função:">
-        <div class="hero-role-wrapper">
-          <div *ngIf="evaluation.hero_id" class="hero-info">
-            <img
-              [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
-              class="hero-icon"
-            />
-            <span>{{
-              gameDataService.getHeroById(evaluation.hero_id)?.localized_name
-            }}</span>
+
+      <!-- Items da lista -->
+      <div
+        *ngFor="let evaluation of displayedEvaluations; trackBy: trackByEvaluationId"
+        class="list-item"
+        [class.selected]="isEvaluationSelected(evaluation.id)"
+      >
+        <!-- Checkbox de seleção -->
+        <div *ngIf="isSelectionMode" class="col-selection">
+          <input
+            type="checkbox"
+            [checked]="isEvaluationSelected(evaluation.id)"
+            (change)="toggleEvaluationSelection(evaluation.id)"
+            class="evaluation-checkbox"
+          >
+        </div>
+
+        <!-- Coluna do jogador -->
+        <div class="col-player" data-label="Jogador:">
+          <div class="player-info-wrapper">
+            <strong class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</strong>
+            <small *ngIf="evaluation.target_player_steam_id" class="steam-id">
+              ID: {{ evaluation.target_player_steam_id }}
+            </small>
+            <small *ngIf="evaluation.match_id" class="match-id">
+              Partida: {{ evaluation.match_id }}
+            </small>
           </div>
+        </div>
+
+        <!-- Coluna do herói -->
+        <div class="col-hero" data-label="Herói:">
+          <div class="hero-info">
+            <ng-container *ngIf="evaluation.hero_id; else noHero">
+              <img
+                [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
+                [alt]="gameDataService.getHeroById(evaluation.hero_id)?.localized_name"
+                class="hero-image"
+                loading="lazy"
+              >
+              <span class="hero-name">
+                {{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}
+              </span>
+            </ng-container>
+            <ng-template #noHero>
+              <span class="no-info">Herói não informado</span>
+            </ng-template>
+          </div>
+
           <div *ngIf="evaluation.role" class="role-badge">
-            {{ evaluation.role.toUpperCase() }}
-          </div>
-          <div *ngIf="!evaluation.hero_id && !evaluation.role" class="no-info">
-            -
+            {{ evaluation.role }}
           </div>
         </div>
-      </div>
-      <div class="col-notes" data-label="Anotação:">
-        <div class="notes-wrapper">
-          <p *ngIf="evaluation.notes" [innerHTML]="evaluation.notes"></p>
-          <p *ngIf="!evaluation.notes" class="no-info">Sem anotações</p>
+
+        <!-- Coluna da avaliação -->
+        <div class="col-rating" data-label="Nota:">
+          <app-rating-display [rating]="evaluation.rating" />
         </div>
-      </div>
-      <div class="col-tags" data-label="Tags:">
-        <div class="tags-wrapper">
-          <span *ngFor="let tag of evaluation.tags" class="tag-badge"
-            >#{{ tag }}</span
-          >
-          <span
-            *ngIf="!evaluation.tags || evaluation.tags.length === 0"
-            class="no-info"
-            >Sem tags</span
-          >
+
+        <!-- Coluna das anotações -->
+        <div class="col-notes" data-label="Anotações:">
+          <p *ngIf="evaluation.notes; else noNotes">
+            {{ evaluation.notes }}
+          </p>
+          <ng-template #noNotes>
+            <span class="no-info">Sem anotações</span>
+          </ng-template>
         </div>
-      </div>
-      <div class="col-rating" data-label="Nota:">
-        <app-rating-display [rating]="evaluation.rating"></app-rating-display>
-      </div>
-      <div class="col-actions">
-        <button
-          class="action-menu-trigger"
-          (click)="toggleActionMenu($event, evaluation.id)"
-        >
-          ⋮
-        </button>
-        <div class="action-popover" *ngIf="activeActionMenu === evaluation.id">
-          <button
-            class="popover-action-btn"
-            (click)="editEvaluation(evaluation)"
-          >
-            Editar
-          </button>
-          <button
-            class="popover-action-btn"
-            (click)="shareEvaluation(evaluation)"
-          >
-            Compartilhar
-          </button>
-          <button
-            class="popover-action-btn delete"
-            (click)="deleteEvaluation(evaluation.id)"
-          >
-            Excluir
-          </button>
+
+        <!-- Coluna das tags -->
+        <div class="col-tags" data-label="Tags:">
+          <div class="tags-wrapper">
+            <ng-container *ngIf="evaluation.tags && evaluation.tags.length > 0; else noTags">
+              <span
+                *ngFor="let tag of evaluation.tags"
+                class="tag-badge"
+              >
+                {{ tag }}
+              </span>
+            </ng-container>
+            <ng-template #noTags>
+              <span class="no-info">Sem tags</span>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Coluna das ações -->
+        <div class="col-actions">
+          <div class="action-menu-container">
+            <button
+              class="action-menu-btn"
+              (click)="toggleActionMenu($event, evaluation.id)"
+              [class.active]="activeActionMenu === evaluation.id"
+            >
+              ⋮
+            </button>
+
+            <div
+              *ngIf="activeActionMenu === evaluation.id"
+              class="action-popover"
+            >
+              <button (click)="openFormModal(evaluation)" class="action-item edit">
+                ✏️ Editar
+              </button>
+              <button (click)="shareEvaluation(evaluation)" class="action-item share">
+                📋 Copiar
+              </button>
+              <button (click)="deleteEvaluation(evaluation.id)" class="action-item delete">
+                🗑️ Excluir
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- ✅ MODAL DE AVALIAÇÃO -->
-  <app-evaluation-form
-    *ngIf="isFormModalVisible"
-    [evaluationData]="selectedEvaluation"
-    (closeModal)="onFormClosed()"
-    (evaluationSaved)="onFormSubmitted()"
-    (evaluationError)="onEvaluationError($event)"
-  >
-  </app-evaluation-form>
 </div>
+
+<!-- ===== MODAL DE EXPORTAÇÃO ===== -->
+<div *ngIf="showExportModal" class="modal-overlay" (click)="closeExportModal()">
+  <div class="modal export-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Exportar Avaliações</h3>
+      <button class="modal-close-btn" (click)="closeExportModal()">×</button>
+    </div>
+
+    <div class="modal-content">
+      <div class="export-options">
+        <label class="radio-option">
+          <input
+            type="radio"
+            name="exportType"
+            value="all"
+            [(ngModel)]="exportType"
+            [disabled]="isExporting"
+          >
+          <span class="radio-label">
+            <strong>Todas as avaliações</strong>
+            <small>({{ getTotalDisplayed() }} avaliações)</small>
+          </span>
+        </label>
+
+        <label
+          class="radio-option"
+          [class.disabled]="getSelectedCount() === 0"
+        >
+          <input
+            type="radio"
+            name="exportType"
+            value="selected"
+            [(ngModel)]="exportType"
+            [disabled]="isExporting || getSelectedCount() === 0"
+          >
+          <span class="radio-label">
+            <strong>Avaliações selecionadas</strong>
+            <small>({{ getSelectedCount() }} avaliações)</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="export-info">
+        <div class="info-box">
+          <h4>📋 O que será exportado:</h4>
+          <ul>
+            <li>Dados completos das avaliações</li>
+            <li>Informações dos jogadores</li>
+            <li>Tags e anotações</li>
+            <li>Código de compartilhamento</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        (click)="exportEvaluations()"
+        class="btn-primary"
+        [disabled]="isExporting || (exportType === 'selected' && getSelectedCount() === 0)"
+      >
+        <span *ngIf="!isExporting">Exportar</span>
+        <span *ngIf="isExporting">
+          <span class="spinner"></span>
+          Exportando...
+        </span>
+      </button>
+      <button
+        (click)="closeExportModal()"
+        class="btn-secondary"
+        [disabled]="isExporting"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DE IMPORTAÇÃO ===== -->
+<div *ngIf="showImportModal" class="modal-overlay" (click)="closeImportModal()">
+  <div class="modal import-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Importar Avaliações</h3>
+      <button class="modal-close-btn" (click)="closeImportModal()">×</button>
+    </div>
+
+    <div class="modal-content">
+      <!-- Tabs de importação -->
+      <div class="import-tabs">
+        <button
+          class="tab-btn"
+          [class.active]="importTab === 'file'"
+          (click)="importTab = 'file'"
+          [disabled]="isImporting"
+        >
+          📁 Arquivo JSON
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="importTab === 'code'"
+          (click)="importTab = 'code'"
+          [disabled]="isImporting"
+        >
+          🔗 Código
+        </button>
+      </div>
+
+      <!-- Conteúdo das tabs -->
+      <div class="import-content">
+        <!-- Tab de arquivo -->
+        <div *ngIf="importTab === 'file'" class="file-import-section">
+          <input
+            type="file"
+            accept=".json"
+            (change)="onFileSelected($event)"
+            #fileInput
+            class="file-input"
+            [disabled]="isImporting"
+          >
+
+          <div
+            class="file-drop-zone"
+            [class.drag-over]="isDragOver"
+            [class.has-file]="selectedFile"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onFileDropped($event)"
+            (click)="fileInput.click()"
+          >
+            <div *ngIf="!selectedFile" class="drop-zone-empty">
+              <i class="drop-icon">☁️</i>
+              <p class="drop-text">
+                <strong>Arraste um arquivo JSON aqui</strong><br>
+                ou clique para selecionar
+              </p>
+              <small>Máximo: 10MB</small>
+            </div>
+
+            <div *ngIf="selectedFile" class="drop-zone-file">
+              <i class="file-icon">📄</i>
+              <div class="file-info">
+                <strong>{{ selectedFile.name }}</strong>
+                <small>{{ (selectedFile.size / 1024).toFixed(1) }} KB</small>
+              </div>
+              <button
+                class="remove-file-btn"
+                (click)="$event.stopPropagation(); selectedFile = null; importPreview = null"
+                [disabled]="isImporting"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview do arquivo -->
+          <div *ngIf="importPreview" class="import-preview">
+            <h4>📊 Prévia da Importação:</h4>
+            <div class="preview-info">
+              <div class="preview-item">
+                <strong>Total de avaliações:</strong> {{ importPreview.total }}
+              </div>
+              <div class="preview-item">
+                <strong>Exportado por:</strong> {{ importPreview.exportedBy }}
+              </div>
+              <div class="preview-item" *ngIf="importPreview.exportedAt">
+                <strong>Data da exportação:</strong>
+                {{ importPreview.exportedAt | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+              <div class="preview-item">
+                <strong>Versão:</strong> {{ importPreview.version }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab de código -->
+        <div *ngIf="importTab === 'code'" class="code-import-section">
+          <div class="code-input-wrapper">
+            <input
+              type="text"
+              placeholder="Digite o código de compartilhamento (ex: ABC12DE4)"
+              [(ngModel)]="shareCode"
+              class="share-code-input"
+              [disabled]="isImporting"
+              maxlength="16"
+            >
+          </div>
+
+          <div class="code-help">
+            <p class="help-text">
+              <i>💡</i>
+              O código de compartilhamento tem 8 caracteres e é fornecido quando alguém exporta avaliações.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modo de importação -->
+      <div class="import-mode-section">
+        <label class="mode-label">⚙️ Modo de importação:</label>
+        <select
+          [(ngModel)]="importMode"
+          class="mode-select"
+          [disabled]="isImporting"
+        >
+          <option value="add">Adicionar (manter existentes)</option>
+          <option value="merge">Mesclar (atualizar existentes)</option>
+          <option value="replace">Substituir (limpar tudo antes)</option>
+        </select>
+
+        <small class="mode-description">
+          {{ getImportModeDescription() }}
+        </small>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        (click)="importEvaluations()"
+        class="btn-primary"
+        [disabled]="!canImport() || isImporting"
+      >
+        <span *ngIf="!isImporting">📥 Importar</span>
+        <span *ngIf="isImporting">
+          <span class="spinner"></span>
+          Importando...
+        </span>
+      </button>
+      <button
+        (click)="closeImportModal()"
+        class="btn-secondary"
+        [disabled]="isImporting"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal do formulário de avaliação -->
+<app-evaluation-form
+  *ngIf="isFormModalVisible"
+  [evaluationData]="selectedEvaluation"
+  (formSubmitted)="onFormSubmitted()"
+  (formClosed)="onFormClosed()"
+  (evaluationError)="onEvaluationError($event)"
+></app-evaluation-form>

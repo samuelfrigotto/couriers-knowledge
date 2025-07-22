@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const evaluationController = require('../../controllers/evaluation.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
-
+const { exportLimiter, importLimiter, importSlowDown } = require('../../middlewares/importExportLimiter.middleware');
 
 router.get('/share/:id', evaluationController.getSharedEvaluation);
 
@@ -31,5 +31,11 @@ router.get('/evaluations/tags', authMiddleware.verifyToken, evaluationController
 router.get('/evaluations/status', authMiddleware.verifyToken, evaluationController.getEvaluationStatus);
 
 router.get('/evaluations/by-name/:playerName', authMiddleware.verifyToken, evaluationController.getEvaluationsByPlayerName);
+
+
+router.post('/evaluations/export', authMiddleware.verifyToken, exportLimiter, evaluationController.exportEvaluations);
+router.post('/evaluations/import', authMiddleware.verifyToken, importLimiter, importSlowDown, evaluationController.importEvaluations);
+
+
 
 module.exports = router;

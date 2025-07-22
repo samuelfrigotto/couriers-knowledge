@@ -232,7 +232,7 @@
 <app-evaluation-form
   *ngIf="isFormVisible"
   [evaluationData]="evaluationInitialData"
-  (closeModal)="closeForm()"
-  (evaluationSaved)="onEvaluationSaved()"
+  (formClosed)="closeForm()"
+  (formSubmitted)="onEvaluationSaved()"
   (evaluationError)="onEvaluationError($event)">
 </app-evaluation-form>

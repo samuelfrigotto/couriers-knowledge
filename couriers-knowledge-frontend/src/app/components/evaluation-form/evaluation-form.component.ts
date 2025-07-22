@@ -1,17 +1,30 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators, ValidationErrors  } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  ValidationErrors,
+} from '@angular/forms';
+import { FormsModule } from '@angular/forms'; // ← ADICIONAR ESTA IMPORTAÇÃO
 import { EvaluationService } from '../../core/evaluation.service';
 import { GameDataService, Hero } from '../../core/game-data.service';
 import { Observable, of } from 'rxjs';
-import { map, startWith, take } from 'rxjs/operators';
+import { map, startWith } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 
-
 function tagsValidator(control: AbstractControl): ValidationErrors | null {
-  // A verificação abaixo agora é segura, pois garantimos que o valor sempre será uma string.
   if (typeof control.value !== 'string') {
-    return null; // Se não for string, não valida (evita o erro)
+    return null;
   }
   const tags = control.value.split(',').map((tag: string) => tag.trim());
   if (tags.some((tag: string) => tag.length > 20)) {
@@ -23,16 +36,18 @@ function tagsValidator(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-evaluation-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule, // ← ADICIONAR ESTA LINHA
+  ],
   templateUrl: './evaluation-form.component.html',
-  styleUrl: './evaluation-form.component.css'
+  styleUrl: './evaluation-form.component.css',
 })
-
-
 export class EvaluationFormComponent implements OnInit {
   @Input() evaluationData: any | null = null;
-  @Output() closeModal = new EventEmitter<void>();
-  @Output() evaluationSaved = new EventEmitter<void>();
+  @Output() formSubmitted = new EventEmitter<void>(); // ← CORRIGIR NOME
+  @Output() formClosed = new EventEmitter<void>(); // ← CORRIGIR NOME
   @Output() evaluationError = new EventEmitter<any>();
 
   private fb = inject(FormBuilder);
@@ -45,18 +60,27 @@ export class EvaluationFormComponent implements OnInit {
   public hoverRating = 0;
   public currentStep = 1;
 
-  // NOVA VARIÁVEL para guardar o nome do herói
-  public prefilledHeroName: string | null = null;
-
   heroes$!: Observable<Hero[]>;
   roles = ['hc', 'mid', 'off', 'sup 4', 'sup 5', 'outro'];
   private allUserTags: string[] = [];
   public suggestedTags$: Observable<string[]> = of([]);
 
+  public prefilledHeroName: string | null = null;
+  public prefilledPlayerName: string | null = null;
+  public prefilledMatchId: string | null = null;
+  public isFromMatch = false; // ← Indica se veio de uma partida
+  public shouldLockFields = false; // ← Controla se os campos devem ser bloqueados
+
   constructor() {
     this.evaluationForm = this.fb.group({
-      targetSteamId: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
-      rating: [null, [Validators.required, Validators.min(0.5), Validators.max(5)]],
+      targetSteamId: [
+        '',
+        [Validators.required, Validators.pattern(/^[0-9]{17}$/)],
+      ],
+      rating: [
+        null,
+        [Validators.required, Validators.min(0.5), Validators.max(5)],
+      ],
       notes: ['', [Validators.maxLength(200)]],
       matchId: [''],
       role: [null],
@@ -66,106 +90,150 @@ export class EvaluationFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('🚀 Evaluation form iniciado');
+    console.log('📥 Dados recebidos:', this.evaluationData);
+
     this.heroes$ = this.gameDataService.heroes$.pipe(
-      map(heroesMap => Object.values(heroesMap).sort((a, b) => a.localized_name.localeCompare(b.localized_name)))
+      map((heroesMap) =>
+        Object.values(heroesMap).sort((a, b) =>
+          a.localized_name.localeCompare(b.localized_name)
+        )
+      )
     );
 
-    this.evaluationService.getUsedTags().subscribe(tags => {
-      this.allUserTags = tags;
+    this.evaluationService.getUniqueTags().subscribe({
+      next: (tags) => {
+        this.allUserTags = tags;
+        console.log('🏷️ Tags carregadas:', tags);
+      },
+      error: (err) => {
+        console.error('❌ Erro ao carregar tags:', err);
+        this.allUserTags = [];
+      },
     });
 
     this.suggestedTags$ = this.evaluationForm.get('tags')!.valueChanges.pipe(
       startWith(''),
-      map(value => this._filterTags(value || ''))
+      map((value) => this._filterTags(value || ''))
     );
 
-    this.isEditMode = !!(this.evaluationData && this.evaluationData.id);
-    const prefillData = this.evaluationData;
+    // ✅ DETECTAR TIPO DE FORMULÁRIO
+    this.isEditMode = this.evaluationData && this.evaluationData.id;
+    this.isFromMatch =
+      this.evaluationData &&
+      !this.evaluationData.id &&
+      (this.evaluationData.matchId ||
+        this.evaluationData.match_id ||
+        this.evaluationData.hero_id);
 
-    if (prefillData) {
-      if (this.isEditMode) {
-        this.currentStep = 2; // Pula para a etapa 2 na edição
-      }
+    console.log('📝 Modo de edição:', this.isEditMode);
+    console.log('🎮 Vem de partida:', this.isFromMatch);
 
-      // ✅ CORREÇÃO: Preparar dados corretamente
-      const formDataToPatch = {
-        ...prefillData,
-        targetSteamId: prefillData.target_player_steam_id || prefillData.targetSteamId
-      };
+    if (this.evaluationData) {
+      this.populateForm();
+    }
+  }
 
-      // ✅ CORREÇÃO: Tratar tags corretamente antes do patchValue
-      if (Array.isArray(formDataToPatch.tags)) {
-        formDataToPatch.tags = formDataToPatch.tags.join(', ');
-      } else if (!formDataToPatch.tags) {
-        formDataToPatch.tags = '';
-      }
+  private populateForm(): void {
+    console.log('🔄 Preenchendo formulário com:', this.evaluationData);
 
-      // ✅ CORREÇÃO: Usar formDataToPatch em vez de prefillData
-      this.evaluationForm.patchValue(formDataToPatch);
+    // ✅ PREENCHER DADOS VISUAIS
+    this.prefilledPlayerName = this.evaluationData.targetPlayerName || null;
+    this.prefilledMatchId =
+      this.evaluationData.matchId || this.evaluationData.match_id || null;
 
-      // Desabilitar campos se necessário
-      if (formDataToPatch.targetSteamId) {
+    // ✅ BUSCAR NOME DO HERÓI SE TIVER ID
+    if (this.evaluationData.hero_id) {
+      const hero = this.gameDataService.getHeroById(
+        parseInt(this.evaluationData.hero_id)
+      );
+      this.prefilledHeroName = hero
+        ? hero.localized_name
+        : 'Herói Desconhecido';
+    }
+
+    // ✅ DECIDIR SE DEVE BLOQUEAR CAMPOS
+    this.shouldLockFields = this.isFromMatch; // Bloquear se veio de partida
+
+    this.evaluationForm.patchValue({
+      targetSteamId:
+        this.evaluationData.targetSteamId ||
+        this.evaluationData.target_player_steam_id,
+      rating: this.evaluationData.rating
+        ? parseFloat(this.evaluationData.rating)
+        : null,
+      notes: this.evaluationData.notes || null,
+      matchId:
+        this.evaluationData.matchId || this.evaluationData.match_id || null,
+      role: this.evaluationData.role || null,
+      hero_id: this.evaluationData.hero_id
+        ? parseInt(this.evaluationData.hero_id)
+        : null,
+      tags: Array.isArray(this.evaluationData.tags)
+        ? this.evaluationData.tags.join(', ')
+        : this.evaluationData.tags || '',
+    });
+
+    // ✅ BLOQUEAR CAMPOS SE NECESSÁRIO
+    if (this.shouldLockFields) {
+      if (
+        this.evaluationData.targetSteamId ||
+        this.evaluationData.target_player_steam_id
+      ) {
         this.evaluationForm.get('targetSteamId')?.disable();
       }
-      if (formDataToPatch.matchId || formDataToPatch.match_id) {
+      if (this.evaluationData.hero_id) {
+        this.evaluationForm.get('hero_id')?.disable();
+      }
+      if (this.evaluationData.matchId || this.evaluationData.match_id) {
         this.evaluationForm.get('matchId')?.disable();
       }
-
-      // NOVA LÓGICA: Se o herói for pré-definido, busca o nome e desabilita o campo
-      if (formDataToPatch.hero_id) {
-        this.evaluationForm.get('hero_id')?.disable();
-        this.gameDataService.heroes$.pipe(take(1)).subscribe(heroesMap => {
-          const hero = heroesMap[formDataToPatch.hero_id];
-          if (hero) {
-            this.prefilledHeroName = hero.localized_name;
-          }
-        });
-      }
     }
+
+    console.log('✅ Formulário preenchido:', this.evaluationForm.value);
+    console.log('🔒 Campos bloqueados:', this.shouldLockFields);
   }
 
-
-
-  // ... (o resto do arquivo .ts permanece igual)
-  nextStep(): void {
-    const targetSteamIdControl = this.evaluationForm.get('targetSteamId');
-    if (targetSteamIdControl?.status === 'VALID' || targetSteamIdControl?.status === 'DISABLED') {
-      this.currentStep = 2;
-    } else {
-      targetSteamIdControl?.markAsTouched();
+  public getPlayerDisplayText(): string {
+    if (this.prefilledPlayerName) {
+      return `${this.prefilledPlayerName} (${
+        this.evaluationForm.get('targetSteamId')?.value
+      })`;
     }
+    return this.evaluationForm.get('targetSteamId')?.value || '';
   }
 
-  prevStep(): void {
-    this.currentStep = 1;
+  // ✅ MÉTODO PARA OBTER TEXTO DO CAMPO MATCH ID
+  public getMatchDisplayText(): string {
+    if (this.prefilledMatchId) {
+      return `Partida: ${this.prefilledMatchId}`;
+    }
+    return this.evaluationForm.get('matchId')?.value || '';
   }
 
   private _filterTags(value: string): string[] {
-    // ✅ CORREÇÃO: Garantir que value seja sempre uma string
-    const val = (typeof value === 'string') ? value : '';
-
+    const val = typeof value === 'string' ? value : '';
     if (!val) return [];
 
-    const currentTags = val.split(',').map(t => t.trim());
+    const currentTags = val.split(',').map((t) => t.trim());
     const lastTag = currentTags.pop()?.toLowerCase() || '';
-
     if (!lastTag) return [];
 
-    return this.allUserTags.filter(tag =>
-      tag.toLowerCase().includes(lastTag) && !currentTags.includes(tag)
+    return this.allUserTags.filter(
+      (tag) => tag.toLowerCase().includes(lastTag) && !currentTags.includes(tag)
     );
   }
 
-  setRating(rating: number, event?: MouseEvent): void {
+  public setRating(rating: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     this.evaluationForm.get('rating')?.setValue(rating);
+    console.log('⭐ Rating definido:', rating); // Debug
   }
 
-  addTag(tagToAdd: string): void {
+  public addTag(tagToAdd: string): void {
     const currentTagsValue = this.evaluationForm.get('tags')?.value || '';
-
-    // ✅ CORREÇÃO: Verificar se o valor atual é string antes de fazer split
     let tags: string[];
+
     if (typeof currentTagsValue === 'string') {
       tags = currentTagsValue.split(',').map((t: string) => t.trim());
     } else if (Array.isArray(currentTagsValue)) {
@@ -174,35 +242,82 @@ export class EvaluationFormComponent implements OnInit {
       tags = [];
     }
 
-    // Remove o último elemento se estiver vazio (caso o usuário esteja digitando)
     if (tags.length > 0 && !tags[tags.length - 1]) {
       tags.pop();
     }
 
-    // Adiciona a nova tag se ela ainda não existir
     if (!tags.includes(tagToAdd)) {
       tags.push(tagToAdd);
     }
 
-    // Atualiza o formulário
     this.evaluationForm.get('tags')?.setValue(tags.join(', ') + ', ');
   }
 
-// Arquivo: couriers-knowledge-frontend/src/app/components/evaluation-form/evaluation-form.component.ts
-// SUBSTITUIR o método submitForm() por esta versão corrigida:
+  public nextStep(): void {
+    console.log('➡️ Próximo passo - tentando ir para passo 2');
+    console.log(
+      '📋 Valor do targetSteamId:',
+      this.evaluationForm.get('targetSteamId')?.value
+    );
+    console.log(
+      '✅ targetSteamId válido?',
+      this.evaluationForm.get('targetSteamId')?.valid
+    );
+    console.log(
+      '🔒 targetSteamId desabilitado?',
+      this.evaluationForm.get('targetSteamId')?.disabled
+    );
+    console.log('📊 Current step antes:', this.currentStep);
 
-  submitForm(): void {
+    // ✅ CORREÇÃO: Verificar se está válido OU desabilitado (campos bloqueados são válidos)
+    const steamIdControl = this.evaluationForm.get('targetSteamId');
+    const isValidOrDisabled = steamIdControl?.valid || steamIdControl?.disabled;
+
+    console.log('🎯 Pode prosseguir?', isValidOrDisabled);
+
+    if (isValidOrDisabled) {
+      this.currentStep = 2;
+      console.log('✅ Mudou para passo:', this.currentStep);
+    } else {
+      console.log('❌ Não pode prosseguir - campo inválido');
+      // Marcar campo como touched para mostrar erro
+      steamIdControl?.markAsTouched();
+    }
+  }
+
+  public prevStep(): void {
+    console.log('⬅️ Passo anterior');
+    console.log('📊 Current step antes:', this.currentStep);
+    this.currentStep = 1;
+    console.log('✅ Mudou para passo:', this.currentStep);
+  }
+
+  public isStepOneValid(): boolean {
+    const steamIdControl = this.evaluationForm.get('targetSteamId');
+    return steamIdControl?.valid || steamIdControl?.disabled || false;
+  }
+
+  // ===== EVALUATION-FORM.COMPONENT.TS - CORREÇÃO DO MÉTODO SUBMITFORM =====
+
+  public submitForm(): void {
+    console.log('📤 Enviando formulário');
+    console.log('📋 Dados do formulário:', this.evaluationForm.value);
+    console.log('✅ Formulário válido:', this.evaluationForm.valid);
+
     if (this.evaluationForm.invalid) {
       this.evaluationForm.markAllAsTouched();
+      console.log('❌ Formulário inválido:', this.evaluationForm.errors);
       return;
     }
 
     const formData = this.evaluationForm.getRawValue();
 
-    // ✅ CORREÇÃO: Tratar tags corretamente
+    // Processar tags
     if (formData.tags) {
       if (Array.isArray(formData.tags)) {
-        formData.tags = formData.tags.filter((tag: string) => tag && tag.trim());
+        formData.tags = formData.tags.filter(
+          (tag: string) => tag && tag.trim()
+        );
       } else if (typeof formData.tags === 'string') {
         formData.tags = formData.tags
           .split(',')
@@ -215,105 +330,115 @@ export class EvaluationFormComponent implements OnInit {
       formData.tags = [];
     }
 
-    // ✅ CORREÇÃO: Verificar tipo antes de chamar .trim()
-    // matchId: deve ser null se vazio (campo integer no backend)
-    if (!formData.matchId ||
-        (typeof formData.matchId === 'string' && formData.matchId.trim() === '') ||
-        (typeof formData.matchId === 'number' && formData.matchId === 0)) {
+    // ✅ CORREÇÃO: Processar matchId (pode ser number ou string)
+    if (
+      !formData.matchId ||
+      formData.matchId === '' ||
+      formData.matchId === null ||
+      formData.matchId === undefined
+    ) {
       formData.matchId = null;
-    } else if (typeof formData.matchId === 'string') {
-      // Se for string, converter para número se possível
-      const numValue = parseInt(formData.matchId.trim(), 10);
-      formData.matchId = isNaN(numValue) ? null : numValue;
+    } else {
+      // Converter para string se for número, depois verificar se está vazio
+      const matchIdStr = String(formData.matchId);
+      if (
+        matchIdStr.trim() === '' ||
+        matchIdStr === 'null' ||
+        matchIdStr === 'undefined'
+      ) {
+        formData.matchId = null;
+      } else {
+        // Manter como string para o backend
+        formData.matchId = matchIdStr;
+      }
     }
-    // Se já for número, manter como está
 
-    // ✅ CORREÇÃO: hero_id - verificar tipo antes de processar
-    if (!formData.hero_id ||
-        formData.hero_id === '' ||
-        formData.hero_id === 'null' ||
-        formData.hero_id === null ||
-        formData.hero_id === 0) {
+    // ✅ CORREÇÃO: Processar hero_id
+    if (
+      !formData.hero_id ||
+      formData.hero_id === '' ||
+      formData.hero_id === null ||
+      formData.hero_id === undefined
+    ) {
       formData.hero_id = null;
     } else {
-      // Garantir que hero_id seja um número válido
-      const heroId = typeof formData.hero_id === 'string' ?
-        parseInt(formData.hero_id, 10) :
-        Number(formData.hero_id);
+      // Garantir que seja um número
+      const heroId =
+        typeof formData.hero_id === 'string'
+          ? parseInt(formData.hero_id, 10)
+          : Number(formData.hero_id);
       formData.hero_id = isNaN(heroId) ? null : heroId;
     }
 
-    // ✅ CORREÇÃO: role - verificar se não é null antes de comparar
-    if (!formData.role ||
-        formData.role === '' ||
-        formData.role === 'null' ||
-        formData.role === null) {
+    // ✅ CORREÇÃO: Processar role
+    if (
+      !formData.role ||
+      formData.role === '' ||
+      formData.role === null ||
+      formData.role === undefined ||
+      formData.role === 'null'
+    ) {
       formData.role = null;
     }
 
-    // ✅ CORREÇÃO: notes - verificar tipo antes de chamar .trim()
-    if (!formData.notes ||
-        (typeof formData.notes === 'string' && formData.notes.trim() === '') ||
-        formData.notes === null) {
+    // ✅ CORREÇÃO: Processar notes
+    if (
+      !formData.notes ||
+      formData.notes === null ||
+      formData.notes === undefined
+    ) {
       formData.notes = null;
     } else if (typeof formData.notes === 'string') {
-      formData.notes = formData.notes.trim();
+      const trimmedNotes = formData.notes.trim();
+      formData.notes = trimmedNotes === '' ? null : trimmedNotes;
     }
 
-    // ✅ CORREÇÃO: rating - garantir que seja um número válido
-    if (formData.rating) {
-      const rating = typeof formData.rating === 'string' ?
-        parseFloat(formData.rating) :
-        Number(formData.rating);
+    // ✅ CORREÇÃO: Processar rating
+    if (formData.rating !== null && formData.rating !== undefined) {
+      const rating =
+        typeof formData.rating === 'string'
+          ? parseFloat(formData.rating)
+          : Number(formData.rating);
       formData.rating = isNaN(rating) ? null : rating;
     }
 
-    // Debug - ver o que está sendo enviado (remover após testar)
-    console.log('📤 Dados sendo enviados:', formData);
+    console.log('📤 Dados processados:', formData);
 
     const apiCall$ = this.isEditMode
-      ? this.evaluationService.updateEvaluation(this.evaluationData.id, formData)
+      ? this.evaluationService.updateEvaluation(
+          this.evaluationData.id,
+          formData
+        )
       : this.evaluationService.createEvaluation(formData);
 
     apiCall$.subscribe({
-      next: () => {
-        this.evaluationSaved.emit();
+      next: (response) => {
+        console.log('✅ Sucesso:', response);
+        this.toastr.success(
+          this.isEditMode
+            ? 'Avaliação atualizada com sucesso!'
+            : 'Avaliação criada com sucesso!'
+        );
+        this.formSubmitted.emit();
       },
       error: (err) => {
-        console.error('Erro ao salvar avaliação', err);
-
-        // Emitir erro para componente pai
+        console.error('❌ Erro ao salvar:', err);
         this.evaluationError.emit(err);
 
-        // Tratamento específico para erro 403 (limite atingido)
         if (err.status === 403) {
           this.toastr.error(
-            err.error.details || 'Limite de avaliações atingido! Considere fazer upgrade para Premium.',
-            'Upgrade Necessário',
-            {
-              timeOut: 10000,
-              closeButton: true
-            }
+            err.error.details || 'Limite de avaliações atingido!',
+            'Upgrade Necessário'
           );
-
-          // Fechar o modal após mostrar o erro
-          this.closeModal.emit();
         } else {
-          // Outros erros
-          this.toastr.error(
-            'Erro ao salvar avaliação. Tente novamente.',
-            'Erro',
-            { timeOut: 5000 }
-          );
+          this.toastr.error('Erro ao salvar avaliação. Tente novamente.');
         }
-      }
+      },
     });
   }
 
-
-
-
-  onClose(): void {
-    this.closeModal.emit();
+  public onClose(): void {
+    console.log('❌ Fechando formulário'); // Debug
+    this.formClosed.emit(); // ← CORRIGIR NOME DO EVENTO
   }
 }

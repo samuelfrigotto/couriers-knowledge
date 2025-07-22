@@ -1,21 +1,63 @@
 <div class="modal-overlay" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditMode ? 'Editar Avaliação' : 'Nova Avaliação' }}</h2>
-      <div class="step-indicator" *ngIf="!isEditMode">Passo {{ currentStep }} de 2</div>
+      <h2>{{ isEditMode ? "Editar Avaliação" : "Nova Avaliação" }}</h2>
+      <div class="step-indicator" *ngIf="!isEditMode">
+        Passo {{ currentStep }} de 2
+      </div>
       <button class="close-btn" (click)="onClose()">&times;</button>
     </div>
 
     <form [formGroup]="evaluationForm" (ngSubmit)="submitForm()">
-
       <div *ngIf="currentStep === 1">
         <fieldset class="form-section">
           <legend>1. Jogador</legend>
           <div class="form-group">
             <label for="targetSteamId">SteamID64 do Jogador *</label>
-            <input id="targetSteamId" type="text" formControlName="targetSteamId" placeholder="Ex: 765611980..." [readonly]="isEditMode">
-            <div *ngIf="evaluationForm.get('targetSteamId')?.invalid && evaluationForm.get('targetSteamId')?.touched" class="error-message">
-               SteamID64 inválido. Deve ser um número de 17 dígitos.
+
+            <!-- ✅ CAMPO NORMAL (quando não bloqueado) -->
+            <input
+              *ngIf="
+                !shouldLockFields ||
+                !evaluationForm.get('targetSteamId')?.disabled
+              "
+              id="targetSteamId"
+              type="text"
+              formControlName="targetSteamId"
+              placeholder="Ex: 765611980..."
+              [readonly]="isEditMode"
+            />
+
+            <!-- ✅ CAMPO VISUAL (quando bloqueado) -->
+            <div
+              *ngIf="
+                shouldLockFields &&
+                evaluationForm.get('targetSteamId')?.disabled
+              "
+              class="prefilled-field"
+            >
+              <div class="prefilled-content">
+                <div class="player-info">
+                  <strong>{{
+                    prefilledPlayerName || "Jogador da Partida"
+                  }}</strong>
+                  <small
+                    >Steam ID:
+                    {{ evaluationForm.get("targetSteamId")?.value }}</small
+                  >
+                </div>
+                <span class="prefilled-badge">Da Partida</span>
+              </div>
+            </div>
+
+            <div
+              *ngIf="
+                evaluationForm.get('targetSteamId')?.invalid &&
+                evaluationForm.get('targetSteamId')?.touched
+              "
+              class="error-message"
+            >
+              SteamID64 inválido. Deve ser um número de 17 dígitos.
             </div>
           </div>
         </fieldset>
@@ -26,27 +68,90 @@
             <div class="form-group">
               <label for="hero_id">Herói Jogado</label>
 
-              <select *ngIf="!evaluationForm.get('hero_id')?.disabled" id="hero_id" formControlName="hero_id">
+              <!-- ✅ SELECT NORMAL (quando não bloqueado) -->
+              <select
+                *ngIf="
+                  !shouldLockFields || !evaluationForm.get('hero_id')?.disabled
+                "
+                id="hero_id"
+                formControlName="hero_id"
+              >
                 <option [ngValue]="null">Não informar</option>
-                <option *ngFor="let hero of (heroes$ | async)" [value]="hero.id">{{ hero.localized_name }}</option>
+                <option *ngFor="let hero of heroes$ | async" [value]="hero.id">
+                  {{ hero.localized_name }}
+                </option>
               </select>
 
-              <div *ngIf="evaluationForm.get('hero_id')?.disabled" class="disabled-field-display">
-                <img *ngIf="evaluationForm.get('hero_id')?.value" [src]="gameDataService.getHeroImageUrl(evaluationForm.get('hero_id')?.value)" class="hero-icon">
-                {{ prefilledHeroName || 'Carregando...' }}
+              <!-- ✅ CAMPO VISUAL HERÓI (quando bloqueado) -->
+              <div
+                *ngIf="
+                  shouldLockFields && evaluationForm.get('hero_id')?.disabled
+                "
+                class="prefilled-field"
+              >
+                <div class="prefilled-content">
+                  <div class="hero-info">
+                    <img
+                      [src]="
+                        gameDataService.getHeroImageUrl(
+                          evaluationForm.get('hero_id')?.value
+                        )
+                      "
+                      class="hero-icon-prefilled"
+                      [alt]="prefilledHeroName"
+                    />
+                    <div class="hero-details">
+                      <strong>{{
+                        prefilledHeroName || "Herói da Partida"
+                      }}</strong>
+                      <small>Detectado automaticamente</small>
+                    </div>
+                  </div>
+                  <span class="prefilled-badge">Da Partida</span>
+                </div>
               </div>
             </div>
+
             <div class="form-group">
               <label for="role">Função</label>
               <select id="role" formControlName="role">
                 <option [ngValue]="null">Não informar</option>
-                <option *ngFor="let role of roles" [value]="role">{{ role.toUpperCase() }}</option>
+                <option *ngFor="let role of roles" [value]="role">
+                  {{ role.toUpperCase() }}
+                </option>
               </select>
             </div>
           </div>
-           <div class="form-group">
+
+          <div class="form-group">
             <label for="matchId">ID da Partida</label>
-            <input id="matchId" type="text" formControlName="matchId" placeholder="Ex: 7123456789">
+
+            <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
+            <input
+              *ngIf="
+                !shouldLockFields || !evaluationForm.get('matchId')?.disabled
+              "
+              id="matchId"
+              type="text"
+              formControlName="matchId"
+              placeholder="Ex: 7123456789"
+            />
+
+            <!-- ✅ CAMPO VISUAL MATCH ID (quando bloqueado) -->
+            <div
+              *ngIf="
+                shouldLockFields && evaluationForm.get('matchId')?.disabled
+              "
+              class="prefilled-field"
+            >
+              <div class="prefilled-content">
+                <div class="match-info">
+                  <strong>{{ getMatchDisplayText() }}</strong>
+                  <small>Partida selecionada</small>
+                </div>
+                <span class="prefilled-badge">Da Partida</span>
+              </div>
+            </div>
           </div>
         </fieldset>
       </div>
@@ -57,47 +162,130 @@
           <div class="form-group rating-group">
             <label>Nota *</label>
             <div class="rating-input-container">
-              <div *ngFor="let i of [1,2,3,4,5]" class="rating-input-square" (click)="setRating(i)" (mouseenter)="hoverRating = i" (mouseleave)="hoverRating = 0">
-                <div class="rating-square-inner" [ngClass]="{ 'filled': (hoverRating || evaluationForm.get('rating')?.value) >= i, 'half': (hoverRating || evaluationForm.get('rating')?.value) === i - 0.5 }">
-                  <div class="half-left" (click)="setRating(i - 0.5, $event)" (mouseenter)="hoverRating = i - 0.5"></div>
-                  <div class="half-right" (click)="setRating(i, $event)" (mouseenter)="hoverRating = i"></div>
+              <div
+                *ngFor="let i of [1, 2, 3, 4, 5]"
+                class="rating-input-square"
+                (click)="setRating(i)"
+                (mouseenter)="hoverRating = i"
+                (mouseleave)="hoverRating = 0"
+              >
+                <div
+                  class="rating-square-inner"
+                  [ngClass]="{
+                    filled:
+                      (hoverRating || evaluationForm.get('rating')?.value) >= i,
+                    half:
+                      (hoverRating || evaluationForm.get('rating')?.value) ===
+                      i - 0.5
+                  }"
+                >
+                  <div
+                    class="half-left"
+                    (click)="setRating(i - 0.5, $event)"
+                    (mouseenter)="hoverRating = i - 0.5"
+                  ></div>
+                  <div
+                    class="half-right"
+                    (click)="setRating(i, $event)"
+                    (mouseenter)="hoverRating = i"
+                  ></div>
                 </div>
               </div>
             </div>
-             <div *ngIf="evaluationForm.get('rating')?.invalid && evaluationForm.get('rating')?.touched" class="error-message">
-               A nota é obrigatória.
-             </div>
+            <div
+              *ngIf="
+                evaluationForm.get('rating')?.invalid &&
+                evaluationForm.get('rating')?.touched
+              "
+              class="error-message"
+            >
+              A nota é obrigatória.
+            </div>
           </div>
 
           <div class="form-group">
             <label for="tags">Tags (separadas por vírgula)</label>
-            <input id="tags" type="text" formControlName="tags" placeholder="Ex: comunicativo, bom farm, tóxico...">
-            <div class="tag-suggestions" *ngIf="(suggestedTags$ | async) as suggestions">
+            <input
+              id="tags"
+              type="text"
+              formControlName="tags"
+              placeholder="Ex: comunicativo, bom farm, tóxico..."
+            />
+            <div
+              class="tag-suggestions"
+              *ngIf="suggestedTags$ | async as suggestions"
+            >
               <span *ngIf="suggestions.length > 0">Sugestões:</span>
-              <button type="button" *ngFor="let tag of suggestions" class="tag-suggestion-btn" (click)="addTag(tag)">{{ tag }}</button>
+              <button
+                type="button"
+                *ngFor="let tag of suggestions"
+                class="tag-suggestion-btn"
+                (click)="addTag(tag)"
+              >
+                {{ tag }}
+              </button>
             </div>
-            <div *ngIf="evaluationForm.get('tags')?.errors as errors" class="error-message">
+            <div
+              *ngIf="evaluationForm.get('tags')?.errors as errors"
+              class="error-message"
+            >
               <span *ngIf="errors['maxTags']">Máximo de 5 tags permitido.</span>
-              <span *ngIf="errors['maxTagLength']">A tag '{{ errors['maxTagLength'].value }}' é longa demais (máx 25 caracteres).</span>
+              <span *ngIf="errors['maxTagLength']"
+                >A tag '{{ errors["maxTagLength"].value }}' é longa demais (máx
+                25 caracteres).</span
+              >
             </div>
           </div>
 
           <div class="form-group">
             <label for="notes">Anotações</label>
-            <textarea id="notes" rows="4" formControlName="notes" placeholder="Descreva o comportamento, pontos fortes e fracos..."></textarea>
-            <div class="char-counter" [class.error]="evaluationForm.get('notes')?.errors?.['maxlength']">
-              {{ evaluationForm.get('notes')?.value?.length || 0 }} / 200
+            <textarea
+              id="notes"
+              rows="4"
+              formControlName="notes"
+              placeholder="Descreva o comportamento, pontos fortes e fracos..."
+            ></textarea>
+            <div
+              class="char-counter"
+              [class.error]="evaluationForm.get('notes')?.errors?.['maxlength']"
+            >
+              {{ evaluationForm.get("notes")?.value?.length || 0 }} / 200
             </div>
           </div>
         </fieldset>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="onClose()">Cancelar</button>
-        <button type="button" class="btn-tertiary" *ngIf="currentStep === 2 && !isEditMode" (click)="prevStep()">Voltar</button>
-        <button type="button" class="btn-primary" *ngIf="currentStep === 1" (click)="nextStep()" [disabled]="evaluationForm.get('targetSteamId')?.invalid">Próximo</button>
-        <button type="submit" class="btn-primary" *ngIf="currentStep === 2" [disabled]="evaluationForm.invalid">
-          {{ isEditMode ? 'Salvar Alterações' : 'Criar Avaliação' }}
+        <button type="button" class="btn-secondary" (click)="onClose()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-tertiary"
+          *ngIf="currentStep === 2 && !isEditMode"
+          (click)="prevStep()"
+        >
+          Voltar
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          *ngIf="currentStep === 1"
+          (click)="nextStep()"
+          [disabled]="
+            evaluationForm.get('targetSteamId')?.invalid &&
+            !evaluationForm.get('targetSteamId')?.disabled
+          "
+        >
+          Próximo
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          *ngIf="currentStep === 2"
+          [disabled]="evaluationForm.invalid"
+        >
+          {{ isEditMode ? "Salvar Alterações" : "Criar Avaliação" }}
         </button>
       </div>
     </form>

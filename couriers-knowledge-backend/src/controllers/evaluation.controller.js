@@ -332,3 +332,276 @@ exports.getEvaluationsByPlayerName = async (req, res) => {
         });
     }
 };
+
+
+exports.exportEvaluations = async (req, res) => {
+  const authorId = req.user.id;
+  const { evaluationIds } = req.body; // Array de IDs das avaliações selecionadas
+
+  try {
+    let query;
+    let queryParams;
+
+    if (evaluationIds && evaluationIds.length > 0) {
+      // Exportar avaliações específicas
+      query = `
+        SELECT 
+          e.*,
+          p.steam_id as target_steam_id,
+          p.last_known_name as target_player_name
+        FROM evaluations e
+        LEFT JOIN players p ON e.player_id = p.id
+        WHERE e.author_id = $1 AND e.id = ANY($2::int[])
+        ORDER BY e.created_at DESC
+      `;
+      queryParams = [authorId, evaluationIds];
+    } else {
+      // Exportar todas as avaliações do usuário
+      query = `
+        SELECT 
+          e.*,
+          p.steam_id as target_steam_id,
+          p.last_known_name as target_player_name
+        FROM evaluations e
+        LEFT JOIN players p ON e.player_id = p.id
+        WHERE e.author_id = $1
+        ORDER BY e.created_at DESC
+      `;
+      queryParams = [authorId];
+    }
+
+    const { rows } = await db.query(query, queryParams);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma avaliação encontrada para exportar.' });
+    }
+
+    // Formato do arquivo de exportação
+    const exportData = {
+      version: "1.0",
+      exported_at: new Date().toISOString(),
+      exported_by: req.user.username || req.user.email,
+      total_evaluations: rows.length,
+      evaluations: rows.map(evaluation => ({
+        // Dados principais da avaliação
+        target_steam_id: evaluation.target_steam_id,
+        target_player_name: evaluation.target_player_name,
+        rating: parseFloat(evaluation.rating),
+        notes: evaluation.notes,
+        tags: evaluation.tags || [],
+        role: evaluation.role,
+        hero_id: evaluation.hero_id,
+        match_id: evaluation.match_id,
+        created_at: evaluation.created_at,
+        
+        // Metadados para importação
+        original_evaluation_id: evaluation.id,
+        original_author: req.user.username || req.user.email
+      }))
+    };
+
+    // Gerar código único para compartilhamento (opcional)
+    const shareCode = require('crypto').randomBytes(8).toString('hex').toUpperCase();
+    
+    // Salvar temporariamente no banco para permitir importação via código
+    const insertShareQuery = `
+      INSERT INTO evaluation_shares (share_code, data, created_by, expires_at, created_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      RETURNING share_code
+    `;
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // Expira em 30 dias
+    
+    await db.query(insertShareQuery, [
+      shareCode,
+      JSON.stringify(exportData),
+      authorId,
+      expiresAt
+    ]);
+
+    res.status(200).json({
+      message: 'Avaliações exportadas com sucesso!',
+      shareCode: shareCode,
+      exportData: exportData
+    });
+
+  } catch (error) {
+    console.error('Erro ao exportar avaliações:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};
+
+// 2. Função para IMPORTAR avaliações
+exports.importEvaluations = async (req, res) => {
+  const authorId = req.user.id;
+  const { importData, shareCode, mode = 'add' } = req.body;
+  // mode: 'add' (adicionar), 'replace' (substituir), 'merge' (mesclar)
+
+  try {
+    let dataToImport;
+
+    if (shareCode) {
+      // Importar via código de compartilhamento
+      const shareQuery = `
+        SELECT data FROM evaluation_shares 
+        WHERE share_code = $1 AND expires_at > NOW()
+      `;
+      const shareResult = await db.query(shareQuery, [shareCode.toUpperCase()]);
+      
+      if (shareResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Código de compartilhamento inválido ou expirado.' });
+      }
+      
+      dataToImport = shareResult.rows[0].data;
+    } else if (importData) {
+      // Importar via dados diretos (arquivo JSON)
+      dataToImport = importData;
+    } else {
+      return res.status(400).json({ message: 'É necessário fornecer dados para importar ou código de compartilhamento.' });
+    }
+
+    // Validar formato dos dados
+    if (!dataToImport.evaluations || !Array.isArray(dataToImport.evaluations)) {
+      return res.status(400).json({ message: 'Formato de dados inválido.' });
+    }
+
+    const client = await db.getClient();
+    
+    try {
+      await client.query('BEGIN');
+
+      let importedCount = 0;
+      let skippedCount = 0;
+      const errors = [];
+
+      for (const evaluation of dataToImport.evaluations) {
+        try {
+          // Verificar se o jogador já existe
+          let playerId;
+          
+          if (evaluation.target_steam_id) {
+            const playerQuery = `
+              SELECT id FROM players WHERE steam_id = $1
+            `;
+            const playerResult = await client.query(playerQuery, [evaluation.target_steam_id]);
+            
+            if (playerResult.rows.length > 0) {
+              playerId = playerResult.rows[0].id;
+            } else {
+              // Criar novo player
+              const insertPlayerQuery = `
+                INSERT INTO players (steam_id, last_known_name, created_at)
+                VALUES ($1, $2, NOW())
+                RETURNING id
+              `;
+              const newPlayerResult = await client.query(insertPlayerQuery, [
+                evaluation.target_steam_id,
+                evaluation.target_player_name || 'Jogador Importado'
+              ]);
+              playerId = newPlayerResult.rows[0].id;
+            }
+          } else {
+            // Buscar por nome se não tiver Steam ID
+            const playerQuery = `
+              SELECT id FROM players WHERE last_known_name = $1 AND created_by = $2
+            `;
+            const playerResult = await client.query(playerQuery, [
+              evaluation.target_player_name,
+              authorId
+            ]);
+            
+            if (playerResult.rows.length > 0) {
+              playerId = playerResult.rows[0].id;
+            } else {
+              // Criar player sem Steam ID
+              const insertPlayerQuery = `
+                INSERT INTO players (last_known_name, created_by, created_at)
+                VALUES ($1, $2, NOW())
+                RETURNING id
+              `;
+              const newPlayerResult = await client.query(insertPlayerQuery, [
+                evaluation.target_player_name || 'Jogador Importado',
+                authorId
+              ]);
+              playerId = newPlayerResult.rows[0].id;
+            }
+          }
+
+          // Verificar se já existe avaliação similar (para evitar duplicatas)
+          if (mode !== 'replace') {
+            const existingQuery = `
+              SELECT id FROM evaluations 
+              WHERE author_id = $1 AND player_id = $2 AND match_id = $3
+            `;
+            const existingResult = await client.query(existingQuery, [
+              authorId,
+              playerId,
+              evaluation.match_id
+            ]);
+
+            if (existingResult.rows.length > 0 && mode === 'add') {
+              skippedCount++;
+              continue; // Pular duplicatas no modo 'add'
+            }
+          }
+
+          // Inserir/atualizar avaliação
+          const insertEvaluationQuery = `
+            INSERT INTO evaluations (
+              author_id, player_id, rating, notes, tags, role, 
+              hero_id, match_id, created_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (author_id, player_id, match_id) 
+            DO UPDATE SET
+              rating = EXCLUDED.rating,
+              notes = EXCLUDED.notes,
+              tags = EXCLUDED.tags,
+              role = EXCLUDED.role,
+              hero_id = EXCLUDED.hero_id,
+              updated_at = NOW()
+          `;
+
+          await client.query(insertEvaluationQuery, [
+            authorId,
+            playerId,
+            evaluation.rating,
+            evaluation.notes,
+            evaluation.tags,
+            evaluation.role,
+            evaluation.hero_id,
+            evaluation.match_id,
+            evaluation.created_at || new Date()
+          ]);
+
+          importedCount++;
+
+        } catch (evalError) {
+          console.error('Erro ao importar avaliação individual:', evalError);
+          errors.push(`Erro na avaliação ${evaluation.target_player_name}: ${evalError.message}`);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      res.status(200).json({
+        message: 'Importação concluída com sucesso!',
+        imported: importedCount,
+        skipped: skippedCount,
+        errors: errors,
+        total_processed: dataToImport.evaluations.length
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    console.error('Erro ao importar avaliações:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};

@@ -118,13 +118,20 @@ export class RecentMatchesComponent {
     }
 
     // Configurar dados iniciais para o formulário
+  // ✅ CORREÇÃO: Dados no formato correto
     this.evaluationInitialData = {
-      playerName: player.personaname || 'Jogador Anônimo',
-      steamId: player.steam_id_64,
+      targetPlayerName: player.personaname || 'Jogador Anônimo',
+      targetSteamId: player.steam_id_64, // ← NOME CORRETO
+      target_player_steam_id: player.steam_id_64, // Compatibilidade
       matchId: this.selectedMatch.match_id,
-      heroId: player.hero_id
+      match_id: this.selectedMatch.match_id, // Compatibilidade
+      hero_id: player.hero_id, // ← PUXAR HERÓI AUTOMATICAMENTE
+      rating: null,
+      notes: null,
+      tags: [],
+      role: null
     };
-
+     console.log('📋 Dados preparados:', this.evaluationInitialData); // Debug
     this.isFormVisible = true;
   }
 

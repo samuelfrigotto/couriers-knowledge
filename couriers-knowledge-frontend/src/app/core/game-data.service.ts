@@ -20,7 +20,7 @@ export interface Item {
 })
 export class GameDataService {
   private http = inject(HttpClient);
-  
+
   private heroesSubject = new BehaviorSubject<{ [key: number]: Hero }>({});
   public heroes$ = this.heroesSubject.asObservable();
 
@@ -45,7 +45,7 @@ export class GameDataService {
   getHeroById(id: number): Hero | null {
     return this.heroesSubject.getValue()[id] || null;
   }
-  
+
   getHeroImageUrl(heroId: number): string {
     const hero = this.getHeroById(heroId);
     const heroNameForUrl = hero ? hero.name.replace(/^npc_dota_hero_/, '') : 'default';
@@ -67,7 +67,7 @@ export class GameDataService {
     if (!item || item.name.includes('recipe')) {
       return 'https://cdn.dota2.com/apps/dota2/images/dota_react/items/recipe.png';
     }
-    
+
     // CORREÇÃO: Agora montamos a URL usando a propriedade 'img' do nosso JSON.
     return `https://cdn.dota2.com${item.img}`;
   }
