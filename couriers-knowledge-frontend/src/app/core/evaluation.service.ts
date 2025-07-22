@@ -289,4 +289,8 @@ export class EvaluationService {
   }
 
 
+  getImportExportStats(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/evaluations/import-export-stats`);
+}
+
 }

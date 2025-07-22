@@ -113,13 +113,22 @@
             </div>
 
             <div class="form-group">
-              <label for="role">Função</label>
-              <select id="role" formControlName="role">
+              <label for="role">
+                Função
+                <span *ngIf="shouldLockFields" class="editable-hint"
+                  >(sempre editável)</span
+                >
+              </label>
+              <select id="role" formControlName="role" class="role-select">
                 <option [ngValue]="null">Não informar</option>
                 <option *ngFor="let role of roles" [value]="role">
-                  {{ role.toUpperCase() }}
+                  {{ getRoleDisplayName(role) }}
                 </option>
               </select>
+              <small *ngIf="shouldLockFields" class="field-help">
+                💡 Você pode alterar a função mesmo quando outros campos estão
+                bloqueados
+              </small>
             </div>
           </div>
 

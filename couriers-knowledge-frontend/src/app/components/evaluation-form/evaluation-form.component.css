@@ -358,3 +358,71 @@ button {
     width: 100%;
   }
 }
+
+
+/* ADICIONE este CSS ao evaluation-form.component.css */
+
+/* ===== CAMPO DE ROLE EDITÁVEL ===== */
+.role-field-group {
+  position: relative;
+}
+
+.role-select {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.role-select:not(:disabled) {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2) !important;
+}
+
+.editable-hint {
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(58, 134, 255, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.field-help {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  font-style: italic;
+  line-height: 1.3;
+  padding: 4px 8px;
+  background: rgba(58, 134, 255, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color);
+}
+
+/* ===== DESTAQUE PARA CAMPOS EDITÁVEIS ===== */
+.role-field-group label {
+  color: var(--primary-color) !important;
+  font-weight: 600 !important;
+  transition: color 0.3s ease;
+}
+
+/* ===== ANIMATION PARA DESTACAR ===== */
+@keyframes highlight-editable {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(58, 134, 255, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.role-select:focus {
+  animation: highlight-editable 0.5s ease-in-out;
+  outline: none !important;
+}
+
+/* ===== ÍCONE DE EDIÇÃO NO LABEL ===== */
+.role-field-group label::before {
+  content: '✏️';
+  margin-right: 6px;
+  font-size: 14px;
+}

@@ -2,17 +2,60 @@
 
 <div class="dashboard-container">
   <!-- Header principal -->
-  <div class="dashboard-header">
-    <div class="header-left">
+
+   <div class="dashboard-header">
+    <!-- Primeira linha -->
+    <div class="header-row-1">
       <h1>Minhas Avaliações</h1>
 
-      <!-- Filtro de jogador sempre visível -->
-      <div class="permanent-search-filter">
+      <div class="row1-actions">
+        <div class="import-export-aligned">
+          <button
+            class="import-btn"
+            [class.limit-reached]="isImportLimitReached()"
+            [disabled]="isImportLimitReached()"
+            (click)="openImportModal()"
+            title="Importar avaliações"
+          >
+            Importar
+            <span *ngIf="isImportLimitReached()" class="limit-badge">Limite</span>
+          </button>
+        </div>
+
+        <button
+          class="selection-toggle-btn"
+          [class.active]="isSelectionMode"
+          (click)="toggleSelectionMode()"
+          title="Ativar/desativar modo de seleção"
+        >
+          {{ isSelectionMode ? 'Sair da Seleção' : 'Selecionar' }}
+        </button>
+
+        <button
+          class="new-evaluation-btn"
+          [class.disabled]="isLimitReached"
+          [disabled]="isLimitReached"
+          (click)="openFormModal()"
+          [title]="
+            isLimitReached
+              ? 'Limite de avaliações atingido. Faça upgrade para Premium!'
+              : 'Criar nova avaliação'
+          "
+        >
+          Nova Avaliação
+        </button>
+      </div>
+    </div>
+
+    <!-- Segunda linha -->
+    <div class="header-row-2">
+      <!-- Filtro de busca -->
+      <div class="search-section">
         <div class="search-input-wrapper">
           <i class="search-icon">⌕</i>
           <input
             type="text"
-            placeholder="Buscar jogador..."
+            placeholder="Buscar Jogador"
             [formControl]="permanentSearchControl"
             class="permanent-search-input"
             #searchInput
@@ -32,7 +75,7 @@
           *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length > 0"
           class="search-results-count"
         >
-          {{ filteredBySearch.length }} resultado(s) encontrado(s)
+          {{ filteredBySearch.length }} resultado(s)
         </div>
         <div
           *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length === 0"
@@ -41,43 +84,47 @@
           Nenhum jogador encontrado
         </div>
       </div>
+
+      <div class="row2-actions">
+        <div class="import-export-aligned">
+          <button
+            class="export-btn"
+            [class.limit-reached]="isExportLimitReached()"
+            [disabled]="isExportLimitReached()"
+            (click)="openExportModal()"
+            title="Exportar avaliações"
+          >
+            Exportar
+            <span *ngIf="isExportLimitReached()" class="limit-badge">Limite</span>
+          </button>
+        </div>
+
+        <button
+          class="refresh-button"
+          (click)="refreshNames()"
+          [disabled]="isRefreshing"
+          title="Atualizar nomes dos jogadores"
+        >
+          {{ isRefreshing ? "Atualizando..." : "Atualizar Nomes" }}
+        </button>
+
+        <!-- Status das avaliações -->
+        <div class="evaluation-status-compact">
+          <div *ngIf="evaluationStatus" class="status-display">
+            <span class="count-text" [class.warning]="isLimitReached">
+              {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
+            </span>
+            <span class="plan-badge" [class.premium]="evaluationStatus.isPremium">
+              {{ evaluationStatus.isPremium ? 'Premium' : 'Free' }}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="header-actions">
-      <!-- Botões de Import/Export -->
-      <div class="import-export-actions">
-        <button
-          class="export-btn"
-          (click)="openExportModal()"
-          title="Exportar avaliações"
-        >
-          <i class="icon">📤</i>
-          Exportar
-        </button>
-
-        <button
-          class="import-btn"
-          (click)="openImportModal()"
-          title="Importar avaliações"
-        >
-          <i class="icon">📥</i>
-          Importar
-        </button>
-      </div>
-
-      <!-- Modo de seleção -->
-      <button
-        class="selection-toggle-btn"
-        [class.active]="isSelectionMode"
-        (click)="toggleSelectionMode()"
-        title="Ativar/desativar modo de seleção"
-      >
-        <i class="icon">☑️</i>
-        {{ isSelectionMode ? 'Sair da Seleção' : 'Selecionar' }}
-      </button>
-
-      <!-- Controles de seleção múltipla -->
-      <div *ngIf="isSelectionMode" class="selection-controls">
+    <!-- Controles de seleção (quando ativo) -->
+    <div *ngIf="isSelectionMode" class="selection-controls-row">
+      <div class="selection-controls">
         <span class="selection-count">
           {{ getSelectedCount() }}/{{ getTotalDisplayed() }} selecionados
         </span>
@@ -86,54 +133,19 @@
           (click)="selectAllEvaluations()"
           [disabled]="getSelectedCount() === getTotalDisplayed()"
         >
-          Todos
+          Selecionar Todos
         </button>
         <button
           class="clear-selection-btn"
           (click)="clearAllSelections()"
           [disabled]="getSelectedCount() === 0"
         >
-          Limpar
+          Limpar Seleção
         </button>
-      </div>
-
-      <!-- Botão de atualizar nomes -->
-      <button
-        class="refresh-button"
-        (click)="refreshNames()"
-        [disabled]="isRefreshing"
-      >
-        {{ isRefreshing ? "Atualizando..." : "Atualizar Nomes" }}
-      </button>
-
-      <!-- Botão de nova avaliação -->
-      <div class="new-evaluation-button-wrapper">
-        <button
-          class="new-evaluation-btn"
-          [class.disabled]="isLimitReached"
-          [disabled]="isLimitReached"
-          (click)="openFormModal()"
-          [title]="
-            isLimitReached
-              ? 'Limite de avaliações atingido. Faça upgrade para Premium!'
-              : 'Criar nova avaliação'
-          "
-        >
-          + Nova Avaliação
-        </button>
-
-        <!-- Indicador de limite -->
-        <div *ngIf="evaluationStatus" class="evaluation-counter">
-          <span [class.warning]="isLimitReached">
-            {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
-          </span>
-          <span *ngIf="!evaluationStatus.isPremium" class="plan-label">
-            ({{ evaluationStatus.isPremium ? 'Premium' : 'Gratuito' }})
-          </span>
-        </div>
       </div>
     </div>
   </div>
+
 
   <!-- Lista de avaliações -->
   <div class="evaluations-content">
@@ -149,44 +161,39 @@
       [config]="{
         type: 'evaluations',
         title: 'Nenhuma avaliação encontrada',
-        subtitle: 'Comece avaliando seus companheiros de equipe para acompanhar o desempenho deles!',
+        subtitle:
+          'Comece avaliando seus companheiros de equipe para acompanhar o desempenho deles!',
         actionText: isLimitReached ? '' : 'Criar Primeira Avaliação',
         showAction: !isLimitReached
       }"
-      (actionClick)="openFormModal()">
+      (actionClick)="openFormModal()"
+    >
     </app-empty-state>
 
     <!-- Lista com dados -->
-    <div *ngIf="!isLoading && displayedEvaluations.length > 0" class="evaluations-list">
+    <div
+      *ngIf="!isLoading && displayedEvaluations.length > 0"
+      class="evaluations-list"
+    >
       <!-- Cabeçalho da lista -->
       <div class="list-header">
         <div class="header-col col-selection" *ngIf="isSelectionMode">
           <!-- Empty for checkbox column -->
         </div>
         <div class="header-col col-player">
-          <div class="header-title">
-            Jogador
-          </div>
+          <div class="header-title">Jogador</div>
         </div>
         <div class="header-col col-hero">
-          <div class="header-title">
-            Herói & Função
-          </div>
+          <div class="header-title">Herói & Função</div>
         </div>
         <div class="header-col col-rating">
-          <div class="header-title">
-            Avaliação
-          </div>
+          <div class="header-title">Avaliação</div>
         </div>
         <div class="header-col col-notes">
-          <div class="header-title">
-            Anotações
-          </div>
+          <div class="header-title">Anotações</div>
         </div>
         <div class="header-col col-tags">
-          <div class="header-title">
-            Tags
-          </div>
+          <div class="header-title">Tags</div>
         </div>
         <div class="header-col col-actions">
           <!-- Actions column -->
@@ -195,7 +202,10 @@
 
       <!-- Items da lista -->
       <div
-        *ngFor="let evaluation of displayedEvaluations; trackBy: trackByEvaluationId"
+        *ngFor="
+          let evaluation of displayedEvaluations;
+          trackBy: trackByEvaluationId
+        "
         class="list-item"
         [class.selected]="isEvaluationSelected(evaluation.id)"
       >
@@ -206,13 +216,15 @@
             [checked]="isEvaluationSelected(evaluation.id)"
             (change)="toggleEvaluationSelection(evaluation.id)"
             class="evaluation-checkbox"
-          >
+          />
         </div>
 
         <!-- Coluna do jogador -->
         <div class="col-player" data-label="Jogador:">
           <div class="player-info-wrapper">
-            <strong class="player-name">{{ evaluation.targetPlayerName || 'Jogador Desconhecido' }}</strong>
+            <strong class="player-name">{{
+              evaluation.targetPlayerName || "Jogador Desconhecido"
+            }}</strong>
             <small *ngIf="evaluation.target_player_steam_id" class="steam-id">
               ID: {{ evaluation.target_player_steam_id }}
             </small>
@@ -228,12 +240,18 @@
             <ng-container *ngIf="evaluation.hero_id; else noHero">
               <img
                 [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
-                [alt]="gameDataService.getHeroById(evaluation.hero_id)?.localized_name"
+                [alt]="
+                  gameDataService.getHeroById(evaluation.hero_id)
+                    ?.localized_name
+                "
                 class="hero-image"
                 loading="lazy"
-              >
+              />
               <span class="hero-name">
-                {{ gameDataService.getHeroById(evaluation.hero_id)?.localized_name }}
+                {{
+                  gameDataService.getHeroById(evaluation.hero_id)
+                    ?.localized_name
+                }}
               </span>
             </ng-container>
             <ng-template #noHero>
@@ -264,11 +282,10 @@
         <!-- Coluna das tags -->
         <div class="col-tags" data-label="Tags:">
           <div class="tags-wrapper">
-            <ng-container *ngIf="evaluation.tags && evaluation.tags.length > 0; else noTags">
-              <span
-                *ngFor="let tag of evaluation.tags"
-                class="tag-badge"
-              >
+            <ng-container
+              *ngIf="evaluation.tags && evaluation.tags.length > 0; else noTags"
+            >
+              <span *ngFor="let tag of evaluation.tags" class="tag-badge">
                 {{ tag }}
               </span>
             </ng-container>
@@ -293,14 +310,23 @@
               *ngIf="activeActionMenu === evaluation.id"
               class="action-popover"
             >
-              <button (click)="openFormModal(evaluation)" class="action-item edit">
-                ✏️ Editar
+              <button
+                (click)="openFormModal(evaluation)"
+                class="action-item edit"
+              >
+                Editar
               </button>
-              <button (click)="shareEvaluation(evaluation)" class="action-item share">
-                📋 Copiar
+              <button
+                (click)="shareEvaluation(evaluation)"
+                class="action-item share"
+              >
+                Compartilhar
               </button>
-              <button (click)="deleteEvaluation(evaluation.id)" class="action-item delete">
-                🗑️ Excluir
+              <button
+                (click)="deleteEvaluation(evaluation.id)"
+                class="action-item delete"
+              >
+                Excluir
               </button>
             </div>
           </div>
@@ -314,76 +340,161 @@
 <div *ngIf="showExportModal" class="modal-overlay" (click)="closeExportModal()">
   <div class="modal export-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Exportar Avaliações</h3>
+      <h3>
+        {{ exportResult ? "Exportação Concluída!" : "Exportar Avaliações" }}
+      </h3>
       <button class="modal-close-btn" (click)="closeExportModal()">×</button>
     </div>
 
     <div class="modal-content">
-      <div class="export-options">
-        <label class="radio-option">
-          <input
-            type="radio"
-            name="exportType"
-            value="all"
-            [(ngModel)]="exportType"
-            [disabled]="isExporting"
-          >
-          <span class="radio-label">
-            <strong>Todas as avaliações</strong>
-            <small>({{ getTotalDisplayed() }} avaliações)</small>
-          </span>
-        </label>
+      <!-- ANTES da exportação -->
+      <div *ngIf="!exportResult && !isExporting">
+        <div class="export-options">
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="exportType"
+              value="all"
+              [(ngModel)]="exportType"
+              [disabled]="isExporting"
+            />
+            <span class="radio-label">
+              <strong>Todas as avaliações</strong>
+              <small>({{ getTotalDisplayed() }} avaliações)</small>
+            </span>
+          </label>
 
-        <label
-          class="radio-option"
-          [class.disabled]="getSelectedCount() === 0"
-        >
-          <input
-            type="radio"
-            name="exportType"
-            value="selected"
-            [(ngModel)]="exportType"
-            [disabled]="isExporting || getSelectedCount() === 0"
+          <label
+            class="radio-option"
+            [class.disabled]="getSelectedCount() === 0"
           >
-          <span class="radio-label">
-            <strong>Avaliações selecionadas</strong>
-            <small>({{ getSelectedCount() }} avaliações)</small>
-          </span>
-        </label>
+            <input
+              type="radio"
+              name="exportType"
+              value="selected"
+              [(ngModel)]="exportType"
+              [disabled]="isExporting || getSelectedCount() === 0"
+            />
+            <span class="radio-label">
+              <strong>Avaliações selecionadas</strong>
+              <small>({{ getSelectedCount() }} avaliações)</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="export-info">
+          <div class="info-box">
+            <h4>📋 O que será exportado:</h4>
+            <ul>
+              <li>Arquivo JSON para backup local</li>
+              <li>Código de compartilhamento (válido por 30 dias)</li>
+              <li>Dados completos das avaliações</li>
+              <li>Informações dos jogadores e tags</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <div class="export-info">
-        <div class="info-box">
-          <h4>📋 O que será exportado:</h4>
-          <ul>
-            <li>Dados completos das avaliações</li>
-            <li>Informações dos jogadores</li>
-            <li>Tags e anotações</li>
-            <li>Código de compartilhamento</li>
-          </ul>
+      <!-- DURANTE a exportação -->
+      <div *ngIf="isExporting" class="export-loading">
+        <div class="loading-spinner"></div>
+        <p>Processando exportação...</p>
+        <small>Gerando arquivo e código de compartilhamento</small>
+      </div>
+
+      <!-- DEPOIS da exportação - MOSTRAR CÓDIGO -->
+      <div *ngIf="exportResult && !isExporting" class="export-success">
+        <div class="success-message">
+          <h4>✅ Exportação realizada com sucesso!</h4>
+          <p>{{ exportResult.totalEvaluations }} avaliações exportadas</p>
+        </div>
+
+        <!-- CÓDIGO DE COMPARTILHAMENTO -->
+        <div class="share-code-section">
+          <h4>🔗 Código de Compartilhamento:</h4>
+          <div class="share-code-display">
+            <div class="code-box">
+              <span class="share-code-text">{{
+                formatShareCode(exportResult.shareCode)
+              }}</span>
+              <button
+                class="copy-code-btn"
+                (click)="copyShareCode()"
+                title="Copiar código"
+              >
+                📋
+              </button>
+            </div>
+          </div>
+
+          <div class="code-instructions">
+            <p><strong>📱 Como compartilhar:</strong></p>
+            <ul>
+              <li>Copie o código acima</li>
+              <li>Envie para outros jogadores via WhatsApp/Discord</li>
+              <li>Eles podem usar esse código na opção "Importar → Código"</li>
+            </ul>
+
+            <div class="code-details">
+              <small>
+                <strong>⏰ Válido até:</strong>
+                {{ exportResult.exportedAt | date : "dd/MM/yyyy" }} (30 dias)<br />
+                <strong>📄 Arquivo JSON:</strong> Baixado automaticamente para
+                backup
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXEMPLO DE USO -->
+        <div class="usage-example">
+          <h5>💬 Exemplo de mensagem para compartilhar:</h5>
+          <div class="example-message">
+            "Pessoal, exportei minhas avaliações do Courier's Knowledge!<br />
+            Usem o código:
+            <strong>{{ formatShareCode(exportResult.shareCode) }}</strong
+            ><br />
+            Vão em Importar → Código e colem esse código."
+          </div>
         </div>
       </div>
     </div>
 
     <div class="modal-actions">
-      <button
-        (click)="exportEvaluations()"
-        class="btn-primary"
-        [disabled]="isExporting || (exportType === 'selected' && getSelectedCount() === 0)"
-      >
-        <span *ngIf="!isExporting">Exportar</span>
-        <span *ngIf="isExporting">
-          <span class="spinner"></span>
-          Exportando...
-        </span>
-      </button>
-      <button
-        (click)="closeExportModal()"
-        class="btn-secondary"
-        [disabled]="isExporting"
-      >
-        Cancelar
-      </button>
+      <!-- Botões ANTES da exportação -->
+      <ng-container *ngIf="!exportResult && !isExporting">
+        <button
+          (click)="exportEvaluations()"
+          class="btn-primary"
+          [disabled]="
+            isExporting ||
+            (exportType === 'selected' && getSelectedCount() === 0)
+          "
+        >
+          <span *ngIf="!isExporting">Exportar</span>
+          <span *ngIf="isExporting">
+            <span class="spinner"></span>
+            Exportando...
+          </span>
+        </button>
+        <button
+          (click)="closeExportModal()"
+          class="btn-secondary"
+          [disabled]="isExporting"
+        >
+          Cancelar
+        </button>
+      </ng-container>
+
+      <!-- Botões DEPOIS da exportação -->
+      <ng-container *ngIf="exportResult && !isExporting">
+        <button (click)="copyShareCode()" class="btn-primary">
+          📋 Copiar Código
+        </button>
+        <button (click)="closeExportModal()" class="btn-secondary">
+          Fechar
+        </button>
+      </ng-container>
     </div>
   </div>
 </div>
@@ -401,24 +512,154 @@
       <div class="import-tabs">
         <button
           class="tab-btn"
+          [class.active]="importTab === 'paste'"
+          (click)="importTab = 'paste'"
+          [disabled]="isImporting"
+        >
+          <i>📋</i> Colar
+        </button>
+
+        <button
+          class="tab-btn"
           [class.active]="importTab === 'file'"
           (click)="importTab = 'file'"
           [disabled]="isImporting"
         >
-          📁 Arquivo JSON
+          <i>📁</i> Arquivo
         </button>
+
         <button
           class="tab-btn"
           [class.active]="importTab === 'code'"
           (click)="importTab = 'code'"
           [disabled]="isImporting"
         >
-          🔗 Código
+          <i>🔗</i> Código
         </button>
       </div>
 
       <!-- Conteúdo das tabs -->
       <div class="import-content">
+        <!-- Tab de colar (NOVA) -->
+        <div *ngIf="importTab === 'paste'" class="paste-import-section">
+          <div class="paste-description">
+            <p>
+              <i>📋</i>
+              <strong>Cole aqui uma avaliação compartilhada:</strong><br />
+              <small
+                >Aceita tanto texto amigável (WhatsApp/Discord) quanto dados
+                JSON exportados!</small
+              >
+            </p>
+          </div>
+
+          <div class="paste-input-wrapper">
+            <textarea
+              placeholder='Cole aqui uma avaliação compartilhada...
+
+Exemplo de texto amigável:
+[Courier&apos;s Knowledge] Avaliação de jogador:
+- Jogador: PlayerName
+- Herói: Pudge
+- Partida: 8383745353
+- Nota: 4/5 (★★★★☆)
+- Anotações: "Jogou bem de suporte"
+- Tags: #bom-suporte #teamwork
+
+Ou dados JSON exportados:
+{
+  "version": "1.0",
+  "evaluations": [...]
+}'
+              [(ngModel)]="pastedText"
+              (input)="onPastedTextChange()"
+              class="paste-textarea"
+              [disabled]="isImporting"
+              rows="10"
+            ></textarea>
+          </div>
+
+          <!-- Preview dos dados colados -->
+          <div *ngIf="pastedPreview" class="import-preview">
+            <h4>📊 Prévia da Importação:</h4>
+            <div class="preview-info">
+              <div class="preview-item">
+                <strong>Total de avaliações:</strong> {{ pastedPreview.total }}
+              </div>
+              <div class="preview-item">
+                <strong>Tipo:</strong>
+                <span *ngIf="pastedPreview.type === 'text'"
+                  >Texto Amigável</span
+                >
+                <span *ngIf="pastedPreview.type === 'json'">Dados JSON</span>
+              </div>
+              <div class="preview-item">
+                <strong>Fonte:</strong> {{ pastedPreview.exportedBy }}
+              </div>
+              <div class="preview-item" *ngIf="pastedPreview.exportedAt">
+                <strong>Data:</strong>
+                {{ pastedPreview.exportedAt | date : "dd/MM/yyyy HH:mm" }}
+              </div>
+              <div
+                class="preview-item"
+                *ngIf="
+                  pastedPreview.type === 'text' && pastedPreview.evaluation
+                "
+              >
+                <strong>Jogador:</strong>
+                {{ pastedPreview.evaluation.target_player_name || "N/A" }}
+              </div>
+              <div
+                class="preview-item"
+                *ngIf="
+                  pastedPreview.type === 'text' && pastedPreview.evaluation
+                "
+              >
+                <strong>Nota:</strong>
+                {{ pastedPreview.evaluation.rating || "N/A" }}/5
+              </div>
+            </div>
+          </div>
+
+          <div class="paste-help">
+            <div class="help-tips">
+              <h5>💡 Como usar:</h5>
+              <ul>
+                <li>
+                  <strong>Receba</strong>: Alguém compartilha uma avaliação por
+                  WhatsApp/Discord
+                </li>
+                <li>
+                  <strong>Cole</strong>: Use Ctrl+V para colar o texto aqui
+                </li>
+                <li>
+                  <strong>Importe</strong>: Clique em "Importar" para adicionar
+                  à sua coleção
+                </li>
+              </ul>
+
+              <div class="format-examples">
+                <h6>📝 Formatos aceitos:</h6>
+                <div class="format-item">
+                  <strong>✅ Texto amigável:</strong> Compartilhamento casual
+                  via mensagem
+                </div>
+                <div class="format-item">
+                  <strong>✅ JSON exportado:</strong> Arquivo de exportação
+                  completo
+                </div>
+              </div>
+            </div>
+
+            <div class="paste-shortcuts">
+              <small
+                ><strong>Atalhos:</strong> Ctrl+V para colar • Ctrl+A para
+                selecionar tudo</small
+              >
+            </div>
+          </div>
+        </div>
+
         <!-- Tab de arquivo -->
         <div *ngIf="importTab === 'file'" class="file-import-section">
           <input
@@ -428,7 +669,7 @@
             #fileInput
             class="file-input"
             [disabled]="isImporting"
-          >
+          />
 
           <div
             class="file-drop-zone"
@@ -442,7 +683,7 @@
             <div *ngIf="!selectedFile" class="drop-zone-empty">
               <i class="drop-icon">☁️</i>
               <p class="drop-text">
-                <strong>Arraste um arquivo JSON aqui</strong><br>
+                <strong>Arraste um arquivo JSON aqui</strong><br />
                 ou clique para selecionar
               </p>
               <small>Máximo: 10MB</small>
@@ -456,7 +697,11 @@
               </div>
               <button
                 class="remove-file-btn"
-                (click)="$event.stopPropagation(); selectedFile = null; importPreview = null"
+                (click)="
+                  $event.stopPropagation();
+                  selectedFile = null;
+                  importPreview = null
+                "
                 [disabled]="isImporting"
               >
                 ×
@@ -476,7 +721,7 @@
               </div>
               <div class="preview-item" *ngIf="importPreview.exportedAt">
                 <strong>Data da exportação:</strong>
-                {{ importPreview.exportedAt | date:'dd/MM/yyyy HH:mm' }}
+                {{ importPreview.exportedAt | date : "dd/MM/yyyy HH:mm" }}
               </div>
               <div class="preview-item">
                 <strong>Versão:</strong> {{ importPreview.version }}
@@ -495,13 +740,14 @@
               class="share-code-input"
               [disabled]="isImporting"
               maxlength="16"
-            >
+            />
           </div>
 
           <div class="code-help">
             <p class="help-text">
               <i>💡</i>
-              O código de compartilhamento tem 8 caracteres e é fornecido quando alguém exporta avaliações.
+              O código de compartilhamento tem 8 caracteres e é fornecido quando
+              alguém exporta avaliações.
             </p>
           </div>
         </div>
@@ -509,20 +755,55 @@
 
       <!-- Modo de importação -->
       <div class="import-mode-section">
-        <label class="mode-label">⚙️ Modo de importação:</label>
-        <select
-          [(ngModel)]="importMode"
-          class="mode-select"
-          [disabled]="isImporting"
-        >
-          <option value="add">Adicionar (manter existentes)</option>
-          <option value="merge">Mesclar (atualizar existentes)</option>
-          <option value="replace">Substituir (limpar tudo antes)</option>
-        </select>
+        <h4>Modo de Importação:</h4>
+        <div class="mode-options">
+          <label class="mode-option">
+            <input
+              type="radio"
+              name="importMode"
+              value="add"
+              [(ngModel)]="importMode"
+              [disabled]="isImporting"
+            />
+            <span class="mode-label">
+              <strong>Adicionar</strong>
+              <small>Manter existentes, adicionar novas</small>
+            </span>
+          </label>
 
-        <small class="mode-description">
+          <label class="mode-option">
+            <input
+              type="radio"
+              name="importMode"
+              value="merge"
+              [(ngModel)]="importMode"
+              [disabled]="isImporting"
+            />
+            <span class="mode-label">
+              <strong>Mesclar</strong>
+              <small>Atualizar existentes, adicionar novas</small>
+            </span>
+          </label>
+
+          <label class="mode-option">
+            <input
+              type="radio"
+              name="importMode"
+              value="replace"
+              [(ngModel)]="importMode"
+              [disabled]="isImporting"
+            />
+            <span class="mode-label">
+              <strong>Substituir</strong>
+              <small>Remover todas e importar novas</small>
+            </span>
+          </label>
+        </div>
+
+        <p class="mode-description">
+          <i>ℹ️</i>
           {{ getImportModeDescription() }}
-        </small>
+        </p>
       </div>
     </div>
 
@@ -530,9 +811,9 @@
       <button
         (click)="importEvaluations()"
         class="btn-primary"
-        [disabled]="!canImport() || isImporting"
+        [disabled]="isImporting || !canImport()"
       >
-        <span *ngIf="!isImporting">📥 Importar</span>
+        <span *ngIf="!isImporting">Importar</span>
         <span *ngIf="isImporting">
           <span class="spinner"></span>
           Importando...

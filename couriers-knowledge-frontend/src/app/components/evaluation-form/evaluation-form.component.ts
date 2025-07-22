@@ -174,7 +174,7 @@ export class EvaluationFormComponent implements OnInit {
         : this.evaluationData.tags || '',
     });
 
-    // ✅ BLOQUEAR CAMPOS SE NECESSÁRIO
+    // ✅ BLOQUEAR CAMPOS SE NECESSÁRIO (EXCETO ROLE)
     if (this.shouldLockFields) {
       if (
         this.evaluationData.targetSteamId ||
@@ -188,10 +188,15 @@ export class EvaluationFormComponent implements OnInit {
       if (this.evaluationData.matchId || this.evaluationData.match_id) {
         this.evaluationForm.get('matchId')?.disable();
       }
+      // ROLE SEMPRE PERMANECE EDITÁVEL - não desabilitar
     }
 
     console.log('✅ Formulário preenchido:', this.evaluationForm.value);
     console.log('🔒 Campos bloqueados:', this.shouldLockFields);
+    console.log(
+      '🎭 Role editável:',
+      !this.evaluationForm.get('role')?.disabled
+    );
   }
 
   public getPlayerDisplayText(): string {
@@ -440,5 +445,18 @@ export class EvaluationFormComponent implements OnInit {
   public onClose(): void {
     console.log('❌ Fechando formulário'); // Debug
     this.formClosed.emit(); // ← CORRIGIR NOME DO EVENTO
+  }
+
+  public getRoleDisplayName(role: string): string {
+    const roleNames: { [key: string]: string } = {
+      hc: 'Hard Carry (Pos 1)',
+      mid: 'Mid Lane (Pos 2)',
+      off: 'Offlaner (Pos 3)',
+      'sup 4': 'Support (Pos 4)',
+      'sup 5': 'Hard Support (Pos 5)',
+      outro: 'Outro',
+    };
+
+    return roleNames[role] || role.toUpperCase();
   }
 }

@@ -1,41 +1,41 @@
-// backend/src/api/routes/evaluation.routes.js
+// SUBSTITUA no arquivo couriers-knowledge-backend/src/api/routes/evaluation.routes.js
+
 const express = require('express');
 const router = express.Router();
 const evaluationController = require('../../controllers/evaluation.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
-const { exportLimiter, importLimiter, importSlowDown } = require('../../middlewares/importExportLimiter.middleware');
+const { exportLimiter, importLimiter } = require('../../middlewares/importExportLimiter.middleware');
 
+// Rota pública para avaliações compartilhadas
 router.get('/share/:id', evaluationController.getSharedEvaluation);
 
-
-// A rota POST /evaluations será protegida.
-// Apenas usuários autenticados (com um token válido) podem criar avaliações.
+// Rotas protegidas que requerem autenticação
 router.post('/evaluations', authMiddleware.verifyToken, evaluationController.createEvaluation);
-
-// Lista as avaliações feitas pelo usuário autenticado
 router.get('/evaluations/me', authMiddleware.verifyToken, evaluationController.getMyEvaluations);
-
-// Lista as avaliações sobre um jogador específico (pelo steam_id)
 router.get('/evaluations/player/:steamId', authMiddleware.verifyToken, evaluationController.getPlayerEvaluations);
-
-// Edita uma avaliação específica (pelo seu ID)
 router.put('/evaluations/:id', authMiddleware.verifyToken, evaluationController.updateEvaluation);
-
-// Apaga uma avaliação específica (pelo seu ID)
 router.delete('/evaluations/:id', authMiddleware.verifyToken, evaluationController.deleteEvaluation);
-
-// NOVA ROTA GET para buscar as tags
 router.get('/evaluations/tags', authMiddleware.verifyToken, evaluationController.getUniqueTags);
-
-// Rota para buscar quantas avaliações um usuário fez
 router.get('/evaluations/status', authMiddleware.verifyToken, evaluationController.getEvaluationStatus);
-
 router.get('/evaluations/by-name/:playerName', authMiddleware.verifyToken, evaluationController.getEvaluationsByPlayerName);
 
+// Rotas de import/export COM RATE LIMITING
+router.post('/evaluations/export', 
+  authMiddleware.verifyToken, 
+  exportLimiter, 
+  evaluationController.exportEvaluations
+);
 
-router.post('/evaluations/export', authMiddleware.verifyToken, exportLimiter, evaluationController.exportEvaluations);
-router.post('/evaluations/import', authMiddleware.verifyToken, importLimiter, importSlowDown, evaluationController.importEvaluations);
+router.post('/evaluations/import', 
+  authMiddleware.verifyToken, 
+  importLimiter, 
+  evaluationController.importEvaluations
+);
 
-
+// Rota para verificar estatísticas de uso
+router.get('/evaluations/import-export-stats', 
+  authMiddleware.verifyToken, 
+  evaluationController.getImportExportStats
+);
 
 module.exports = router;

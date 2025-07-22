@@ -1,6 +1,8 @@
 // backend/src/controllers/evaluation.controller.js
 const db = require('../config/database');
 const steamService = require('../services/steam.service');
+const { logOperation } = require('../middlewares/importExportLimiter.middleware');
+const { getUserUsageStats, LIMITS } = require('../middlewares/importExportLimiter.middleware');
 
 exports.createEvaluation = async (req, res) => {
     const authorId = req.user.id;
@@ -336,7 +338,7 @@ exports.getEvaluationsByPlayerName = async (req, res) => {
 
 exports.exportEvaluations = async (req, res) => {
   const authorId = req.user.id;
-  const { evaluationIds } = req.body; // Array de IDs das avaliações selecionadas
+  const { evaluationIds } = req.body;
 
   try {
     let query;
@@ -376,11 +378,16 @@ exports.exportEvaluations = async (req, res) => {
       return res.status(404).json({ message: 'Nenhuma avaliação encontrada para exportar.' });
     }
 
+    // Buscar dados do usuário para exportação
+    const userQuery = `SELECT steam_username FROM users WHERE id = $1`;
+    const userResult = await db.query(userQuery, [authorId]);
+    const exportedBy = userResult.rows[0]?.steam_username || 'Usuario';
+
     // Formato do arquivo de exportação
     const exportData = {
       version: "1.0",
       exported_at: new Date().toISOString(),
-      exported_by: req.user.username || req.user.email,
+      exported_by: exportedBy,
       total_evaluations: rows.length,
       evaluations: rows.map(evaluation => ({
         // Dados principais da avaliação
@@ -396,12 +403,12 @@ exports.exportEvaluations = async (req, res) => {
         
         // Metadados para importação
         original_evaluation_id: evaluation.id,
-        original_author: req.user.username || req.user.email
+        original_author: exportedBy
       }))
     };
 
-    // Gerar código único para compartilhamento (opcional)
-    const shareCode = require('crypto').randomBytes(8).toString('hex').toUpperCase();
+    // Gerar código único para compartilhamento
+    const shareCode = require('crypto').randomBytes(4).toString('hex').toUpperCase();
     
     // Salvar temporariamente no banco para permitir importação via código
     const insertShareQuery = `
@@ -420,6 +427,13 @@ exports.exportEvaluations = async (req, res) => {
       expiresAt
     ]);
 
+    // Registrar a operação de exportação
+    await logOperation(authorId, 'export', {
+      total_evaluations: rows.length,
+      share_code: shareCode,
+      export_type: evaluationIds && evaluationIds.length > 0 ? 'selected' : 'all'
+    });
+
     res.status(200).json({
       message: 'Avaliações exportadas com sucesso!',
       shareCode: shareCode,
@@ -432,17 +446,18 @@ exports.exportEvaluations = async (req, res) => {
   }
 };
 
-// 2. Função para IMPORTAR avaliações
+
 exports.importEvaluations = async (req, res) => {
   const authorId = req.user.id;
   const { importData, shareCode, mode = 'add' } = req.body;
-  // mode: 'add' (adicionar), 'replace' (substituir), 'merge' (mesclar)
 
   try {
     let dataToImport;
+    let importSource = 'unknown';
 
     if (shareCode) {
       // Importar via código de compartilhamento
+      importSource = 'share_code';
       const shareQuery = `
         SELECT data FROM evaluation_shares 
         WHERE share_code = $1 AND expires_at > NOW()
@@ -450,15 +465,34 @@ exports.importEvaluations = async (req, res) => {
       const shareResult = await db.query(shareQuery, [shareCode.toUpperCase()]);
       
       if (shareResult.rows.length === 0) {
-        return res.status(404).json({ message: 'Código de compartilhamento inválido ou expirado.' });
+        // Verificar se o código existe mas está expirado
+        const expiredQuery = `
+          SELECT expires_at FROM evaluation_shares 
+          WHERE share_code = $1
+        `;
+        const expiredResult = await db.query(expiredQuery, [shareCode.toUpperCase()]);
+        
+        if (expiredResult.rows.length > 0) {
+          return res.status(410).json({ 
+            message: 'Código de compartilhamento expirado.' 
+          });
+        } else {
+          return res.status(404).json({ 
+            message: 'Código de compartilhamento inválido.' 
+          });
+        }
       }
       
       dataToImport = shareResult.rows[0].data;
+      
     } else if (importData) {
-      // Importar via dados diretos (arquivo JSON)
+      // Importar via dados diretos (arquivo JSON ou texto)
+      importSource = importData.version ? 'json_file' : 'text_paste';
       dataToImport = importData;
     } else {
-      return res.status(400).json({ message: 'É necessário fornecer dados para importar ou código de compartilhamento.' });
+      return res.status(400).json({ 
+        message: 'É necessário fornecer dados para importar ou código de compartilhamento.' 
+      });
     }
 
     // Validar formato dos dados
@@ -466,7 +500,11 @@ exports.importEvaluations = async (req, res) => {
       return res.status(400).json({ message: 'Formato de dados inválido.' });
     }
 
-    const client = await db.getClient();
+    if (dataToImport.evaluations.length === 0) {
+      return res.status(400).json({ message: 'Nenhuma avaliação encontrada para importar.' });
+    }
+
+    const client = await db.connect();
     
     try {
       await client.query('BEGIN');
@@ -475,15 +513,15 @@ exports.importEvaluations = async (req, res) => {
       let skippedCount = 0;
       const errors = [];
 
-      for (const evaluation of dataToImport.evaluations) {
+      for (let i = 0; i < dataToImport.evaluations.length; i++) {
+        const evaluation = dataToImport.evaluations[i];
+        
         try {
           // Verificar se o jogador já existe
           let playerId;
           
           if (evaluation.target_steam_id) {
-            const playerQuery = `
-              SELECT id FROM players WHERE steam_id = $1
-            `;
+            const playerQuery = `SELECT id FROM players WHERE steam_id = $1`;
             const playerResult = await client.query(playerQuery, [evaluation.target_steam_id]);
             
             if (playerResult.rows.length > 0) {
@@ -504,7 +542,8 @@ exports.importEvaluations = async (req, res) => {
           } else {
             // Buscar por nome se não tiver Steam ID
             const playerQuery = `
-              SELECT id FROM players WHERE last_known_name = $1 AND created_by = $2
+              SELECT id FROM players 
+              WHERE last_known_name = $1 AND created_by = $2
             `;
             const playerResult = await client.query(playerQuery, [
               evaluation.target_player_name,
@@ -514,7 +553,7 @@ exports.importEvaluations = async (req, res) => {
             if (playerResult.rows.length > 0) {
               playerId = playerResult.rows[0].id;
             } else {
-              // Criar player sem Steam ID
+              // Criar novo player sem Steam ID
               const insertPlayerQuery = `
                 INSERT INTO players (last_known_name, created_by, created_at)
                 VALUES ($1, $2, NOW())
@@ -528,42 +567,51 @@ exports.importEvaluations = async (req, res) => {
             }
           }
 
-          // Verificar se já existe avaliação similar (para evitar duplicatas)
+          // Verificar se já existe avaliação duplicada
           if (mode !== 'replace') {
-            const existingQuery = `
+            const duplicateQuery = `
               SELECT id FROM evaluations 
-              WHERE author_id = $1 AND player_id = $2 AND match_id = $3
+              WHERE author_id = $1 AND player_id = $2
             `;
-            const existingResult = await client.query(existingQuery, [
-              authorId,
-              playerId,
-              evaluation.match_id
-            ]);
-
-            if (existingResult.rows.length > 0 && mode === 'add') {
-              skippedCount++;
-              continue; // Pular duplicatas no modo 'add'
+            const duplicateResult = await client.query(duplicateQuery, [authorId, playerId]);
+            
+            if (duplicateResult.rows.length > 0) {
+              if (mode === 'add') {
+                skippedCount++;
+                continue;
+              } else if (mode === 'merge') {
+                // Atualizar avaliação existente
+                const updateQuery = `
+                  UPDATE evaluations 
+                  SET rating = $1, notes = $2, tags = $3, role = $4, 
+                      hero_id = $5, match_id = $6, updated_at = NOW()
+                  WHERE author_id = $7 AND player_id = $8
+                `;
+                await client.query(updateQuery, [
+                  evaluation.rating,
+                  evaluation.notes,
+                  evaluation.tags,
+                  evaluation.role,
+                  evaluation.hero_id,
+                  evaluation.match_id,
+                  authorId,
+                  playerId
+                ]);
+                importedCount++;
+                continue;
+              }
             }
           }
 
-          // Inserir/atualizar avaliação
-          const insertEvaluationQuery = `
+          // Inserir nova avaliação
+          const insertQuery = `
             INSERT INTO evaluations (
               author_id, player_id, rating, notes, tags, role, 
               hero_id, match_id, created_at
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (author_id, player_id, match_id) 
-            DO UPDATE SET
-              rating = EXCLUDED.rating,
-              notes = EXCLUDED.notes,
-              tags = EXCLUDED.tags,
-              role = EXCLUDED.role,
-              hero_id = EXCLUDED.hero_id,
-              updated_at = NOW()
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
           `;
-
-          await client.query(insertEvaluationQuery, [
+          
+          await client.query(insertQuery, [
             authorId,
             playerId,
             evaluation.rating,
@@ -571,19 +619,28 @@ exports.importEvaluations = async (req, res) => {
             evaluation.tags,
             evaluation.role,
             evaluation.hero_id,
-            evaluation.match_id,
-            evaluation.created_at || new Date()
+            evaluation.match_id
           ]);
-
+          
           importedCount++;
-
+          
         } catch (evalError) {
-          console.error('Erro ao importar avaliação individual:', evalError);
-          errors.push(`Erro na avaliação ${evaluation.target_player_name}: ${evalError.message}`);
+          console.error(`Erro ao processar avaliação ${i + 1}:`, evalError);
+          errors.push(`Avaliação ${i + 1}: ${evalError.message}`);
         }
       }
 
       await client.query('COMMIT');
+
+      // Registrar a operação de importação
+      await logOperation(authorId, 'import', {
+        total_evaluations: dataToImport.evaluations.length,
+        imported_count: importedCount,
+        skipped_count: skippedCount,
+        import_source: importSource,
+        import_mode: mode,
+        share_code: shareCode || null
+      });
 
       res.status(200).json({
         message: 'Importação concluída com sucesso!',
@@ -602,6 +659,106 @@ exports.importEvaluations = async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao importar avaliações:', error);
+    res.status(500).json({ 
+      message: 'Erro interno do servidor.'
+    });
+  }
+};
+
+
+exports.getImportExportStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Buscar status atualizado do usuário diretamente do banco
+    const userQuery = `SELECT account_status, premium_expires_at FROM users WHERE id = $1`;
+    const userResult = await db.query(userQuery, [userId]);
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+    
+    const user = userResult.rows[0];
+    const userStatus = user.account_status || 'Free';
+    
+    // Verificar se Premium ainda está válido
+    const isPremiumValid = userStatus === 'Premium' && 
+      (!user.premium_expires_at || new Date(user.premium_expires_at) > new Date());
+    
+    const effectiveStatus = isPremiumValid ? 'Premium' : 'Free';
+    
+    console.log('=== STATS DEBUG ===');
+    console.log('User ID:', userId);
+    console.log('Account Status DB:', userStatus);
+    console.log('Premium Expires:', user.premium_expires_at);
+    console.log('Is Premium Valid:', isPremiumValid);
+    console.log('Effective Status:', effectiveStatus);
+    
+    // Obter estatísticas de uso
+    const usage = await getUserUsageStats(userId);
+    
+    // Definir limites baseados no plano do usuário
+    const limits = isPremiumValid ? LIMITS.PREMIUM : LIMITS.FREE;
+    
+    // Calcular status dos limites
+    const exportStatus = {
+      daily: {
+        current: usage.export.daily,
+        limit: limits.DAILY,
+        remaining: limits.DAILY ? Math.max(0, limits.DAILY - usage.export.daily) : null,
+        unlimited: !limits.DAILY
+      },
+      monthly: {
+        current: usage.export.monthly,
+        limit: limits.MONTHLY,
+        remaining: limits.MONTHLY ? Math.max(0, limits.MONTHLY - usage.export.monthly) : null,
+        unlimited: !limits.MONTHLY
+      }
+    };
+    
+    const importStatus = {
+      daily: {
+        current: usage.import.daily,
+        limit: limits.DAILY,
+        remaining: limits.DAILY ? Math.max(0, limits.DAILY - usage.import.daily) : null,
+        unlimited: !limits.DAILY
+      },
+      monthly: {
+        current: usage.import.monthly,
+        limit: limits.MONTHLY,
+        remaining: limits.MONTHLY ? Math.max(0, limits.MONTHLY - usage.import.monthly) : null,
+        unlimited: !limits.MONTHLY
+      }
+    };
+    
+    res.status(200).json({
+      user: {
+        id: userId,
+        status: effectiveStatus,
+        isPremium: isPremiumValid,
+        premiumExpires: user.premium_expires_at
+      },
+      limits: {
+        plan: isPremiumValid ? 'Premium' : 'Free',
+        export: limits,
+        import: limits
+      },
+      usage: {
+        export: exportStatus,
+        import: importStatus
+      },
+      canExport: {
+        daily: !limits.DAILY || usage.export.daily < limits.DAILY,
+        monthly: !limits.MONTHLY || usage.export.monthly < limits.MONTHLY
+      },
+      canImport: {
+        daily: !limits.DAILY || usage.import.daily < limits.DAILY,
+        monthly: !limits.MONTHLY || usage.import.monthly < limits.MONTHLY
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas de import/export:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
