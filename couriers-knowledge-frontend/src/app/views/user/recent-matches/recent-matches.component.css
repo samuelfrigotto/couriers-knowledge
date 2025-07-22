@@ -93,6 +93,26 @@ h1, h2 {
   font-size: 1.1rem;
   color: #a0aec0;
 }
+
+.vs-text {
+  margin: 0 8px;
+  font-weight: bold;
+  color: #a0aec0;
+  font-size: 0.9em;
+}
+
+.details-score .vs-text {
+  margin: 0 15px;
+  font-size: 1.5rem;
+  color: #a0aec0;
+}
+
+.score-vs .radiant-score,
+.score-vs .dire-score {
+  margin: 0;
+  padding: 0;
+}
+
 .score-vs .radiant-score { color: #68d391; }
 .score-vs .dire-score { color: #fc8181; }
 .hero-icon-small {
@@ -139,6 +159,13 @@ h1, h2 {
 }
 .details-score .radiant-score { color: #68d391; }
 .details-score .dire-score { color: #fc8181; }
+
+.details-score .radiant-score,
+.details-score .dire-score {
+  margin: 0;
+  padding: 0;
+}
+
 .back-button {
   background-color: var(--accent-color);
   color: var(--text-color);
