@@ -1,55 +1,64 @@
 // frontend/src/app/views/user/friends/friends.component.ts
-// VERSÃO LIMPA E CORRIGIDA
+// VERSÃO COM BARRA DE PESQUISA ADICIONADA AO SEU CÓDIGO ORIGINAL
 
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject, takeUntil, map, Observable, combineLatest } from 'rxjs';
+import { FormsModule } from '@angular/forms'; // ✅ NOVO: Adicionado para ngModel
+import { Subject, takeUntil, map, Observable, combineLatest, BehaviorSubject } from 'rxjs'; // ✅ NOVO: BehaviorSubject adicionado
 import { ToastrService } from 'ngx-toastr';
 
 import { FriendsService, FriendStatus, FriendsStatusResponse } from '../../../core/friends.service';
 import { SteamChatService } from '../../../core/steam-chat.service';
 import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
 
-
-// ✅ NOVO: Interface para o amigo unificado
+// ✅ Interface para o amigo unificado (mantida)
 interface UnifiedFriendStatus extends FriendStatus {
   status: 'using-app' | 'not-using-app';
 }
 
-
 @Component({
   selector: 'app-friends',
   standalone: true,
-  imports: [CommonModule, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, EmptyStateComponent], // ✅ NOVO: FormsModule adicionado
   templateUrl: './friends.component.html',
   styleUrls: ['./friends.component.css']
 })
 export class FriendsComponent implements OnInit, OnDestroy {
-  // Injeção de dependências
+  // Injeção de dependências (mantida)
   protected friendsService = inject(FriendsService);
-  private steamChatService = inject(SteamChatService); // ✅ NOVO SERVIÇO
+  private steamChatService = inject(SteamChatService);
   private toastr = inject(ToastrService);
   private destroy$ = new Subject<void>();
 
-  // ✅ OBSERVABLES PÚBLICOS PARA O TEMPLATE
+  // ✅ NOVO: Propriedades para pesquisa
+  searchTerm = '';
+  private searchSubject = new BehaviorSubject<string>('');
+  public search$ = this.searchSubject.asObservable();
+
+  // ✅ OBSERVABLES PÚBLICOS PARA O TEMPLATE (mantidos + novos com filtro)
   public friendsData$: Observable<FriendsStatusResponse | null>;
   public allFriends$: Observable<UnifiedFriendStatus[]>;
   public invitedFriends$: Observable<FriendStatus[]>;
 
+  // ✅ NOVO: Observables filtrados
+  public filteredAllFriends$: Observable<UnifiedFriendStatus[]>;
+  public filteredNotUsingApp$: Observable<FriendStatus[]>;
+  public filteredUsingApp$: Observable<FriendStatus[]>;
+  public filteredInvitedFriends$: Observable<FriendStatus[]>;
 
-    // Estado do componente
+  // Estado do componente (mantido)
   activeTab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics' = 'all-friends';
 
-  // Estados para interações
+  // Estados para interações (mantidos)
   invitingFriends = new Set<string>();
   copiedInvites = new Set<string>();
   openingSteamChat = new Set<string>();
 
   constructor() {
-    // Inicializa os Observables
+    // Inicializa os Observables (mantidos)
     this.friendsData$ = this.friendsService.friendsStatus$;
 
-    // ✅ Observable para a lista de todos os amigos, combinada e ordenada
+    // ✅ Observable para a lista de todos os amigos, combinada e ordenada (mantido)
     this.allFriends$ = this.friendsData$.pipe(
       map(data => {
         if (!data) return [];
@@ -64,9 +73,32 @@ export class FriendsComponent implements OnInit, OnDestroy {
       })
     );
 
-    // ✅ Observable para a lista de amigos convidados
+    // ✅ Observable para a lista de amigos convidados (mantido)
     this.invitedFriends$ = this.friendsData$.pipe(
       map(data => data ? data.notUsingApp.filter(f => f.already_invited) : [])
+    );
+
+    // ✅ NOVO: Observables filtrados
+    this.filteredAllFriends$ = combineLatest([this.allFriends$, this.search$]).pipe(
+      map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
+    );
+
+    this.filteredNotUsingApp$ = combineLatest([
+      this.friendsData$.pipe(map(data => data?.notUsingApp || [])),
+      this.search$
+    ]).pipe(
+      map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
+    );
+
+    this.filteredUsingApp$ = combineLatest([
+      this.friendsData$.pipe(map(data => data?.usingApp || [])),
+      this.search$
+    ]).pipe(
+      map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
+    );
+
+    this.filteredInvitedFriends$ = combineLatest([this.invitedFriends$, this.search$]).pipe(
+      map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
     );
   }
 
@@ -83,8 +115,32 @@ export class FriendsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ✅ NOVO: Métodos para pesquisa
+  private filterFriends<T extends { steam_username: string }>(friends: T[], searchTerm: string): T[] {
+    if (!searchTerm.trim()) return friends;
+
+    const term = searchTerm.toLowerCase().trim();
+    return friends.filter(friend =>
+      friend.steam_username.toLowerCase().includes(term)
+    );
+  }
+
+  onSearchChange(searchTerm: string): void {
+    this.searchTerm = searchTerm;
+    this.searchSubject.next(searchTerm);
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.searchSubject.next('');
+  }
+
+  hasActiveSearch(): boolean {
+    return this.searchTerm.trim().length > 0;
+  }
+
   /**
-   * Carrega dados dos amigos
+   * Carrega dados dos amigos (mantido)
    */
   loadFriendsData(): void {
       console.log('🔍 Carregando dados dos amigos...');
@@ -103,7 +159,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
     }
 
   /**
-   * Força atualização dos dados
+   * Força atualização dos dados (mantido)
    */
   refreshFriends(): void {
     console.log('🔄 Atualizando dados...');
@@ -111,8 +167,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ✅ CORRIGIDO: Convida um amigo e abre o Steam Chat automaticamente
-   * Agora espera a cópia ser completada antes de abrir o Steam
+   * ✅ CORRIGIDO: Convida um amigo e abre o Steam Chat automaticamente (mantido)
    */
   async inviteFriendWithSteamChat(friend: FriendStatus): Promise<void> {
     if (this.invitingFriends.has(friend.steam_id)) return;
@@ -150,7 +205,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ✅ NOVO MÉTODO: Abre Steam Chat com mensagem pré-preenchida
+   * ✅ NOVO MÉTODO: Abre Steam Chat com mensagem pré-preenchida (mantido)
    */
   private openSteamChatWithMessage(friend: FriendStatus, inviteMessage: string): void {
       this.steamChatService.openSteamChat({
@@ -159,6 +214,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
         playerName: friend.steam_username
       });
     }
+
   /**
    * Método original de convite (mantido para compatibilidade)
    */
@@ -196,7 +252,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Copia mensagem de convite para área de transferência
+   * Copia mensagem de convite para área de transferência (mantido)
    */
   async copyInviteMessage(message: string, friendSteamId: string): Promise<void> {
     const success = await this.friendsService.copyToClipboard(message);
@@ -213,15 +269,16 @@ export class FriendsComponent implements OnInit, OnDestroy {
       this.toastr.warning('Copie manualmente', '', { timeOut: 3000 });
     }
   }
+
   /**
-   * ✅ ATUALIZADO: Abre perfil Steam do amigo usando novo serviço
+   * ✅ ATUALIZADO: Abre perfil Steam do amigo usando novo serviço (mantido)
    */
   openSteamProfile(friend: FriendStatus): void {
     this.steamChatService.openSteamProfile(friend.steam_id, friend.steam_username);
   }
 
   /**
-   * ✅ NOVO MÉTODO: Abre Steam Chat sem gerar convite
+   * ✅ NOVO MÉTODO: Abre Steam Chat sem gerar convite (mantido)
    */
   openSteamChatDirect(friend: FriendStatus): void {
     this.openingSteamChat.add(friend.steam_id);
@@ -253,35 +310,35 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Muda aba ativa
+   * Muda aba ativa (mantido)
    */
-  // Linha 140 (aproximadamente)
   setActiveTab(tab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics'): void {
     this.activeTab = tab;
   }
+
   /**
-   * Verifica se um amigo está sendo convidado
+   * Verifica se um amigo está sendo convidado (mantido)
    */
   isInviting(steamId: string): boolean {
     return this.invitingFriends.has(steamId);
   }
 
   /**
-   * ✅ NOVO: Verifica se Steam Chat está sendo aberto
+   * ✅ NOVO: Verifica se Steam Chat está sendo aberto (mantido)
    */
   isOpeningSteamChat(steamId: string): boolean {
     return this.openingSteamChat.has(steamId);
   }
 
   /**
-   * Verifica se um convite foi copiado recentemente
+   * Verifica se um convite foi copiado recentemente (mantido)
    */
   wasRecentlyCopied(steamId: string): boolean {
     return this.copiedInvites.has(steamId);
   }
 
   /**
-   * ✅ ATUALIZADO: Retorna texto do botão baseado no estado
+   * ✅ ATUALIZADO: Retorna texto do botão baseado no estado (mantido)
    */
   getInviteButtonText(friend: FriendStatus): string {
     if (this.isInviting(friend.steam_id)) {
@@ -304,7 +361,7 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * ✅ ATUALIZADO: Retorna classe CSS do botão
+   * ✅ ATUALIZADO: Retorna classe CSS do botão (mantido)
    */
   getInviteButtonClass(friend: FriendStatus): string {
     if (this.isInviting(friend.steam_id) || this.isOpeningSteamChat(friend.steam_id)) {
@@ -323,7 +380,7 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Formata data para exibição
+   * Formata data para exibição (mantido)
    */
   formatDate(dateString?: string): string {
     if (!dateString) {
@@ -346,15 +403,15 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Retorna classe do status online
+   * Retorna classe do status online (mantido)
    */
   getOnlineStatusClass = (isOnline?: boolean) => isOnline ? 'online' : 'offline';
-  getOnlineStatusText = (isOnline?: boolean) => isOnline ? 'Online' : 'Offline';
+  getOnlineStatusText = (isOnline?: boolean) => isOnline ? 'Online' : 'Offline';
+
   /**
-   * TrackBy function para performance do *ngFor
+   * TrackBy function para performance do *ngFor (mantido)
    */
   trackByFriend(index: number, friend: FriendStatus): string {
     return friend.steam_id;
   }
-
 }

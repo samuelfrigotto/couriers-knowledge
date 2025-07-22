@@ -1,6 +1,7 @@
 // empty-state.component.ts
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 export interface EmptyStateConfig {
   type: 'evaluations' | 'friends' | 'matches' | 'live' | 'general';
@@ -9,6 +10,7 @@ export interface EmptyStateConfig {
   actionText?: string;
   actionRoute?: string;
   showAction?: boolean;
+  customMessage?: string;
 }
 
 @Component({
@@ -60,6 +62,9 @@ export interface EmptyStateConfig {
 })
 export class EmptyStateComponent {
   @Input() config: EmptyStateConfig = { type: 'general' };
+  @Output() actionClick = new EventEmitter<any>();
+
+  constructor(private router: Router) {}
 
   getTitle(): string {
     if (this.config.title) return this.config.title;
@@ -68,7 +73,7 @@ export class EmptyStateComponent {
       evaluations: 'Nenhuma avaliação ainda',
       friends: 'Sua lista de amigos está vazia',
       matches: 'Nenhuma partida encontrada',
-      live: 'Nenhuma partida ao vivo',
+      live: 'Aguardando dados de partida',
       general: 'Nada para mostrar aqui'
     };
 
@@ -81,8 +86,8 @@ export class EmptyStateComponent {
     const subtitles = {
       evaluations: 'Comece avaliando jogadores nas suas partidas para construir sua base de conhecimento.',
       friends: 'Adicione amigos para compartilhar avaliações e descobrir novos insights sobre jogadores.',
-      matches: 'Suas partidas aparecerão aqui quando você começar a jogar ou avaliar outros jogadores.',
-      live: 'Quando você estiver em uma partida ao vivo, ela aparecerá aqui com informações em tempo real.',
+      matches: 'Suas partidas aparecerão aqui quando você começar a jogar e avaliar outros jogadores.',
+      live: 'Suas partidas em tempo real aparecerão aqui quando disponíveis através do Dota 2.',
       general: 'Este espaço será preenchido conforme você usar o Courier\'s Knowledge.'
     };
 
@@ -92,10 +97,10 @@ export class EmptyStateComponent {
   getTip(): string {
     const tips = {
       evaluations: 'Dica: Avalie sempre após cada partida para não esquecer detalhes importantes!',
-      friends: 'Dica: Amigos ajudam a descobrir jogadores problemáticos ou excelentes em comum.',
-      matches: 'Dica: Use o Game State Integration para capturar partidas automaticamente.',
-      live: 'Dica: Ative o GSI para ver dados em tempo real enquanto joga.',
-      general: 'Dica: Explore todas as funcionalidades para maximizar sua experiência.'
+      friends: 'Dica: Conecte-se com outros jogadores para expandir sua rede de conhecimento.',
+      matches: 'Dica: O histórico de partidas ajuda a identificar padrões e melhorar sua gameplay.',
+      live: 'Dica: Dados de partidas em tempo real proporcionam insights valiosos durante o jogo.',
+      general: 'Dica: Explore todas as funcionalidades para maximizar sua experiência no Dota 2.'
     };
 
     return tips[this.config.type];
@@ -105,11 +110,11 @@ export class EmptyStateComponent {
     if (this.config.actionText) return this.config.actionText;
 
     const actions = {
-      evaluations: 'Ver Partidas Recentes',
-      friends: 'Buscar Amigos',
-      matches: 'Configurar GSI',
-      live: 'Ativar GSI',
-      general: 'Começar'
+      evaluations: 'Fazer primeira avaliação',
+      friends: 'Buscar amigos',
+      matches: 'Ver tutoriais',
+      live: 'Configurar Dota 2',
+      general: 'Começar agora'
     };
 
     return actions[this.config.type];
@@ -117,10 +122,10 @@ export class EmptyStateComponent {
 
   getBrandMessage(): string {
     const messages = [
-      'Os segredos dos jogadores, repassados de entregador para entregador.',
-      'Courier\'s Knowledge - Sua base de dados pessoal do Dota 2.',
+      'Courier\'s Knowledge - Elevando seu nível no Dota 2.',
       'Transformando experiências em conhecimento estratégico.',
-      'Onde cada avaliação conta para melhorar seu jogo.'
+      'Onde cada avaliação conta para melhorar seu jogo.',
+      'Sua jornada rumo ao próximo nível começa aqui.'
     ];
 
     return messages[Math.floor(Math.random() * messages.length)];
@@ -141,8 +146,9 @@ export class EmptyStateComponent {
       `,
       live: `
         <circle cx="12" cy="12" r="8"/>
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
+        <path d="M8.5 14.5L12 11l3.5 3.5"/>
+        <path d="M12 6v6"/>
+        <path d="M16 10l-4 4-4-4"/>
       `,
       general: `
         <circle cx="12" cy="12" r="10"/>
@@ -155,16 +161,16 @@ export class EmptyStateComponent {
   }
 
   onActionClick(): void {
-    if (this.config.actionRoute) {
-      // Aqui você pode implementar navegação ou emitir evento
-      console.log(`Navegando para: ${this.config.actionRoute}`);
-      // Exemplo: this.router.navigate([this.config.actionRoute]);
-    }
-
-    // Emite evento personalizado para o componente pai
-    const event = new CustomEvent('emptyStateAction', {
-      detail: { type: this.config.type, action: this.getActionText() }
+    // Emite evento para o componente pai
+    this.actionClick.emit({
+      type: this.config.type,
+      action: this.getActionText(),
+      route: this.config.actionRoute
     });
-    window.dispatchEvent(event);
+
+    // Navegação automática se rota foi especificada
+    if (this.config.actionRoute) {
+      this.router.navigate([this.config.actionRoute]);
+    }
   }
 }

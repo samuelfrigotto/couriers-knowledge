@@ -57,6 +57,34 @@
       </div>
     </div>
 
+    <!-- ✅ NOVA SEÇÃO: Barra de Pesquisa -->
+    <div class="search-section">
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Pesquisar amigos pelo nome..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange(searchTerm)"
+            #searchInput>
+          <div class="search-icon">🔍</div>
+          <button
+            *ngIf="hasActiveSearch()"
+            class="clear-search-btn"
+            (click)="clearSearch(); searchInput.focus()"
+            title="Limpar pesquisa">
+            ✕
+          </button>
+        </div>
+        <div *ngIf="hasActiveSearch()" class="search-info">
+          <span class="search-results-text">
+            Pesquisando por: <strong>"{{ searchTerm }}"</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs-container">
       <div class="tabs">
         <button class="tab" [class.active]="activeTab === 'all-friends'" (click)="setActiveTab('all-friends')">Todos ({{ friends.total_friends }})</button>
@@ -67,6 +95,7 @@
       </div>
     </div>
 
+    <!-- ✅ ABA: Todos os Amigos (com pesquisa) -->
     <div *ngIf="activeTab === 'all-friends'" class="tab-content">
       <div *ngIf="friends.total_friends === 0">
           <app-empty-state
@@ -80,70 +109,104 @@
             (emptyStateAction)="refreshFriends()">
           </app-empty-state>
       </div>
-      <div *ngIf="allFriends$ | async as allFriends" class="friends-grid">
-        <div *ngFor="let friend of allFriends; trackBy: trackByFriend" class="friend-card" [class.using-app]="friend.status === 'using-app'">
-          <div class="friend-avatar">
-            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-            <div class="app-badge" *ngIf="friend.status === 'using-app'" title="Usa o Courier's Knowledge">✓</div>
-            <div *ngIf="friend.status !== 'using-app'" class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
-          </div>
-          <div class="friend-info">
-            <h4 class="friend-name">{{ friend.steam_username }}</h4>
-            <p class="friend-status">
-              <span *ngIf="friend.status === 'using-app'" class="using-app-text">Usa o app • Entrou em {{ formatDate(friend.joined_at) }}</span>
-              <span *ngIf="friend.status !== 'using-app'" [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
-            </p>
-          </div>
-          <div class="friend-actions">
-            <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-            <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
-              {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
-            </button>
+
+      <!-- ✅ Lista filtrada de amigos -->
+      <ng-container *ngIf="filteredAllFriends$ | async as filteredFriends">
+        <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.total_friends > 0" class="no-results">
+          <div class="no-results-content">
+            <h3>Nenhum amigo encontrado</h3>
+            <p>Não encontramos amigos com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
           </div>
         </div>
-      </div>
+
+        <div *ngIf="filteredFriends.length > 0" class="friends-grid">
+          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card" [class.using-app]="friend.status === 'using-app'">
+            <div class="friend-avatar">
+              <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+              <div class="app-badge" *ngIf="friend.status === 'using-app'" title="Usa o Courier's Knowledge">✓</div>
+              <div *ngIf="friend.status !== 'using-app'" class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
+            </div>
+            <div class="friend-info">
+              <h4 class="friend-name">{{ friend.steam_username }}</h4>
+              <p class="friend-status">
+                <span *ngIf="friend.status === 'using-app'" class="using-app-text">Usa o app • Entrou em {{ formatDate(friend.joined_at) }}</span>
+                <span *ngIf="friend.status !== 'using-app'" [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
+              </p>
+            </div>
+            <div class="friend-actions">
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
+                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
     </div>
 
+    <!-- ✅ ABA: Para Convidar (com pesquisa) -->
     <div *ngIf="activeTab === 'not-using-app'" class="tab-content">
       <div *ngIf="friends.notUsingApp.length === 0" class="empty-state">
         <h3>Todos os seus amigos já usam o app!</h3>
         <p>Parabéns! Todos os seus amigos da Steam já conhecem o Courier's Knowledge.</p>
       </div>
-      <div *ngIf="friends.notUsingApp.length > 0" class="friends-grid">
-        <div *ngFor="let friend of friends.notUsingApp; trackBy: trackByFriend" class="friend-card">
-          <div class="friend-avatar">
-            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-            <div class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
-          </div>
-          <div class="friend-info">
-            <h4 class="friend-name">{{ friend.steam_username }}</h4>
-            <p class="friend-status">
-              <span [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
-              <span *ngIf="friend.already_invited" class="invited-indicator">• Convidado {{ formatDate(friend.invited_at) }}</span>
-            </p>
-          </div>
-          <div class="friend-actions">
-            <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-            <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat direto na Steam">
-              {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
-            </button>
-            <button [class]="'invite-btn-main ' + getInviteButtonClass(friend)" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="friend.already_invited ? 'Gerar novo convite e abrir Steam' : 'Convidar e abrir Steam automaticamente'">
-              {{ getInviteButtonText(friend) }}
-            </button>
+
+      <ng-container *ngIf="filteredNotUsingApp$ | async as filteredFriends">
+        <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.notUsingApp.length > 0" class="no-results">
+          <div class="no-results-content">
+            <h3>Nenhum amigo encontrado</h3>
+            <p>Não encontramos amigos para convidar com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
           </div>
         </div>
-      </div>
+
+        <div *ngIf="filteredFriends.length > 0" class="friends-grid">
+          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card">
+            <div class="friend-avatar">
+              <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+              <div class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
+            </div>
+            <div class="friend-info">
+              <h4 class="friend-name">{{ friend.steam_username }}</h4>
+              <p class="friend-status">
+                <span [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
+                <span *ngIf="friend.already_invited" class="invited-indicator">• Convidado {{ formatDate(friend.invited_at) }}</span>
+              </p>
+            </div>
+            <div class="friend-actions">
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat direto na Steam">
+                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              </button>
+              <button [class]="'invite-btn-main ' + getInviteButtonClass(friend)" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="friend.already_invited ? 'Gerar novo convite e abrir Steam' : 'Convidar e abrir Steam automaticamente'">
+                {{ getInviteButtonText(friend) }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
     </div>
 
+    <!-- ✅ ABA: Convidados (com pesquisa) -->
     <div *ngIf="activeTab === 'invited'" class="tab-content">
-      <ng-container *ngIf="invitedFriends$ | async as invitedFriends">
-        <div *ngIf="invitedFriends.length === 0" class="empty-state">
+      <ng-container *ngIf="filteredInvitedFriends$ | async as filteredFriends">
+        <div *ngIf="(invitedFriends$ | async)?.length === 0" class="empty-state">
           <h3>Nenhum amigo convidado ainda</h3>
           <p>Vá para a aba "Para Convidar" e comece a chamar seus amigos!</p>
           <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
         </div>
-        <div *ngIf="invitedFriends.length > 0" class="friends-grid">
-          <div *ngFor="let friend of invitedFriends; trackBy: trackByFriend" class="friend-card invited">
+
+        <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && (invitedFriends$ | async)!.length > 0" class="no-results">
+          <div class="no-results-content">
+            <h3>Nenhum amigo encontrado</h3>
+            <p>Não encontramos amigos convidados com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
+          </div>
+        </div>
+
+        <div *ngIf="filteredFriends.length > 0" class="friends-grid">
+          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card invited">
             <div class="friend-avatar">
               <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
               <div class="invited-badge" title="Convite enviado">✓</div>
@@ -166,32 +229,45 @@
       </ng-container>
     </div>
 
+    <!-- ✅ ABA: Usando o App (com pesquisa) -->
     <div *ngIf="activeTab === 'using-app'" class="tab-content">
       <div *ngIf="friends.usingApp.length === 0" class="empty-state">
         <h3>Nenhum amigo usando o app ainda</h3>
         <p>Que tal convidar alguns amigos para usar o Courier's Knowledge?</p>
         <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
       </div>
-      <div *ngIf="friends.usingApp.length > 0" class="friends-grid">
-        <div *ngFor="let friend of friends.usingApp; trackBy: trackByFriend" class="friend-card using-app">
-          <div class="friend-avatar">
-            <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-            <div class="app-badge" title="Usa o Courier's Knowledge">✓</div>
-          </div>
-          <div class="friend-info">
-            <h4 class="friend-name">{{ friend.steam_username }}</h4>
-            <p class="friend-status">Entrou em {{ formatDate(friend.joined_at) }}</p>
-          </div>
-          <div class="friend-actions">
-            <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-            <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
-              {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
-            </button>
+
+      <ng-container *ngIf="filteredUsingApp$ | async as filteredFriends">
+        <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.usingApp.length > 0" class="no-results">
+          <div class="no-results-content">
+            <h3>Nenhum amigo encontrado</h3>
+            <p>Não encontramos amigos usando o app com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
           </div>
         </div>
-      </div>
+
+        <div *ngIf="filteredFriends.length > 0" class="friends-grid">
+          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card using-app">
+            <div class="friend-avatar">
+              <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
+              <div class="app-badge" title="Usa o Courier's Knowledge">✓</div>
+            </div>
+            <div class="friend-info">
+              <h4 class="friend-name">{{ friend.steam_username }}</h4>
+              <p class="friend-status">Entrou em {{ formatDate(friend.joined_at) }}</p>
+            </div>
+            <div class="friend-actions">
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
+                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
     </div>
 
+    <!-- ✅ ABA: Estatísticas (sem alterações) -->
     <div *ngIf="activeTab === 'statistics'" class="tab-content">
       <div class="statistics-content">
         <h3>Suas estatísticas de amigos</h3>
@@ -265,5 +341,6 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>
