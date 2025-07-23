@@ -181,7 +181,81 @@ export class I18nService {
         'friends.stats.totalInvitesSent': 'Total Invites Sent',
         'friends.stats.pendingInvites': 'Pending Invites',
         'friends.stats.inviteProgress': 'Invite Progress',
+        // Adicionar no final da seção 'en':
+
+// Additional UI Elements
+'friends.ui.refreshTooltip': 'Refresh friends list',
+'friends.ui.profileButton': 'Profile',
+'friends.ui.chatButton': 'Chat',
+'friends.ui.opening': 'Opening...',
+'friends.ui.generating': 'Generating...',
+'friends.ui.reinviteButton': 'Re-invite + Steam',
+'friends.ui.profileTooltip': 'Open Steam profile',
+'friends.ui.chatTooltip': 'Open Steam chat',
+'friends.ui.chatDirectTooltip': 'Open Steam chat directly',
+'friends.ui.appBadgeTooltip': 'Uses Courier\'s Knowledge',
+
+// Date Labels
+'friends.date.joinedOn': 'Joined on',
+'friends.date.friends': 'friends',
+
+// Statistics Page
+'friends.statistics.title': 'Your friends statistics',
+'friends.statistics.joinedAfterInvite': 'Friends who joined after invite',
+
+// Empty State Messages
+'friends.empty.allUsingApp': 'Congratulations! All your Steam friends already know Courier\'s Knowledge.',
+'friends.empty.suggestInvite': 'How about inviting some friends to use Courier\'s Knowledge?',
+'friends.empty.viewToInvite': 'View friends to invite',
+'friends.empty.noResultsToInvite': 'We couldn\'t find friends to invite with the name',
+'friends.empty.noResultsUsingApp': 'We couldn\'t find friends using the app with the name',
+
+// Steam Integration Section
+'friends.steam.integrationTitle': 'Steam Integration',
+'friends.steam.autoChat': 'Automatic Chat',
+'friends.steam.readyMessage': 'Ready Message',
+'friends.steam.superFast': 'Super Fast',
+'friends.steam.autoChatDesc': 'Opens Steam and goes directly to chat with your friend',
+'friends.steam.readyMessageDesc': 'The invite message is automatically copied',
+'friends.steam.superFastDesc': 'Just press Enter to send the invite',
+
+// Progress Text
+'friends.progress.of': 'of',
+'friends.date.today': 'Today',
+'friends.date.yesterday': 'Yesterday',
+'friends.date.daysAgo': 'days ago',
+'friends.button.generating': 'Generating...',
+'friends.button.openingSteam': 'Opening Steam...',
+'friends.button.copied': 'Copied!',
+'friends.button.inviteAndSteam': 'Invite + Steam',
+'friends.button.reinviteAndSteam': 'Re-invite + Steam',
+'friends.status.online': 'Online',
+'friends.status.offline': 'Offline',
+'friends.empty.noResultsGeneral': 'We couldn\'t find friends with the name',
+'friends.empty.goToInviteTab': 'Go to the "To Invite" tab and start inviting your friends!',
+'friends.empty.noResultsInvited': 'We couldn\'t find invited friends with the name',
+'friends.tooltip.generateNewInvite': 'Generate new invite and open Steam',
+'friends.tooltip.inviteAndOpenSteam': 'Invite and open Steam automatically',
+'friends.tooltip.inviteSent': 'Invite sent',
+'friends.tooltip.resendInvite': 'Send invite again + Steam',
       },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       pt: {
         // Settings
         'settings.title': 'Configurações',
@@ -334,8 +408,84 @@ export class I18nService {
         'friends.stats.totalInvitesSent': 'Total de Convites Enviados',
         'friends.stats.pendingInvites': 'Convites Pendentes',
         'friends.stats.inviteProgress': 'Progresso dos Convites',
+        // Adicionar no final da seção 'pt':
+
+// Additional UI Elements
+'friends.ui.refreshTooltip': 'Atualizar lista de amigos',
+'friends.ui.profileButton': 'Perfil',
+'friends.ui.chatButton': 'Chat',
+'friends.ui.opening': 'Abrindo...',
+'friends.ui.generating': 'Gerando...',
+'friends.ui.reinviteButton': 'Reconvidar + Steam',
+'friends.ui.profileTooltip': 'Abrir perfil Steam',
+'friends.ui.chatTooltip': 'Abrir chat na Steam',
+'friends.ui.chatDirectTooltip': 'Abrir chat direto na Steam',
+'friends.ui.appBadgeTooltip': 'Usa o Courier\'s Knowledge',
+
+// Date Labels
+'friends.date.joinedOn': 'Entrou em',
+'friends.date.friends': 'amigos',
+
+// Statistics Page
+'friends.statistics.title': 'Suas estatísticas de amigos',
+'friends.statistics.joinedAfterInvite': 'Amigos que entraram após convite',
+
+// Empty State Messages
+'friends.empty.allUsingApp': 'Parabéns! Todos os seus amigos da Steam já conhecem o Courier\'s Knowledge.',
+'friends.empty.suggestInvite': 'Que tal convidar alguns amigos para usar o Courier\'s Knowledge?',
+'friends.empty.viewToInvite': 'Ver amigos para convidar',
+'friends.empty.noResultsToInvite': 'Não encontramos amigos para convidar com o nome',
+'friends.empty.noResultsUsingApp': 'Não encontramos amigos usando o app com o nome',
+
+// Steam Integration Section
+'friends.steam.integrationTitle': 'Integração Steam',
+'friends.steam.autoChat': 'Chat Automático',
+'friends.steam.readyMessage': 'Mensagem Pronta',
+'friends.steam.superFast': 'Super Rápido',
+'friends.steam.autoChatDesc': 'Abre o Steam e vai direto para o chat com seu amigo',
+'friends.steam.readyMessageDesc': 'A mensagem de convite é copiada automaticamente',
+'friends.steam.superFastDesc': 'Só apertar Enter para enviar o convite',
+
+// Progress Text
+'friends.progress.of': 'de',
+
+'friends.date.today': 'Hoje',
+'friends.date.yesterday': 'Ontem',
+'friends.date.daysAgo': 'dias atrás',
+'friends.button.generating': 'Gerando...',
+'friends.button.openingSteam': 'Abrindo Steam...',
+'friends.button.copied': 'Copiado!',
+'friends.button.inviteAndSteam': 'Convidar + Steam',
+'friends.button.reinviteAndSteam': 'Reconvidar + Steam',
+'friends.status.online': 'Online',
+'friends.status.offline': 'Offline',
+'friends.empty.noResultsGeneral': 'Não encontramos amigos com o nome',
+'friends.empty.goToInviteTab': 'Vá para a aba "Para Convidar" e comece a chamar seus amigos!',
+'friends.empty.noResultsInvited': 'Não encontramos amigos convidados com o nome',
+'friends.tooltip.generateNewInvite': 'Gerar novo convite e abrir Steam',
+'friends.tooltip.inviteAndOpenSteam': 'Convidar e abrir Steam automaticamente',
+'friends.tooltip.inviteSent': 'Convite enviado',
+'friends.tooltip.resendInvite': 'Enviar convite novamente + Steam',
       },
     };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   constructor() {
     this.loadLanguageFromStorage();

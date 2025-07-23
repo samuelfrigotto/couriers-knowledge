@@ -9,7 +9,7 @@
         class="refresh-btn"
         (click)="refreshFriends()"
         [disabled]="friendsService.isLoading$ | async"
-        title="Atualizar lista de amigos">
+        [title]="'friends.ui.refreshTooltip' | translate">
         {{ (friendsService.isLoading$ | async) ? ('friends.loading' | translate) : ('friends.refresh' | translate) }}
       </button>
     </div>
@@ -60,84 +60,93 @@
     <!-- ✅ NOVA SEÇÃO: Barra de Pesquisa -->
     <div class="search-section">
       <div class="search-container">
-        <div class="search-input-wrapper">
-          <input
-            type="text"
-            class="search-input"
-            placeholder="{{ 'friends.search.placeholder' | translate }}"
-            [(ngModel)]="searchTerm"
-            (input)="onSearchChange(searchTerm)"
-            #searchInput>
-          <div class="search-icon">🔍</div>
-          <button
-            *ngIf="hasActiveSearch()"
-            class="clear-search-btn"
-            (click)="clearSearch(); searchInput.focus()"
-            title="{{ 'friends.search.clear' | translate }}">
-            ✕
-          </button>
-        </div>
-        <div *ngIf="hasActiveSearch()" class="search-info">
-          <span class="search-results-text">
-            {{ 'friends.search.searching' | translate }} <strong>"{{ searchTerm }}"</strong>
-          </span>
-        </div>
+        <input
+          type="text"
+          class="search-input"
+          [placeholder]="'friends.search.placeholder' | translate"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange(searchTerm)"
+        />
+        <button *ngIf="hasActiveSearch()" class="clear-search-btn" (click)="clearSearch()" [title]="'friends.search.clear' | translate">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="hasActiveSearch()" class="search-info">
+        <small>{{ 'friends.search.searching' | translate }}<strong>"{{ searchTerm }}"</strong></small>
       </div>
     </div>
 
+    <!-- ✅ NOVA SEÇÃO: Tabs -->
     <div class="tabs-container">
       <div class="tabs">
-        <button class="tab" [class.active]="activeTab === 'all-friends'" (click)="setActiveTab('all-friends')">{{ 'friends.tabs.all' | translate }} ({{ friends.total_friends }})</button>
-        <button class="tab" [class.active]="activeTab === 'not-using-app'" (click)="setActiveTab('not-using-app')">{{ 'friends.tabs.toInvite' | translate }} ({{ friends.notUsingApp.length }})</button>
-        <button class="tab" [class.active]="activeTab === 'invited'" (click)="setActiveTab('invited')">{{ 'friends.tabs.invited' | translate }} ({{ (invitedFriends$ | async)?.length || 0 }})</button>
-        <button class="tab" [class.active]="activeTab === 'using-app'" (click)="setActiveTab('using-app')">{{ 'friends.tabs.usingApp' | translate }} ({{ friends.usingApp.length }})</button>
-        <button class="tab" [class.active]="activeTab === 'statistics'" (click)="setActiveTab('statistics')">{{ 'friends.tabs.statistics' | translate }}</button>
+        <button class="tab" [class.active]="activeTab === 'all-friends'" (click)="setActiveTab('all-friends')">
+          {{ 'friends.tabs.all' | translate }} ({{ (allFriends$ | async)?.length || 0 }})
+        </button>
+        <button class="tab" [class.active]="activeTab === 'not-using-app'" (click)="setActiveTab('not-using-app')">
+          {{ 'friends.tabs.toInvite' | translate }} ({{ friends.notUsingApp.length }})
+        </button>
+        <button class="tab" [class.active]="activeTab === 'invited'" (click)="setActiveTab('invited')">
+          {{ 'friends.tabs.invited' | translate }} ({{ (invitedFriends$ | async)?.length || 0 }})
+        </button>
+        <button class="tab" [class.active]="activeTab === 'using-app'" (click)="setActiveTab('using-app')">
+          {{ 'friends.tabs.usingApp' | translate }} ({{ friends.usingApp.length }})
+        </button>
+        <button class="tab" [class.active]="activeTab === 'statistics'" (click)="setActiveTab('statistics')">
+          {{ 'friends.tabs.statistics' | translate }}
+        </button>
       </div>
     </div>
 
     <!-- ✅ ABA: Todos os Amigos (com pesquisa) -->
     <div *ngIf="activeTab === 'all-friends'" class="tab-content">
-      <div *ngIf="friends.total_friends === 0">
-          <app-empty-state
-            [config]="{
-              type: 'friends',
-              title: 'Lista de amigos vazia',
-              subtitle: 'Verifique se seu perfil Steam não está privado ou se você possui amigos adicionados',
-              actionText: 'Atualizar Lista',
-              showAction: true
-            }"
-            (emptyStateAction)="refreshFriends()">
-          </app-empty-state>
+      <div *ngIf="friends.total_friends === 0" class="empty-state">
+        <h3>{{ 'friends.empty.noFriends' | translate }}</h3>
+        <p>{{ 'friends.empty.startInviting' | translate }}</p>
       </div>
 
-      <!-- ✅ Lista filtrada de amigos -->
       <ng-container *ngIf="filteredAllFriends$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.total_friends > 0" class="no-results">
           <div class="no-results-content">
             <h3>{{ 'friends.empty.noResults' | translate }}</h3>
-            <p>Não encontramos amigos com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <p>{{ 'friends.empty.noResultsGeneral' | translate }} "<strong>{{ searchTerm }}</strong>"</p>
             <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
 
         <div *ngIf="filteredFriends.length > 0" class="friends-grid">
-          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card" [class.using-app]="friend.status === 'using-app'">
+          <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card" [class]="friend.status === 'using-app' ? 'using-app' : (friend.already_invited ? 'invited' : '')">
             <div class="friend-avatar">
               <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-              <div class="app-badge" *ngIf="friend.status === 'using-app'" title="Usa o Courier's Knowledge">✓</div>
-              <div *ngIf="friend.status !== 'using-app'" class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
+
+              <!-- Badge para quem usa o app -->
+              <div *ngIf="friend.status === 'using-app'" class="app-badge" [title]="'friends.ui.appBadgeTooltip' | translate">✓</div>
+
+              <!-- Badge para convidados -->
+              <div *ngIf="friend.status === 'not-using-app' && friend.already_invited" class="invited-badge" [title]="'friends.action.alreadyInvited' | translate">✓</div>
+
+              <!-- Indicador de status online/offline para quem não usa o app -->
+              <div *ngIf="friend.status === 'not-using-app' && !friend.already_invited" class="status-indicator" [class]="getOnlineStatusClass(friend.is_online)" [title]="getOnlineStatusText(friend.is_online)"></div>
             </div>
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
               <p class="friend-status">
-                <span *ngIf="friend.status === 'using-app'" class="using-app-text">{{ 'friends.status.usingApp' | translate }} • Entrou em {{ formatDate(friend.joined_at) }}</span>
-                <span *ngIf="friend.status !== 'using-app'" [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
+                <span *ngIf="friend.status === 'using-app'">{{ 'friends.date.joinedOn' | translate }} {{ formatDate(friend.joined_at) }}</span>
+                <span *ngIf="friend.status === 'not-using-app' && friend.already_invited" class="invited-indicator">{{ 'friends.status.invited' | translate }} {{ formatDate(friend.invited_at) }}</span>
+                <span *ngIf="friend.status === 'not-using-app' && !friend.already_invited" [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
               </p>
             </div>
             <div class="friend-actions">
-              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
-                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" [title]="'friends.ui.profileTooltip' | translate">
+                {{ 'friends.ui.profileButton' | translate }}
+              </button>
+
+              <button *ngIf="friend.status === 'using-app'" class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" [title]="'friends.ui.chatTooltip' | translate">
+                {{ isOpeningSteamChat(friend.steam_id) ? ('friends.ui.opening' | translate) : ('friends.ui.chatButton' | translate) }}
+              </button>
+
+              <button *ngIf="friend.status === 'not-using-app'" [class]="'invite-btn-main ' + getInviteButtonClass(friend)" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="friend.already_invited ? ('friends.tooltip.generateNewInvite' | translate) : ('friends.tooltip.inviteAndOpenSteam' | translate)">
+                {{ getInviteButtonText(friend) }}
               </button>
             </div>
           </div>
@@ -149,14 +158,14 @@
     <div *ngIf="activeTab === 'not-using-app'" class="tab-content">
       <div *ngIf="friends.notUsingApp.length === 0" class="empty-state">
         <h3>{{ 'friends.empty.noUsingApp' | translate }}</h3>
-        <p>Parabéns! Todos os seus amigos da Steam já conhecem o Courier's Knowledge.</p>
+        <p>{{ 'friends.empty.allUsingApp' | translate }}</p>
       </div>
 
       <ng-container *ngIf="filteredNotUsingApp$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.notUsingApp.length > 0" class="no-results">
           <div class="no-results-content">
             <h3>{{ 'friends.empty.noResults' | translate }}</h3>
-            <p>Não encontramos amigos para convidar com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <p>{{ 'friends.empty.noResultsToInvite' | translate }} "<strong>{{ searchTerm }}</strong>"</p>
             <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
@@ -175,11 +184,13 @@
               </p>
             </div>
             <div class="friend-actions">
-              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat direto na Steam">
-                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" [title]="'friends.ui.profileTooltip' | translate">
+                {{ 'friends.ui.profileButton' | translate }}
               </button>
-              <button [class]="'invite-btn-main ' + getInviteButtonClass(friend)" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="friend.already_invited ? 'Gerar novo convite e abrir Steam' : 'Convidar e abrir Steam automaticamente'">
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" [title]="'friends.ui.chatDirectTooltip' | translate">
+                {{ isOpeningSteamChat(friend.steam_id) ? ('friends.ui.opening' | translate) : ('friends.ui.chatButton' | translate) }}
+              </button>
+              <button [class]="'invite-btn-main ' + getInviteButtonClass(friend)" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="friend.already_invited ? ('friends.tooltip.generateNewInvite' | translate) : ('friends.tooltip.inviteAndOpenSteam' | translate)">
                 {{ getInviteButtonText(friend) }}
               </button>
             </div>
@@ -193,14 +204,14 @@
       <ng-container *ngIf="filteredInvitedFriends$ | async as filteredFriends">
         <div *ngIf="(invitedFriends$ | async)?.length === 0" class="empty-state">
           <h3>{{ 'friends.empty.noInvited' | translate }}</h3>
-          <p>Vá para a aba "Para Convidar" e comece a chamar seus amigos!</p>
-          <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
+          <p>{{ 'friends.empty.goToInviteTab' | translate }}</p>
+          <button class="primary-btn" (click)="setActiveTab('not-using-app')">{{ 'friends.empty.viewToInvite' | translate }}</button>
         </div>
 
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && (invitedFriends$ | async)!.length > 0" class="no-results">
           <div class="no-results-content">
             <h3>{{ 'friends.empty.noResults' | translate }}</h3>
-            <p>Não encontramos amigos convidados com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <p>{{ 'friends.empty.noResultsInvited' | translate }} "<strong>{{ searchTerm }}</strong>"</p>
             <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
@@ -209,19 +220,21 @@
           <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card invited">
             <div class="friend-avatar">
               <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-              <div class="invited-badge" title="Convite enviado">✓</div>
+              <div class="invited-badge" [title]="'friends.tooltip.inviteSent' | translate">✓</div>
             </div>
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
               <p class="friend-status"><span class="invited-text">{{ 'friends.status.invited' | translate }} {{ formatDate(friend.invited_at) }}</span></p>
             </div>
             <div class="friend-actions">
-              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
-                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" [title]="'friends.ui.profileTooltip' | translate">
+                {{ 'friends.ui.profileButton' | translate }}
               </button>
-              <button class="invite-btn btn-secondary" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" title="Enviar convite novamente + Steam">
-                {{ isInviting(friend.steam_id) ? 'Gerando...' : isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Reconvidar + Steam' }}
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" [title]="'friends.ui.chatTooltip' | translate">
+                {{ isOpeningSteamChat(friend.steam_id) ? ('friends.ui.opening' | translate) : ('friends.ui.chatButton' | translate) }}
+              </button>
+              <button class="invite-btn btn-secondary" (click)="inviteFriendWithSteamChat(friend)" [disabled]="isInviting(friend.steam_id) || isOpeningSteamChat(friend.steam_id)" [title]="'friends.tooltip.resendInvite' | translate">
+                {{ isInviting(friend.steam_id) ? ('friends.ui.generating' | translate) : isOpeningSteamChat(friend.steam_id) ? ('friends.ui.opening' | translate) : ('friends.ui.reinviteButton' | translate) }}
               </button>
             </div>
           </div>
@@ -233,15 +246,15 @@
     <div *ngIf="activeTab === 'using-app'" class="tab-content">
       <div *ngIf="friends.usingApp.length === 0" class="empty-state">
         <h3>{{ 'friends.empty.noUsingApp' | translate }}</h3>
-        <p>Que tal convidar alguns amigos para usar o Courier's Knowledge?</p>
-        <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
+        <p>{{ 'friends.empty.suggestInvite' | translate }}</p>
+        <button class="primary-btn" (click)="setActiveTab('not-using-app')">{{ 'friends.empty.viewToInvite' | translate }}</button>
       </div>
 
       <ng-container *ngIf="filteredUsingApp$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.usingApp.length > 0" class="no-results">
           <div class="no-results-content">
             <h3>{{ 'friends.empty.noResults' | translate }}</h3>
-            <p>Não encontramos amigos usando o app com o nome "<strong>{{ searchTerm }}</strong>"</p>
+            <p>{{ 'friends.empty.noResultsUsingApp' | translate }} "<strong>{{ searchTerm }}</strong>"</p>
             <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
@@ -250,16 +263,18 @@
           <div *ngFor="let friend of filteredFriends; trackBy: trackByFriend" class="friend-card using-app">
             <div class="friend-avatar">
               <img [src]="friend.avatar_url" [alt]="friend.steam_username" />
-              <div class="app-badge" title="Usa o Courier's Knowledge">✓</div>
+              <div class="app-badge" [title]="'friends.ui.appBadgeTooltip' | translate">✓</div>
             </div>
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
-              <p class="friend-status">Entrou em {{ formatDate(friend.joined_at) }}</p>
+              <p class="friend-status">{{ 'friends.date.joinedOn' | translate }} {{ formatDate(friend.joined_at) }}</p>
             </div>
             <div class="friend-actions">
-              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
-              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" title="Abrir chat na Steam">
-                {{ isOpeningSteamChat(friend.steam_id) ? 'Abrindo...' : 'Chat' }}
+              <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" [title]="'friends.ui.profileTooltip' | translate">
+                {{ 'friends.ui.profileButton' | translate }}
+              </button>
+              <button class="action-btn steam-chat-btn" [disabled]="isOpeningSteamChat(friend.steam_id)" (click)="openSteamChatDirect(friend)" [title]="'friends.ui.chatTooltip' | translate">
+                {{ isOpeningSteamChat(friend.steam_id) ? ('friends.ui.opening' | translate) : ('friends.ui.chatButton' | translate) }}
               </button>
             </div>
           </div>
@@ -267,10 +282,10 @@
       </ng-container>
     </div>
 
-    <!-- ✅ ABA: Estatísticas (sem alterações) -->
+    <!-- ✅ ABA: Estatísticas -->
     <div *ngIf="activeTab === 'statistics'" class="tab-content">
       <div class="statistics-content">
-        <h3>Suas estatísticas de amigos</h3>
+        <h3>{{ 'friends.statistics.title' | translate }}</h3>
         <div class="stats-detailed">
           <div class="stat-detail">
             <span class="stat-icon">👥</span>
@@ -290,7 +305,7 @@
             <span class="stat-icon">✅</span>
             <div class="stat-info">
               <div class="stat-value">{{ friends.statistics.friends_joined_after_invite }}</div>
-              <div class="stat-description">Amigos que entraram após convite</div>
+              <div class="stat-description">{{ 'friends.statistics.joinedAfterInvite' | translate }}</div>
             </div>
           </div>
           <div class="stat-detail">
@@ -308,39 +323,38 @@
             <div class="progress-fill" [style.width.%]="(friends.statistics.friends_using_app / friends.total_friends) * 100"></div>
           </div>
           <p>
-            {{ friends.statistics.friends_using_app }} de {{ friends.total_friends }} amigos
+            {{ friends.statistics.friends_using_app }} {{ 'friends.progress.of' | translate }} {{ friends.total_friends }} {{ 'friends.date.friends' | translate }}
             ({{ ((friends.statistics.friends_using_app / friends.total_friends) * 100 || 0).toFixed(1) }}%)
           </p>
         </div>
 
         <div class="steam-stats-section">
-          <h4>Integração Steam</h4>
+          <h4>{{ 'friends.steam.integrationTitle' | translate }}</h4>
           <div class="steam-info-grid">
             <div class="steam-info-card">
               <div class="info-icon">🚀</div>
               <div class="info-content">
-                <h5>Chat Automático</h5>
-                <p>Abre o Steam e vai direto para o chat com seu amigo</p>
+                <h5>{{ 'friends.steam.autoChat' | translate }}</h5>
+                <p>{{ 'friends.steam.autoChatDesc' | translate }}</p>
               </div>
             </div>
             <div class="steam-info-card">
               <div class="info-icon">📋</div>
               <div class="info-content">
-                <h5>Mensagem Pronta</h5>
-                <p>A mensagem de convite é copiada automaticamente</p>
+                <h5>{{ 'friends.steam.readyMessage' | translate }}</h5>
+                <p>{{ 'friends.steam.readyMessageDesc' | translate }}</p>
               </div>
             </div>
             <div class="steam-info-card">
               <div class="info-icon">⚡</div>
               <div class="info-content">
-                <h5>Super Rápido</h5>
-                <p>Só apertar Enter para enviar o convite</p>
+                <h5>{{ 'friends.steam.superFast' | translate }}</h5>
+                <p>{{ 'friends.steam.superFastDesc' | translate }}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
