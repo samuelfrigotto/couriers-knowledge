@@ -11,53 +11,57 @@
     <form [formGroup]="evaluationForm" (ngSubmit)="submitForm()">
       <div *ngIf="currentStep === 1">
         <fieldset class="form-section">
-          <legend>1. Jogador</legend>
-          <div class="form-group">
-            <label for="targetSteamId">SteamID64 do Jogador *</label>
+          <legend>1. Identificação do Jogador</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="targetSteamId">Steam ID do Jogador</label>
 
-            <!-- ✅ CAMPO NORMAL (quando não bloqueado) -->
-            <input
-              *ngIf="
-                !shouldLockFields ||
-                !evaluationForm.get('targetSteamId')?.disabled
-              "
-              id="targetSteamId"
-              type="text"
-              formControlName="targetSteamId"
-              placeholder="Ex: 765611980..."
-              [readonly]="isEditMode"
-            />
+              <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
+              <input
+                *ngIf="
+                  !shouldLockFields ||
+                  !evaluationForm.get('targetSteamId')?.disabled
+                "
+                type="text"
+                id="targetSteamId"
+                formControlName="targetSteamId"
+                placeholder="Exemplo: 76561198012345678"
+                maxlength="17"
+              />
 
-            <!-- ✅ CAMPO VISUAL (quando bloqueado) -->
-            <div
-              *ngIf="
-                shouldLockFields &&
-                evaluationForm.get('targetSteamId')?.disabled
-              "
-              class="prefilled-field"
-            >
-              <div class="prefilled-content">
-                <div class="player-info">
-                  <strong>{{
-                    prefilledPlayerName || "Jogador da Partida"
-                  }}</strong>
-                  <small
-                    >Steam ID:
-                    {{ evaluationForm.get("targetSteamId")?.value }}</small
-                  >
+              <!-- ✅ CAMPO VISUAL PLAYER (quando bloqueado) -->
+              <div
+                *ngIf="
+                  shouldLockFields &&
+                  evaluationForm.get('targetSteamId')?.disabled
+                "
+                class="prefilled-field"
+              >
+                <div class="prefilled-content">
+                  <div class="player-info">
+                    <strong>{{
+                      prefilledPlayerName || "Jogador da Partida"
+                    }}</strong>
+                    <small>{{
+                      evaluationForm.get("targetSteamId")?.value
+                    }}</small>
+                  </div>
+                  <span class="prefilled-badge">{{
+                    isEditMode ? "Fixo" : "Da Partida"
+                  }}</span>
                 </div>
-                <span class="prefilled-badge">Da Partida</span>
               </div>
-            </div>
 
-            <div
-              *ngIf="
-                evaluationForm.get('targetSteamId')?.invalid &&
-                evaluationForm.get('targetSteamId')?.touched
-              "
-              class="error-message"
-            >
-              SteamID64 inválido. Deve ser um número de 17 dígitos.
+              <div
+                *ngIf="
+                  evaluationForm.get('targetSteamId')?.invalid &&
+                  evaluationForm.get('targetSteamId')?.touched &&
+                  !evaluationForm.get('targetSteamId')?.disabled
+                "
+                class="error-message"
+              >
+                Deve ser um número de 17 dígitos.
+              </div>
             </div>
           </div>
         </fieldset>
@@ -65,6 +69,41 @@
         <fieldset class="form-section">
           <legend>2. Contexto da Partida (Opcional)</legend>
           <div class="form-row">
+            <!-- ===== CAMPO DE MATCH ID ===== -->
+            <div class="form-group">
+              <label for="matchId">ID da Partida</label>
+
+              <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
+              <input
+                *ngIf="
+                  !shouldLockFields || !evaluationForm.get('matchId')?.disabled
+                "
+                type="text"
+                id="matchId"
+                formControlName="matchId"
+                placeholder="Exemplo: 1234567890"
+              />
+
+              <!-- ✅ CAMPO VISUAL MATCH (quando bloqueado) -->
+              <div
+                *ngIf="
+                  shouldLockFields && evaluationForm.get('matchId')?.disabled
+                "
+                class="prefilled-field"
+              >
+                <div class="prefilled-content">
+                  <div class="match-info">
+                    <strong>{{ getMatchDisplayText() }}</strong>
+                    <small>Partida detectada automaticamente</small>
+                  </div>
+                  <span class="prefilled-badge">{{
+                    isEditMode ? "Fixo" : "Da Partida"
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== CAMPO DE HERÓI ===== -->
             <div class="form-group">
               <label for="hero_id">Herói Jogado</label>
 
@@ -104,19 +143,26 @@
                       <strong>{{
                         prefilledHeroName || "Herói da Partida"
                       }}</strong>
-                      <small>Detectado automaticamente</small>
+                      <small>{{
+                        isEditMode
+                          ? "Não é possível alterar"
+                          : "Detectado automaticamente"
+                      }}</small>
                     </div>
                   </div>
-                  <span class="prefilled-badge">Da Partida</span>
+                  <span class="prefilled-badge">{{
+                    isEditMode ? "Fixo" : "Da Partida"
+                  }}</span>
                 </div>
               </div>
             </div>
 
-            <div class="form-group">
+            <!-- ===== CAMPO DE ROLE (SEMPRE EDITÁVEL) ===== -->
+            <div class="form-group role-field-group">
               <label for="role">
-                Função
+                ✏️ Função
                 <span *ngIf="shouldLockFields" class="editable-hint"
-                  >(sempre editável)</span
+                  >(editável)</span
                 >
               </label>
               <select id="role" formControlName="role" class="role-select">
@@ -126,40 +172,13 @@
                 </option>
               </select>
               <small *ngIf="shouldLockFields" class="field-help">
-                💡 Você pode alterar a função mesmo quando outros campos estão
-                bloqueados
+                💡
+                {{
+                  isEditMode
+                    ? "A função pode ser alterada mesmo durante a edição"
+                    : "Você pode alterar a função mesmo quando outros campos estão bloqueados"
+                }}
               </small>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="matchId">ID da Partida</label>
-
-            <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
-            <input
-              *ngIf="
-                !shouldLockFields || !evaluationForm.get('matchId')?.disabled
-              "
-              id="matchId"
-              type="text"
-              formControlName="matchId"
-              placeholder="Ex: 7123456789"
-            />
-
-            <!-- ✅ CAMPO VISUAL MATCH ID (quando bloqueado) -->
-            <div
-              *ngIf="
-                shouldLockFields && evaluationForm.get('matchId')?.disabled
-              "
-              class="prefilled-field"
-            >
-              <div class="prefilled-content">
-                <div class="match-info">
-                  <strong>{{ getMatchDisplayText() }}</strong>
-                  <small>Partida selecionada</small>
-                </div>
-                <span class="prefilled-badge">Da Partida</span>
-              </div>
             </div>
           </div>
         </fieldset>

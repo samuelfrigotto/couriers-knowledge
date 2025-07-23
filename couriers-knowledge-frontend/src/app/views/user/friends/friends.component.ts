@@ -1,17 +1,19 @@
 // frontend/src/app/views/user/friends/friends.component.ts
-// VERSÃO COM BARRA DE PESQUISA ADICIONADA AO SEU CÓDIGO ORIGINAL
+// VERSÃO COMPLETA COM TRADUÇÕES IMPLEMENTADAS
 
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ✅ NOVO: Adicionado para ngModel
-import { Subject, takeUntil, map, Observable, combineLatest, BehaviorSubject } from 'rxjs'; // ✅ NOVO: BehaviorSubject adicionado
+import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil, map, Observable, combineLatest, BehaviorSubject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { FriendsService, FriendStatus, FriendsStatusResponse } from '../../../core/friends.service';
 import { SteamChatService } from '../../../core/steam-chat.service';
 import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
+import { TranslatePipe } from '../../../pipes/translate.pipe';
+import { I18nService } from '../../../core/i18n.service';
 
-// ✅ Interface para o amigo unificado (mantida)
+// Interface para o amigo unificado
 interface UnifiedFriendStatus extends FriendStatus {
   status: 'using-app' | 'not-using-app';
 }
@@ -19,46 +21,47 @@ interface UnifiedFriendStatus extends FriendStatus {
 @Component({
   selector: 'app-friends',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent], // ✅ NOVO: FormsModule adicionado
+  imports: [CommonModule, FormsModule, EmptyStateComponent, TranslatePipe],
   templateUrl: './friends.component.html',
   styleUrls: ['./friends.component.css']
 })
 export class FriendsComponent implements OnInit, OnDestroy {
-  // Injeção de dependências (mantida)
+  // Injeção de dependências
   protected friendsService = inject(FriendsService);
   private steamChatService = inject(SteamChatService);
   private toastr = inject(ToastrService);
+  private i18nService = inject(I18nService);
   private destroy$ = new Subject<void>();
 
-  // ✅ NOVO: Propriedades para pesquisa
+  // Propriedades para pesquisa
   searchTerm = '';
   private searchSubject = new BehaviorSubject<string>('');
   public search$ = this.searchSubject.asObservable();
 
-  // ✅ OBSERVABLES PÚBLICOS PARA O TEMPLATE (mantidos + novos com filtro)
+  // Observables públicos para o template
   public friendsData$: Observable<FriendsStatusResponse | null>;
   public allFriends$: Observable<UnifiedFriendStatus[]>;
   public invitedFriends$: Observable<FriendStatus[]>;
 
-  // ✅ NOVO: Observables filtrados
+  // Observables filtrados
   public filteredAllFriends$: Observable<UnifiedFriendStatus[]>;
   public filteredNotUsingApp$: Observable<FriendStatus[]>;
   public filteredUsingApp$: Observable<FriendStatus[]>;
   public filteredInvitedFriends$: Observable<FriendStatus[]>;
 
-  // Estado do componente (mantido)
+  // Estado do componente
   activeTab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics' = 'all-friends';
 
-  // Estados para interações (mantidos)
+  // Estados para interações
   invitingFriends = new Set<string>();
   copiedInvites = new Set<string>();
   openingSteamChat = new Set<string>();
 
   constructor() {
-    // Inicializa os Observables (mantidos)
+    // Inicializa os Observables
     this.friendsData$ = this.friendsService.friendsStatus$;
 
-    // ✅ Observable para a lista de todos os amigos, combinada e ordenada (mantido)
+    // Observable para a lista de todos os amigos, combinada e ordenada
     this.allFriends$ = this.friendsData$.pipe(
       map(data => {
         if (!data) return [];
@@ -73,12 +76,12 @@ export class FriendsComponent implements OnInit, OnDestroy {
       })
     );
 
-    // ✅ Observable para a lista de amigos convidados (mantido)
+    // Observable para a lista de amigos convidados
     this.invitedFriends$ = this.friendsData$.pipe(
       map(data => data ? data.notUsingApp.filter(f => f.already_invited) : [])
     );
 
-    // ✅ NOVO: Observables filtrados
+    // Observables filtrados
     this.filteredAllFriends$ = combineLatest([this.allFriends$, this.search$]).pipe(
       map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
     );
@@ -115,7 +118,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ✅ NOVO: Métodos para pesquisa
+  // Métodos para pesquisa
   private filterFriends<T extends { steam_username: string }>(friends: T[], searchTerm: string): T[] {
     if (!searchTerm.trim()) return friends;
 
@@ -140,26 +143,26 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carrega dados dos amigos (mantido)
+   * Carrega dados dos amigos
    */
   loadFriendsData(): void {
-      console.log('🔍 Carregando dados dos amigos...');
-      this.friendsService.getFriendsStatus()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (data) => {
-            this.toastr.success(`${data.total_friends} amigos carregados!`, '', { timeOut: 2000 });
-            console.log('✅ Dados carregados:', data);
-          },
-          error: (error) => {
-            console.error('❌ Erro ao carregar amigos:', error);
-            this.toastr.error('Erro ao carregar amigos', '', { timeOut: 3000 });
-          }
-        });
-    }
+    console.log('🔍 Carregando dados dos amigos...');
+    this.friendsService.getFriendsStatus()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.toastr.success(`${data.total_friends} ${this.i18nService.translate('friends.notification.friendsLoaded')}`, '', { timeOut: 2000 });
+          console.log('✅ Dados carregados:', data);
+        },
+        error: (error) => {
+          console.error('❌ Erro ao carregar amigos:', error);
+          this.toastr.error(this.i18nService.translate('friends.notification.errorLoading'), '', { timeOut: 3000 });
+        }
+      });
+  }
 
   /**
-   * Força atualização dos dados (mantido)
+   * Força atualização dos dados
    */
   refreshFriends(): void {
     console.log('🔄 Atualizando dados...');
@@ -167,7 +170,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ✅ CORRIGIDO: Convida um amigo e abre o Steam Chat automaticamente (mantido)
+   * Convida um amigo e abre o Steam Chat automaticamente
    */
   async inviteFriendWithSteamChat(friend: FriendStatus): Promise<void> {
     if (this.invitingFriends.has(friend.steam_id)) return;
@@ -185,16 +188,16 @@ export class FriendsComponent implements OnInit, OnDestroy {
 
           if (copySuccess) {
             setTimeout(() => this.openSteamChatWithMessage(friend, response.invite_data.invite_message), 200);
-            this.toastr.success(`Steam abrindo! Mensagem copiada.`, '', { timeOut: 4000 });
+            this.toastr.success(this.i18nService.translate('friends.notification.steamOpening'), '', { timeOut: 4000 });
           } else {
             this.openSteamChatWithMessage(friend, response.invite_data.invite_message);
-            this.toastr.warning('Steam abrindo. Copie a mensagem manualmente.', '', { timeOut: 4000 });
+            this.toastr.warning(this.i18nService.translate('friends.notification.steamOpeningManual'), '', { timeOut: 4000 });
           }
           // O serviço já força um refresh, então a UI irá atualizar reativamente
         },
         error: (error) => {
           console.error('❌ Erro ao convidar:', error);
-          const errorMessage = error.error?.message || 'Erro ao gerar convite';
+          const errorMessage = error.error?.message || this.i18nService.translate('friends.notification.errorInviting');
           this.toastr.error(errorMessage, '', { timeOut: 4000 });
         },
         complete: () => {
@@ -205,20 +208,20 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ✅ NOVO MÉTODO: Abre Steam Chat com mensagem pré-preenchida (mantido)
+   * Abre Steam Chat com mensagem pré-preenchida
    */
   private openSteamChatWithMessage(friend: FriendStatus, inviteMessage: string): void {
-      this.steamChatService.openSteamChat({
-        steamId: friend.steam_id,
-        message: inviteMessage,
-        playerName: friend.steam_username
-      });
-    }
+    this.steamChatService.openSteamChat({
+      steamId: friend.steam_id,
+      message: inviteMessage,
+      playerName: friend.steam_username
+    });
+  }
 
   /**
-   * Método original de convite (mantido para compatibilidade)
+   * Método original de convite (para compatibilidade)
    */
-   inviteFriend(friend: FriendStatus): void {
+  inviteFriend(friend: FriendStatus): void {
     if (this.invitingFriends.has(friend.steam_id)) {
       console.log('⚠️ Já enviando convite para:', friend.steam_username);
       return;
@@ -236,13 +239,10 @@ export class FriendsComponent implements OnInit, OnDestroy {
 
           // Copia automaticamente a mensagem de convite
           this.copyInviteMessage(response.invite_data.invite_message, friend.steam_id);
-
-          // REMOVIDO: Bloco de atualização de dados locais.
-          // O service já chama o refresh, e a UI vai atualizar reativamente.
         },
         error: (error) => {
           console.error('❌ Erro ao convidar:', error);
-          const errorMessage = error.error?.message || 'Não foi possível gerar o convite';
+          const errorMessage = error.error?.message || this.i18nService.translate('friends.notification.errorInviting');
           this.toastr.error(errorMessage, 'Erro no Convite');
         },
         complete: () => {
@@ -252,33 +252,33 @@ export class FriendsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Copia mensagem de convite para área de transferência (mantido)
+   * Copia mensagem de convite para área de transferência
    */
   async copyInviteMessage(message: string, friendSteamId: string): Promise<void> {
     const success = await this.friendsService.copyToClipboard(message);
 
     if (success) {
       this.copiedInvites.add(friendSteamId);
-      this.toastr.info('Mensagem copiada!', '', { timeOut: 2000 });
+      this.toastr.success(this.i18nService.translate('friends.notification.messageCopied'), '', { timeOut: 2000 });
 
-      // Remove indicador de "copiado" após 3 segundos
+      // Remove o indicador visual após 3 segundos
       setTimeout(() => {
         this.copiedInvites.delete(friendSteamId);
       }, 3000);
     } else {
-      this.toastr.warning('Copie manualmente', '', { timeOut: 3000 });
+      this.toastr.error(this.i18nService.translate('friends.notification.copyError'), '', { timeOut: 3000 });
     }
   }
 
   /**
-   * ✅ ATUALIZADO: Abre perfil Steam do amigo usando novo serviço (mantido)
+   * Abre perfil Steam do amigo usando novo serviço
    */
   openSteamProfile(friend: FriendStatus): void {
     this.steamChatService.openSteamProfile(friend.steam_id, friend.steam_username);
   }
 
   /**
-   * ✅ NOVO MÉTODO: Abre Steam Chat sem gerar convite (mantido)
+   * Abre Steam Chat sem gerar convite
    */
   openSteamChatDirect(friend: FriendStatus): void {
     this.openingSteamChat.add(friend.steam_id);
@@ -310,35 +310,35 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Muda aba ativa (mantido)
+   * Define a aba ativa
    */
   setActiveTab(tab: 'all-friends' | 'not-using-app' | 'invited' | 'using-app' | 'statistics'): void {
     this.activeTab = tab;
   }
 
   /**
-   * Verifica se um amigo está sendo convidado (mantido)
+   * Verifica se um amigo está sendo convidado
    */
   isInviting(steamId: string): boolean {
     return this.invitingFriends.has(steamId);
   }
 
   /**
-   * ✅ NOVO: Verifica se Steam Chat está sendo aberto (mantido)
+   * Verifica se o Steam Chat está sendo aberto
    */
   isOpeningSteamChat(steamId: string): boolean {
     return this.openingSteamChat.has(steamId);
   }
 
   /**
-   * Verifica se um convite foi copiado recentemente (mantido)
+   * Verifica se um convite foi copiado recentemente
    */
   wasRecentlyCopied(steamId: string): boolean {
     return this.copiedInvites.has(steamId);
   }
 
   /**
-   * ✅ ATUALIZADO: Retorna texto do botão baseado no estado (mantido)
+   * Retorna texto do botão baseado no estado
    */
   getInviteButtonText(friend: FriendStatus): string {
     if (this.isInviting(friend.steam_id)) {
@@ -361,7 +361,7 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * ✅ ATUALIZADO: Retorna classe CSS do botão (mantido)
+   * Retorna classe CSS do botão
    */
   getInviteButtonClass(friend: FriendStatus): string {
     if (this.isInviting(friend.steam_id) || this.isOpeningSteamChat(friend.steam_id)) {
@@ -380,7 +380,7 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Formata data para exibição (mantido)
+   * Formata data para exibição
    */
   formatDate(dateString?: string): string {
     if (!dateString) {
@@ -403,13 +403,13 @@ Dá uma olhada: https://couriers-knowledge.com
   }
 
   /**
-   * Retorna classe do status online (mantido)
+   * Retorna classe do status online
    */
   getOnlineStatusClass = (isOnline?: boolean) => isOnline ? 'online' : 'offline';
   getOnlineStatusText = (isOnline?: boolean) => isOnline ? 'Online' : 'Offline';
 
   /**
-   * TrackBy function para performance do *ngFor (mantido)
+   * TrackBy function para performance do *ngFor
    */
   trackByFriend(index: number, friend: FriendStatus): string {
     return friend.steam_id;

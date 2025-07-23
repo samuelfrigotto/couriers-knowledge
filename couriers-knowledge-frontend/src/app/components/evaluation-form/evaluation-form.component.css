@@ -265,6 +265,13 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+
+.prefilled-field:has(.prefilled-badge:contains("Fixo")) {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+  border-color: #ffc107;
 }
 
 .prefilled-content {
@@ -325,6 +332,12 @@ button {
   flex-shrink: 0;
 }
 
+/* Badge diferente para edição */
+.prefilled-badge:contains("Fixo") {
+  background: #ffc107;
+  color: #000;
+}
+
 /* Animação sutil para os campos prefilled */
 .prefilled-field {
   animation: prefillGlow 2s ease-in-out;
@@ -370,11 +383,13 @@ button {
 .role-select {
   position: relative;
   transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
 .role-select:not(:disabled) {
   border-color: var(--primary-color) !important;
   box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2) !important;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), rgba(6, 255, 165, 0.05));
 }
 
 .editable-hint {
@@ -386,6 +401,12 @@ button {
   background: rgba(58, 134, 255, 0.1);
   border-radius: 4px;
   display: inline-block;
+  animation: pulse-hint 2s infinite;
+}
+
+@keyframes pulse-hint {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .field-help {
@@ -420,9 +441,39 @@ button {
   outline: none !important;
 }
 
-/* ===== ÍCONE DE EDIÇÃO NO LABEL ===== */
-.role-field-group label::before {
-  content: '✏️';
-  margin-right: 6px;
-  font-size: 14px;
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  .prefilled-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .prefilled-badge {
+    align-self: flex-end;
+  }
+
+  .hero-info {
+    width: 100%;
+  }
+}
+
+/* ===== INDICADORES VISUAIS EXTRAS ===== */
+.form-section {
+  position: relative;
+}
+
+/* Indicador quando todos os campos estão bloqueados */
+.form-section:has(.prefilled-field) legend::after {
+  content: " 🔒";
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Indicador especial para seção com campo editável */
+.form-section:has(.role-field-group) legend::after {
+  content: " (✏️ role editável)";
+  font-size: 11px;
+  color: var(--primary-color);
+  font-weight: normal;
 }

@@ -1,4 +1,4 @@
-<!-- get-premium.component.html - VERSÃO CORRIGIDA -->
+<!-- get-premium.component.html - VERSÃO LIMPA SEM DEPOIMENTOS -->
 <div class="floating-elements">
   <div class="floating-circle circle-1"></div>
   <div class="floating-circle circle-2"></div>
@@ -9,20 +9,20 @@
   <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
-    <p>Carregando planos...</p>
+    <p>{{ 'premium.loading' | translate }}</p>
   </div>
 
   <!-- Error State -->
   <div *ngIf="error && !isLoading" class="error-container">
     <h3>⚠️ {{ error }}</h3>
-    <button class="retry-btn" (click)="loadPlans()">Tentar Novamente</button>
+    <button class="retry-btn" (click)="loadPlans()">{{ 'premium.retryButton' | translate }}</button>
   </div>
 
   <!-- Main Content -->
   <div *ngIf="!isLoading">
     <div class="header">
-      <h1>Desbloqueie Todo o Potencial</h1>
-      <p>Escolha o plano perfeito para você e eleve sua experiência a um novo patamar com recursos exclusivos e sem limitações.</p>
+      <h1>{{ 'premium.title' | translate }}</h1>
+      <p>{{ 'premium.subtitle' | translate }}</p>
     </div>
 
     <div class="plans-grid">
@@ -38,13 +38,13 @@
           R$ {{ plan.price | number:'1.2-2' }}
         </div>
         <ng-template #comingSoonPrice>
-          <div class="plan-price">Em breve</div>
+          <div class="plan-price">{{ 'premium.comingSoon' | translate }}</div>
         </ng-template>
 
         <div class="plan-period">{{ plan.period }}</div>
 
         <div class="plan-total">
-          <div class="plan-total-label">{{ plan.comingSoon ? 'Status' : 'Total no período' }}</div>
+          <div class="plan-total-label">{{ plan.comingSoon ? ('premium.status' | translate) : ('premium.totalPeriod' | translate) }}</div>
           <div class="plan-total-price">{{ plan.total }}</div>
           <div *ngIf="plan.monthly_equivalent" class="monthly-equivalent">
             {{ plan.monthly_equivalent }}
@@ -54,88 +54,53 @@
         <ul class="plan-features">
           <li *ngFor="let feature of plan.features">
             <span [class]="feature.included ? 'check-icon' : 'x-icon'">
-              {{ feature.included ? '✓' : '✗' }}
+              {{ feature.included ? '✅' : '❌' }}
             </span>
             {{ feature.text }}
           </li>
         </ul>
 
         <button
-          [class]="'plan-button ' + plan.buttonClass"
-          [disabled]="plan.comingSoon || isLoading"
-          (click)="onPlanSelect(plan)"
+          class="plan-button"
+          [class]="plan.buttonClass"
+          [disabled]="plan.comingSoon"
         >
-          <span *ngIf="isLoading && !plan.comingSoon">Processando...</span>
-          <span *ngIf="!isLoading || plan.comingSoon">{{ plan.buttonText }}</span>
+          {{ plan.buttonText }}
         </button>
-      </div>
-    </div>
-
-    <div class="comparison-section">
-      <h2 class="comparison-title">Premium vs Gratuito</h2>
-      <div class="comparison-grid">
-        <div class="plan-limits">
-          <h3 class="limits-title">Limitações do Plano Gratuito</h3>
-          <ul class="limits-list">
-            <li *ngFor="let limitation of freePlanLimitations">
-              <span class="x-icon">✗</span>
-              {{ limitation }}
-            </li>
-          </ul>
-        </div>
-
-        <div class="plan-benefits">
-          <h3 class="benefits-title">Vantagens do Premium</h3>
-          <ul class="benefits-list">
-            <li *ngFor="let benefit of premiumBenefits">
-              <span class="check-icon">✓</span>
-              {{ benefit }}
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
 
     <!-- FAQ Section -->
     <div class="faq-section">
-      <h2 class="faq-title">Perguntas Frequentes</h2>
+      <h2 class="faq-title">{{ 'premium.faq.title' | translate }}</h2>
       <div class="faq-grid">
         <div class="faq-item">
-          <h4>🔄 Como funciona o cancelamento?</h4>
-          <p>Sua assinatura é válida até o final do período contratado. Não há cancelamento antecipado, mas você pode escolher não renovar ao final do período.</p>
+          <h4>{{ 'premium.faq.security.title' | translate }}</h4>
+          <p>{{ 'premium.faq.security.content' | translate }}</p>
         </div>
         <div class="faq-item">
-          <h4>💳 Quais formas de pagamento aceitas?</h4>
-          <p>Aceitamos cartões de crédito, débito e boleto bancário através da Stripe, nossa plataforma de pagamentos segura.</p>
+          <h4>{{ 'premium.faq.export.title' | translate }}</h4>
+          <p>{{ 'premium.faq.export.content' | translate }}</p>
         </div>
         <div class="faq-item">
-          <h4>🔒 Meus dados estão seguros?</h4>
-          <p>Absolutamente! Utilizamos criptografia de ponta e não armazenamos informações de cartão. Todos os pagamentos são processados pela Stripe.</p>
+          <h4>{{ 'premium.faq.activation.title' | translate }}</h4>
+          <p>{{ 'premium.faq.activation.content' | translate }}</p>
         </div>
         <div class="faq-item">
-          <h4>📊 Posso exportar meus dados?</h4>
-          <p>Sim! Com o Premium, você pode exportar todas as suas avaliações e relatórios em formatos JSON. Mais formatos serão adicionados em breve.</p>
-        </div>
-        <div class="faq-item">
-          <h4>⚡ Quando o Premium é ativado?</h4>
-          <p>Seu plano Premium é ativado imediatamente após a confirmação do pagamento e permanece ativo por todo o período contratado.</p>
-        </div>
-        <div class="faq-item">
-          <h4>🎮 Quais recursos Premium estarão disponíveis?</h4>
-          <p>Avaliações ilimitadas, relatórios avançados, suporte prioritário e acesso antecipado a novos recursos conforme são desenvolvidos.</p>
+          <h4>{{ 'premium.faq.features.title' | translate }}</h4>
+          <p>{{ 'premium.faq.features.content' | translate }}</p>
         </div>
       </div>
     </div>
 
     <!-- Call to Action Final -->
     <div class="final-cta">
-      <h2>Pronto para começar?</h2>
-      <p>Melhore sua experiência no Dota 2 com recursos exclusivos do Courier's Knowledge Premium!</p>
+      <h2>{{ 'premium.finalCta.title' | translate }}</h2>
+      <p>{{ 'premium.finalCta.subtitle' | translate }}</p>
     </div>
   </div>
 </div>
 
-<!-- Loading/Error Styles -->
 <style>
 .loading-container, .error-container {
   display: flex;
@@ -241,38 +206,9 @@
   -webkit-text-fill-color: transparent;
 }
 
-.cta-stats {
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  margin-top: 40px;
-  flex-wrap: wrap;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #667eea;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  color: #a8a8b3;
-  font-size: 0.9rem;
-}
-
 @media (max-width: 768px) {
   .faq-grid {
     grid-template-columns: 1fr;
-  }
-
-  .cta-stats {
-    gap: 30px;
   }
 
   .final-cta h2 {

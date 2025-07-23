@@ -1,8 +1,8 @@
 <div class="friends-container">
   <div class="friends-header">
     <div class="header-content">
-      <h1 class="friends-title">Amigos Steam</h1>
-      <p class="friends-subtitle">Convide seus amigos e abra o chat da Steam automaticamente!</p>
+      <h1 class="friends-title">{{ 'friends.title' | translate }}</h1>
+      <p class="friends-subtitle">{{ 'friends.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
       <button
@@ -10,21 +10,21 @@
         (click)="refreshFriends()"
         [disabled]="friendsService.isLoading$ | async"
         title="Atualizar lista de amigos">
-        {{ (friendsService.isLoading$ | async) ? 'Carregando...' : 'Atualizar' }}
+        {{ (friendsService.isLoading$ | async) ? ('friends.loading' | translate) : ('friends.refresh' | translate) }}
       </button>
     </div>
   </div>
 
   <div *ngIf="(friendsService.isLoading$ | async) && !(friendsData$ | async)" class="loading-container">
     <div class="spinner"></div>
-    <p>Carregando seus amigos da Steam...</p>
+    <p>{{ 'friends.loadingFriends' | translate }}</p>
   </div>
 
   <div *ngIf="!(friendsService.isLoading$ | async) && !(friendsData$ | async)" class="error-container">
     <div class="error-content">
-      <h3>Não foi possível carregar seus amigos</h3>
-      <p>Verifique se seu perfil Steam não está privado e tente novamente.</p>
-      <button class="retry-btn" (click)="refreshFriends()">Tentar novamente</button>
+      <h3>{{ 'friends.errorTitle' | translate }}</h3>
+      <p>{{ 'friends.errorMessage' | translate }}</p>
+      <button class="retry-btn" (click)="refreshFriends()">{{ 'friends.retry' | translate }}</button>
     </div>
   </div>
 
@@ -33,27 +33,27 @@
     <div class="stats-summary">
       <div class="stat-card">
         <div class="stat-number">{{ friends.total_friends }}</div>
-        <div class="stat-label">Total de amigos</div>
+        <div class="stat-label">{{ 'friends.stats.totalFriends' | translate }}</div>
       </div>
       <div class="stat-card success">
         <div class="stat-number">{{ friends.statistics.friends_using_app }}</div>
-        <div class="stat-label">Usando o app</div>
+        <div class="stat-label">{{ 'friends.stats.usingApp' | translate }}</div>
       </div>
       <div class="stat-card warning">
         <div class="stat-number">{{ friends.statistics.friends_not_using_app }}</div>
-        <div class="stat-label">Para convidar</div>
+        <div class="stat-label">{{ 'friends.stats.toInvite' | translate }}</div>
       </div>
       <div class="stat-card info">
         <div class="stat-number">{{ friends.statistics.total_invites_sent }}</div>
-        <div class="stat-label">Convites enviados</div>
+        <div class="stat-label">{{ 'friends.stats.invitesSent' | translate }}</div>
       </div>
     </div>
 
     <div class="steam-integration-banner">
       <div class="banner-icon">💬</div>
       <div class="banner-content">
-        <h4>Integração com Chat Steam</h4>
-        <p>Agora você pode abrir o chat da Steam automaticamente com a mensagem de convite já pronta! Só apertar Enter.</p>
+        <h4>{{ 'friends.banner.title' | translate }}</h4>
+        <p>{{ 'friends.banner.description' | translate }}</p>
       </div>
     </div>
 
@@ -64,7 +64,7 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Pesquisar amigos pelo nome..."
+            placeholder="{{ 'friends.search.placeholder' | translate }}"
             [(ngModel)]="searchTerm"
             (input)="onSearchChange(searchTerm)"
             #searchInput>
@@ -73,13 +73,13 @@
             *ngIf="hasActiveSearch()"
             class="clear-search-btn"
             (click)="clearSearch(); searchInput.focus()"
-            title="Limpar pesquisa">
+            title="{{ 'friends.search.clear' | translate }}">
             ✕
           </button>
         </div>
         <div *ngIf="hasActiveSearch()" class="search-info">
           <span class="search-results-text">
-            Pesquisando por: <strong>"{{ searchTerm }}"</strong>
+            {{ 'friends.search.searching' | translate }} <strong>"{{ searchTerm }}"</strong>
           </span>
         </div>
       </div>
@@ -87,11 +87,11 @@
 
     <div class="tabs-container">
       <div class="tabs">
-        <button class="tab" [class.active]="activeTab === 'all-friends'" (click)="setActiveTab('all-friends')">Todos ({{ friends.total_friends }})</button>
-        <button class="tab" [class.active]="activeTab === 'not-using-app'" (click)="setActiveTab('not-using-app')">Para Convidar ({{ friends.notUsingApp.length }})</button>
-        <button class="tab" [class.active]="activeTab === 'invited'" (click)="setActiveTab('invited')">Convidados ({{ (invitedFriends$ | async)?.length || 0 }})</button>
-        <button class="tab" [class.active]="activeTab === 'using-app'" (click)="setActiveTab('using-app')">Usando o App ({{ friends.usingApp.length }})</button>
-        <button class="tab" [class.active]="activeTab === 'statistics'" (click)="setActiveTab('statistics')">Estatísticas</button>
+        <button class="tab" [class.active]="activeTab === 'all-friends'" (click)="setActiveTab('all-friends')">{{ 'friends.tabs.all' | translate }} ({{ friends.total_friends }})</button>
+        <button class="tab" [class.active]="activeTab === 'not-using-app'" (click)="setActiveTab('not-using-app')">{{ 'friends.tabs.toInvite' | translate }} ({{ friends.notUsingApp.length }})</button>
+        <button class="tab" [class.active]="activeTab === 'invited'" (click)="setActiveTab('invited')">{{ 'friends.tabs.invited' | translate }} ({{ (invitedFriends$ | async)?.length || 0 }})</button>
+        <button class="tab" [class.active]="activeTab === 'using-app'" (click)="setActiveTab('using-app')">{{ 'friends.tabs.usingApp' | translate }} ({{ friends.usingApp.length }})</button>
+        <button class="tab" [class.active]="activeTab === 'statistics'" (click)="setActiveTab('statistics')">{{ 'friends.tabs.statistics' | translate }}</button>
       </div>
     </div>
 
@@ -114,9 +114,9 @@
       <ng-container *ngIf="filteredAllFriends$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.total_friends > 0" class="no-results">
           <div class="no-results-content">
-            <h3>Nenhum amigo encontrado</h3>
+            <h3>{{ 'friends.empty.noResults' | translate }}</h3>
             <p>Não encontramos amigos com o nome "<strong>{{ searchTerm }}</strong>"</p>
-            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
 
@@ -130,7 +130,7 @@
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
               <p class="friend-status">
-                <span *ngIf="friend.status === 'using-app'" class="using-app-text">Usa o app • Entrou em {{ formatDate(friend.joined_at) }}</span>
+                <span *ngIf="friend.status === 'using-app'" class="using-app-text">{{ 'friends.status.usingApp' | translate }} • Entrou em {{ formatDate(friend.joined_at) }}</span>
                 <span *ngIf="friend.status !== 'using-app'" [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
               </p>
             </div>
@@ -148,16 +148,16 @@
     <!-- ✅ ABA: Para Convidar (com pesquisa) -->
     <div *ngIf="activeTab === 'not-using-app'" class="tab-content">
       <div *ngIf="friends.notUsingApp.length === 0" class="empty-state">
-        <h3>Todos os seus amigos já usam o app!</h3>
+        <h3>{{ 'friends.empty.noUsingApp' | translate }}</h3>
         <p>Parabéns! Todos os seus amigos da Steam já conhecem o Courier's Knowledge.</p>
       </div>
 
       <ng-container *ngIf="filteredNotUsingApp$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.notUsingApp.length > 0" class="no-results">
           <div class="no-results-content">
-            <h3>Nenhum amigo encontrado</h3>
+            <h3>{{ 'friends.empty.noResults' | translate }}</h3>
             <p>Não encontramos amigos para convidar com o nome "<strong>{{ searchTerm }}</strong>"</p>
-            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
 
@@ -171,7 +171,7 @@
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
               <p class="friend-status">
                 <span [class]="getOnlineStatusClass(friend.is_online)">{{ getOnlineStatusText(friend.is_online) }}</span>
-                <span *ngIf="friend.already_invited" class="invited-indicator">• Convidado {{ formatDate(friend.invited_at) }}</span>
+                <span *ngIf="friend.already_invited" class="invited-indicator">• {{ 'friends.status.invited' | translate }} {{ formatDate(friend.invited_at) }}</span>
               </p>
             </div>
             <div class="friend-actions">
@@ -192,16 +192,16 @@
     <div *ngIf="activeTab === 'invited'" class="tab-content">
       <ng-container *ngIf="filteredInvitedFriends$ | async as filteredFriends">
         <div *ngIf="(invitedFriends$ | async)?.length === 0" class="empty-state">
-          <h3>Nenhum amigo convidado ainda</h3>
+          <h3>{{ 'friends.empty.noInvited' | translate }}</h3>
           <p>Vá para a aba "Para Convidar" e comece a chamar seus amigos!</p>
           <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
         </div>
 
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && (invitedFriends$ | async)!.length > 0" class="no-results">
           <div class="no-results-content">
-            <h3>Nenhum amigo encontrado</h3>
+            <h3>{{ 'friends.empty.noResults' | translate }}</h3>
             <p>Não encontramos amigos convidados com o nome "<strong>{{ searchTerm }}</strong>"</p>
-            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
 
@@ -213,7 +213,7 @@
             </div>
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.steam_username }}</h4>
-              <p class="friend-status"><span class="invited-text">Convidado {{ formatDate(friend.invited_at) }}</span></p>
+              <p class="friend-status"><span class="invited-text">{{ 'friends.status.invited' | translate }} {{ formatDate(friend.invited_at) }}</span></p>
             </div>
             <div class="friend-actions">
               <button class="action-btn steam-btn" (click)="openSteamProfile(friend)" title="Abrir perfil Steam">Perfil</button>
@@ -232,7 +232,7 @@
     <!-- ✅ ABA: Usando o App (com pesquisa) -->
     <div *ngIf="activeTab === 'using-app'" class="tab-content">
       <div *ngIf="friends.usingApp.length === 0" class="empty-state">
-        <h3>Nenhum amigo usando o app ainda</h3>
+        <h3>{{ 'friends.empty.noUsingApp' | translate }}</h3>
         <p>Que tal convidar alguns amigos para usar o Courier's Knowledge?</p>
         <button class="primary-btn" (click)="setActiveTab('not-using-app')">Ver amigos para convidar</button>
       </div>
@@ -240,9 +240,9 @@
       <ng-container *ngIf="filteredUsingApp$ | async as filteredFriends">
         <div *ngIf="hasActiveSearch() && filteredFriends.length === 0 && friends.usingApp.length > 0" class="no-results">
           <div class="no-results-content">
-            <h3>Nenhum amigo encontrado</h3>
+            <h3>{{ 'friends.empty.noResults' | translate }}</h3>
             <p>Não encontramos amigos usando o app com o nome "<strong>{{ searchTerm }}</strong>"</p>
-            <button class="clear-search-btn-alt" (click)="clearSearch()">Limpar pesquisa</button>
+            <button class="clear-search-btn-alt" (click)="clearSearch()">{{ 'friends.search.clear' | translate }}</button>
           </div>
         </div>
 
@@ -276,14 +276,14 @@
             <span class="stat-icon">👥</span>
             <div class="stat-info">
               <div class="stat-value">{{ friends.statistics.friends_using_app }}</div>
-              <div class="stat-description">Amigos usando o app</div>
+              <div class="stat-description">{{ 'friends.stats.usingApp' | translate }}</div>
             </div>
           </div>
           <div class="stat-detail">
             <span class="stat-icon">📩</span>
             <div class="stat-info">
               <div class="stat-value">{{ friends.statistics.total_invites_sent }}</div>
-              <div class="stat-description">Convites enviados</div>
+              <div class="stat-description">{{ 'friends.stats.invitesSent' | translate }}</div>
             </div>
           </div>
           <div class="stat-detail">
@@ -297,13 +297,13 @@
             <span class="stat-icon">⏳</span>
             <div class="stat-info">
               <div class="stat-value">{{ (invitedFriends$ | async)?.length || 0 }}</div>
-              <div class="stat-description">Convites pendentes</div>
+              <div class="stat-description">{{ 'friends.stats.pendingInvites' | translate }}</div>
             </div>
           </div>
         </div>
 
         <div class="progress-section">
-          <h4>Progresso</h4>
+          <h4>{{ 'friends.stats.inviteProgress' | translate }}</h4>
           <div class="progress-bar">
             <div class="progress-fill" [style.width.%]="(friends.statistics.friends_using_app / friends.total_friends) * 100"></div>
           </div>

@@ -134,6 +134,8 @@ export class EvaluationFormComponent implements OnInit {
     }
   }
 
+  // evaluation-form.component.ts - CORREÇÃO PARA BLOQUEAR CAMPOS NA EDIÇÃO
+
   private populateForm(): void {
     console.log('🔄 Preenchendo formulário com:', this.evaluationData);
 
@@ -153,7 +155,8 @@ export class EvaluationFormComponent implements OnInit {
     }
 
     // ✅ DECIDIR SE DEVE BLOQUEAR CAMPOS
-    this.shouldLockFields = this.isFromMatch; // Bloquear se veio de partida
+    // IMPORTANTE: Agora bloquea campos tanto se vem de partida QUANTO se está em modo de edição
+    this.shouldLockFields = this.isFromMatch || this.isEditMode;
 
     this.evaluationForm.patchValue({
       targetSteamId:
@@ -176,28 +179,38 @@ export class EvaluationFormComponent implements OnInit {
 
     // ✅ BLOQUEAR CAMPOS SE NECESSÁRIO (EXCETO ROLE)
     if (this.shouldLockFields) {
+      // SEMPRE bloquear Steam ID quando shouldLockFields for true
       if (
         this.evaluationData.targetSteamId ||
         this.evaluationData.target_player_steam_id
       ) {
         this.evaluationForm.get('targetSteamId')?.disable();
       }
+
+      // SEMPRE bloquear hero_id quando shouldLockFields for true
       if (this.evaluationData.hero_id) {
         this.evaluationForm.get('hero_id')?.disable();
       }
+
+      // SEMPRE bloquear matchId quando shouldLockFields for true
       if (this.evaluationData.matchId || this.evaluationData.match_id) {
         this.evaluationForm.get('matchId')?.disable();
       }
-      // ROLE SEMPRE PERMANECE EDITÁVEL - não desabilitar
+
+      // ROLE SEMPRE PERMANECE EDITÁVEL - nunca desabilitar
+      // this.evaluationForm.get('role') - não mexer neste campo
     }
 
     console.log('✅ Formulário preenchido:', this.evaluationForm.value);
     console.log('🔒 Campos bloqueados:', this.shouldLockFields);
+    console.log('📝 Modo de edição:', this.isEditMode);
+    console.log('🎮 Vem de partida:', this.isFromMatch);
     console.log(
       '🎭 Role editável:',
       !this.evaluationForm.get('role')?.disabled
     );
   }
+
 
   public getPlayerDisplayText(): string {
     if (this.prefilledPlayerName) {
