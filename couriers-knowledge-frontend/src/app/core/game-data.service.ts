@@ -41,11 +41,35 @@ export class GameDataService {
     );
   }
 
-  // --- Métodos dos Heróis (sem alteração) ---
+  // --- Métodos dos Heróis ---
   getHeroById(id: number): Hero | null {
     return this.heroesSubject.getValue()[id] || null;
   }
 
+  /**
+   * Retorna todos os heróis como um array
+   * Útil para dropdowns e seletores
+   */
+  getHeroes(): Hero[] {
+    const heroesMap = this.heroesSubject.getValue();
+    return Object.values(heroesMap).sort((a, b) => {
+      // Ordena alfabeticamente pelo nome localizado
+      return a.localized_name.localeCompare(b.localized_name);
+    });
+  }
+
+  /**
+   * Retorna todos os heróis como um mapa (objeto)
+   * Útil quando você precisa do formato original
+   */
+  getHeroesMap(): { [key: number]: Hero } {
+    return this.heroesSubject.getValue();
+  }
+
+  /**
+   * Gera a URL da imagem do herói baseada no nome
+   * As imagens estão nos assets locais
+   */
   getHeroImageUrl(heroId: number): string {
     const hero = this.getHeroById(heroId);
     const heroNameForUrl = hero ? hero.name.replace(/^npc_dota_hero_/, '') : 'default';

@@ -104,7 +104,7 @@ interface UserProfile {
             <div class="system-info">
               <div class="info-row">
                 <span class="info-label">Versão:</span>
-                <span class="info-value">v1.0.0 Beta</span>
+                <span class="info-value">v0.0.27 Beta</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Servidor:</span>

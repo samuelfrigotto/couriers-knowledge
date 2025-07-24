@@ -612,8 +612,128 @@ export class I18nService {
   // Tooltips específicos
   'layout.tooltips.immortalLive': 'Real-time analysis for elite players',
   'layout.tooltips.immortalMatches': 'Import matches via AI-powered screenshots',
-  'layout.tooltips.immortalRestriction': 'Automatic history unavailable due to Valve restrictions for 8.5k+ MMR'
+  'layout.tooltips.immortalRestriction': 'Automatic history unavailable due to Valve restrictions for 8.5k+ MMR',
 
+
+'importMatches.title': 'Import Matches',
+'importMatches.badge.immortalExclusive': 'Immortal Exclusive',
+
+// Header
+'importMatches.header.backButton': '← Back to Matches',
+'importMatches.button.addMatch': 'Add Match',
+'importMatches.button.understood': 'Understood',
+'importMatches.button.close': 'Close',
+'importMatches.button.cancel': 'Cancel',
+'importMatches.button.saveMatch': 'Save Match',
+'importMatches.button.next': 'Next',
+'importMatches.button.previous': 'Previous',
+
+// Steps
+'importMatches.steps.step': 'Step',
+'importMatches.steps.matchInfo': 'Match Information',
+'importMatches.steps.radiantTeam': 'Radiant Team',
+'importMatches.steps.direTeam': 'Dire Team',
+
+// Tooltips
+'importMatches.tooltip.help': 'Help and information',
+'importMatches.tooltip.viewDetails': 'View details',
+'importMatches.tooltip.deleteMatch': 'Delete match',
+
+// Table Headers
+'importMatches.table.yourHero': 'Your Hero',
+'importMatches.table.result': 'Result',
+'importMatches.table.score': 'Score',
+'importMatches.table.date': 'Date',
+'importMatches.table.actions': 'Actions',
+
+// Results
+'importMatches.result.victory': 'Victory',
+'importMatches.result.defeat': 'Defeat',
+'importMatches.result.vs': ' vs ',
+'importMatches.result.minutes': ' min',
+
+// Loading
+'importMatches.loading.matches': 'Loading imported matches...',
+
+// Empty State
+'importMatches.empty.title': 'No imported matches',
+'importMatches.empty.description': 'Your imported matches will appear here. As an Immortal player, you can add matches manually.',
+'importMatches.empty.action': 'Add First Match',
+
+// Details
+'importMatches.details.comingSoon': 'Details Coming Soon',
+'importMatches.details.detailsDescription': 'Detailed view of imported matches will be available soon with complete player analysis.',
+
+// Form Labels
+'importMatches.form.matchInfo': 'Match Information',
+'importMatches.form.matchResult': 'Match Result',
+'importMatches.form.duration': 'Duration (minutes)',
+'importMatches.form.durationHelp': 'Match duration in minutes',
+'importMatches.form.radiantScore': 'Radiant Kills',
+'importMatches.form.direScore': 'Dire Kills',
+'importMatches.form.radiantTeam': 'Radiant Team',
+'importMatches.form.direTeam': 'Dire Team',
+'importMatches.form.selectHero': 'Select Hero',
+'importMatches.form.playerName': 'Player Name',
+'importMatches.form.rank': 'Rank',
+'importMatches.form.kda': 'K/D/A',
+'importMatches.form.networth': 'Net Worth',
+
+// Validation
+'importMatches.validation.incompleteData': 'Please fill at least basic information and some heroes.',
+
+// Help Modal
+'importMatches.help.title': 'How It Works - Immortal Mode',
+'importMatches.help.whyImmortal.title': 'Why is it different for Immortals?',
+'importMatches.help.whyImmortal.description': 'Valve restricts access to match data for 8.5k+ MMR players to protect professional strategies. That\'s why we developed exclusive import methods.',
+
+'importMatches.help.howToImport.title': 'How to Import Matches',
+'importMatches.help.howToImport.step1': 'Click "Add Match" after finishing a match',
+'importMatches.help.howToImport.step2': 'Fill basic match information',
+'importMatches.help.howToImport.step3': 'Add data for all 10 players (hero, name, rank, KDA, networth)',
+'importMatches.help.howToImport.step4': 'Save the match to your custom history',
+
+'importMatches.help.importMethods.title': 'Import Methods',
+'importMatches.help.importMethods.manual.title': 'Manual Import',
+'importMatches.help.importMethods.manual.description': 'Manually fill match data: heroes, result, duration and player information.',
+
+'importMatches.help.importMethods.screenshot.title': 'Via Screenshot (Coming Soon)',
+'importMatches.help.importMethods.screenshot.description': 'Upload a screenshot of the result screen and our AI will automatically extract match data.',
+
+'importMatches.help.importMethods.ai.title': 'Automatic Analysis (AI)',
+'importMatches.help.importMethods.ai.description': 'Advanced system that automatically monitors your matches and extracts data in real-time.',
+
+'importMatches.help.comingSoon': 'Coming Soon',
+
+// Add Match Modal
+'importMatches.addMatch.title': 'Add New Match',
+
+// Success Messages
+'importMatches.success.matchDeleted': 'Match deleted successfully!',
+'importMatches.success.matchAdded': 'Match added successfully!',
+
+// Confirm Messages
+'importMatches.confirm.deleteMatch': 'Are you sure you want to delete this match?',
+// Loading
+
+// Add Match Modal
+'importMatches.addMatch.comingSoon': 'Funcionalidade em Desenvolvimento',
+'importMatches.addMatch.description': 'O sistema de importação manual e via screenshot está sendo finalizado. Em breve você poderá adicionar suas partidas de forma simples e intuitiva.',
+
+
+
+
+
+'importMatches.table.source': 'Source',
+
+
+
+
+// Sources
+'importMatches.source.manual': 'Manual',
+'importMatches.source.screenshot': 'Screenshot',
+'importMatches.source.aiAnalysis': 'AI',
+'importMatches.source.unknown': 'Unknown',
 
       },
 
@@ -622,6 +742,20 @@ export class I18nService {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
 
 
@@ -1188,7 +1322,98 @@ export class I18nService {
   'layout.tooltips.immortalMatches': 'Importe partidas via screenshots com IA',
   'layout.tooltips.immortalRestriction': 'Histórico automático indisponível devido às restrições da Valve para 8.5k+ MMR',
 
+// Import Matches - Immortal
+'importMatches.title': 'Importar Partidas',
+'importMatches.badge.immortalExclusive': 'Exclusivo Immortal',
 
+// Header
+'importMatches.header.backButton': '← Voltar para Partidas',
+'importMatches.button.addMatch': 'Adicionar Partida',
+'importMatches.button.understood': 'Entendi',
+'importMatches.button.close': 'Fechar',
+'importMatches.button.cancel': 'Cancelar',
+'importMatches.button.saveMatch': 'Salvar Partida',
+
+// Tooltips
+'importMatches.tooltip.help': 'Ajuda e informações',
+'importMatches.tooltip.viewDetails': 'Ver detalhes',
+'importMatches.tooltip.deleteMatch': 'Excluir partida',
+
+// Table Headers
+'importMatches.table.yourHero': 'Seu Herói',
+'importMatches.table.result': 'Resultado',
+'importMatches.table.score': 'Placar',
+'importMatches.table.date': 'Data',
+'importMatches.table.actions': 'Ações',
+
+// Results
+'importMatches.result.victory': 'Vitória',
+'importMatches.result.defeat': 'Derrota',
+'importMatches.result.vs': ' vs ',
+'importMatches.result.minutes': ' min',
+
+// Loading
+'importMatches.loading.matches': 'Carregando partidas importadas...',
+
+// Empty State
+'importMatches.empty.title': 'Nenhuma partida importada',
+'importMatches.empty.description': 'Suas partidas importadas aparecerão aqui. Como jogador Immortal, você pode adicionar partidas manualmente.',
+'importMatches.empty.action': 'Adicionar Primeira Partida',
+
+// Details
+'importMatches.details.comingSoon': 'Detalhes em Breve',
+'importMatches.details.detailsDescription': 'A visualização detalhada das partidas importadas estará disponível em breve com análise completa dos jogadores.',
+
+// Form Labels
+'importMatches.form.matchInfo': 'Informações da Partida',
+'importMatches.form.matchResult': 'Resultado da Partida',
+'importMatches.form.duration': 'Duração (minutos)',
+'importMatches.form.durationHelp': 'Duração da partida em minutos',
+'importMatches.form.radiantScore': 'Kills Radiant',
+'importMatches.form.direScore': 'Kills Dire',
+'importMatches.form.radiantTeam': 'Time Radiant',
+'importMatches.form.direTeam': 'Time Dire',
+'importMatches.form.selectHero': 'Selecionar Herói',
+'importMatches.form.playerName': 'Nome do Jogador',
+'importMatches.form.rank': 'Rank',
+'importMatches.form.kda': 'K/D/A',
+'importMatches.form.networth': 'Net Worth',
+
+// Validation
+'importMatches.validation.incompleteData': 'Preencha pelo menos as informações básicas e alguns heróis.',
+
+// Help Modal
+'importMatches.help.title': 'Como Funciona - Modo Immortal',
+'importMatches.help.whyImmortal.title': 'Por que é diferente para Immortals?',
+'importMatches.help.whyImmortal.description': 'A Valve restringe o acesso aos dados de partida para jogadores 8.5k+ MMR para proteger estratégias profissionais. Por isso, desenvolvemos métodos exclusivos de importação.',
+
+'importMatches.help.howToImport.title': 'Como Importar Partidas',
+'importMatches.help.howToImport.step1': 'Clique em "Adicionar Partida" após terminar uma partida',
+'importMatches.help.howToImport.step2': 'Preencha as informações básicas da partida',
+'importMatches.help.howToImport.step3': 'Adicione os dados dos 10 jogadores (herói, nome, rank, KDA, networth)',
+'importMatches.help.howToImport.step4': 'Salve a partida em seu histórico personalizado',
+
+'importMatches.help.importMethods.title': 'Métodos de Importação',
+'importMatches.help.importMethods.manual.title': 'Importação Manual',
+'importMatches.help.importMethods.manual.description': 'Preencha manualmente os dados da partida: heróis, resultado, duração e informações dos jogadores.',
+
+'importMatches.help.importMethods.screenshot.title': 'Via Screenshot (Em Breve)',
+'importMatches.help.importMethods.screenshot.description': 'Faça upload de uma screenshot da tela de resultado e nossa IA extrairá automaticamente os dados da partida.',
+
+'importMatches.help.importMethods.ai.title': 'Análise Automática (IA)',
+'importMatches.help.importMethods.ai.description': 'Sistema avançado que monitora automaticamente suas partidas e extrai dados em tempo real.',
+
+'importMatches.help.comingSoon': 'Em Breve',
+
+// Add Match Modal
+'importMatches.addMatch.title': 'Adicionar Nova Partida',
+
+// Success Messages
+'importMatches.success.matchDeleted': 'Partida excluída com sucesso!',
+'importMatches.success.matchAdded': 'Partida adicionada com sucesso!',
+
+// Confirm Messages
+'importMatches.confirm.deleteMatch': 'Tem certeza que deseja excluir esta partida?',
 
 
       },

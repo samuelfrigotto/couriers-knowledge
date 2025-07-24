@@ -1,1 +1,407 @@
-<p>immortal-recent-matches works!</p>
+<!-- immortal-recent-matches.component.html -->
+
+<div class="matches-container">
+
+  <!-- MATCH DETAILS VIEW -->
+  <div *ngIf="selectedMatch; else matchList" class="details-view">
+    <!-- Header modernizado -->
+    <div class="details-header">
+      <button class="back-button" (click)="backToMatches()">
+        {{ 'importMatches.header.backButton' | translate }}
+      </button>
+      <div class="details-title">
+        <h2>
+          {{ selectedMatch.user_won ? ('importMatches.result.victory' | translate) : ('importMatches.result.defeat' | translate) }}
+        </h2>
+        <span class="match-duration">{{ (selectedMatch.duration / 60) | number:'1.0-0' }}{{ 'importMatches.result.minutes' | translate }}</span>
+        <div class="match-source">
+          <svg class="source-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="details-score">
+        <span class="radiant-score">{{ selectedMatch.radiant_score }}</span>
+        <span class="vs-text">{{ 'importMatches.result.vs' | translate }}</span>
+        <span class="dire-score">{{ selectedMatch.dire_score }}</span>
+      </div>
+    </div>
+
+    <!-- Placeholder para detalhes da partida -->
+    <div class="match-details-placeholder">
+      <div class="placeholder-content">
+        <div class="placeholder-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+        </div>
+        <h3>{{ 'importMatches.details.comingSoon' | translate }}</h3>
+        <p>{{ 'importMatches.details.detailsDescription' | translate }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCH LIST VIEW -->
+  <ng-template #matchList>
+
+    <!-- HEADER COM TÍTULO, BOTÃO E HELP -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1>{{ 'importMatches.title' | translate }}</h1>
+          <div class="immortal-badge">
+            <svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 3l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L13 17.77l-5.18 3.25L9 14.14 4 9.27l5.91-.01L13 3z"/>
+            </svg>
+            <span class="badge-text">{{ 'importMatches.badge.immortalExclusive' | translate }}</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="help-button" (click)="openHelpModal()" title="{{ 'importMatches.tooltip.help' | translate }}">
+            <svg class="help-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+            </svg>
+          </button>
+          <button class="add-match-button" (click)="openAddMatchModal()">
+            <svg class="plus-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            {{ 'importMatches.button.addMatch' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>{{ 'importMatches.loading.matches' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="!isLoading && importedMatches.length === 0" class="empty-state">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+          </svg>
+        </div>
+        <h3>{{ 'importMatches.empty.title' | translate }}</h3>
+        <p>{{ 'importMatches.empty.description' | translate }}</p>
+        <button class="empty-action-btn" (click)="openAddMatchModal()">
+          {{ 'importMatches.empty.action' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- MATCHES TABLE -->
+    <div class="match-list-container" *ngIf="!isLoading && importedMatches.length > 0">
+
+      <!-- Table Header -->
+      <div class="match-row-header">
+        <div class="header-hero">{{ 'importMatches.table.yourHero' | translate }}</div>
+        <div class="header-result">{{ 'importMatches.table.result' | translate }}</div>
+        <div class="header-score">{{ 'importMatches.table.score' | translate }}</div>
+        <div class="header-date">{{ 'importMatches.table.date' | translate }}</div>
+        <div class="header-actions">{{ 'importMatches.table.actions' | translate }}</div>
+      </div>
+
+      <!-- Match Rows -->
+      <div *ngFor="let match of importedMatches"
+           class="match-row"
+           [ngClass]="{ 'win': match.user_won, 'loss': !match.user_won }">
+
+        <div class="match-hero-col" (click)="viewMatchDetails(match.match_id)">
+          <img [src]="gameDataService.getHeroImageUrl(match.user_hero_id)"
+               class="hero-icon-medium"
+               [alt]="gameDataService.getHeroById(match.user_hero_id)?.localized_name">
+          <span class="hero-name">{{ gameDataService.getHeroById(match.user_hero_id)?.localized_name }}</span>
+        </div>
+
+        <div class="match-result-col" (click)="viewMatchDetails(match.match_id)">
+          <span class="result-text">
+            {{ match.user_won ? ('importMatches.result.victory' | translate) : ('importMatches.result.defeat' | translate) }}
+          </span>
+        </div>
+
+        <div class="match-score-col" (click)="viewMatchDetails(match.match_id)">
+          <span class="score-display">
+            <span class="radiant-score">{{ match.radiant_score }}</span>
+            <span class="vs-separator">×</span>
+            <span class="dire-score">{{ match.dire_score }}</span>
+          </span>
+        </div>
+
+        <div class="match-date-col" (click)="viewMatchDetails(match.match_id)">
+          <span class="date-text">{{ formatDate(match.created_at) }}</span>
+          <small class="duration-text">{{ (match.duration / 60) | number:'1.0-0' }}min</small>
+        </div>
+
+        <div class="match-actions-col">
+          <button class="action-button view-btn" (click)="viewMatchDetails(match.match_id)" title="{{ 'importMatches.tooltip.viewDetails' | translate }}">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+          </button>
+          <button class="action-button delete-btn" (click)="deleteMatch(match.match_id)" title="{{ 'importMatches.tooltip.deleteMatch' | translate }}">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-template>
+
+</div>
+
+<!-- HELP MODAL -->
+<div *ngIf="isHelpModalVisible" class="modal-overlay" (click)="closeHelpModal()">
+  <div class="modal-content help-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ 'importMatches.help.title' | translate }}</h3>
+      <button class="close-button" (click)="closeHelpModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="help-section">
+        <h4>{{ 'importMatches.help.whyImmortal.title' | translate }}</h4>
+        <p>{{ 'importMatches.help.whyImmortal.description' | translate }}</p>
+      </div>
+
+      <div class="help-section">
+        <h4>{{ 'importMatches.help.howToImport.title' | translate }}</h4>
+        <ol class="help-steps">
+          <li>{{ 'importMatches.help.howToImport.step1' | translate }}</li>
+          <li>{{ 'importMatches.help.howToImport.step2' | translate }}</li>
+          <li>{{ 'importMatches.help.howToImport.step3' | translate }}</li>
+          <li>{{ 'importMatches.help.howToImport.step4' | translate }}</li>
+        </ol>
+      </div>
+
+      <div class="help-section">
+        <h4>{{ 'importMatches.help.importMethods.title' | translate }}</h4>
+        <div class="import-methods">
+          <div class="method-card">
+            <span class="method-icon">✏️</span>
+            <div class="method-info">
+              <h5>{{ 'importMatches.help.importMethods.manual.title' | translate }}</h5>
+              <p>{{ 'importMatches.help.importMethods.manual.description' | translate }}</p>
+            </div>
+          </div>
+          <div class="method-card">
+            <span class="method-icon">📸</span>
+            <div class="method-info">
+              <h5>{{ 'importMatches.help.importMethods.screenshot.title' | translate }}</h5>
+              <p>{{ 'importMatches.help.importMethods.screenshot.description' | translate }}</p>
+            </div>
+          </div>
+          <div class="method-card coming-soon">
+            <span class="method-icon">🤖</span>
+            <div class="method-info">
+              <h5>{{ 'importMatches.help.importMethods.ai.title' | translate }}</h5>
+              <p>{{ 'importMatches.help.importMethods.ai.description' | translate }}</p>
+            </div>
+            <span class="coming-soon-badge">{{ 'importMatches.help.comingSoon' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-button primary" (click)="closeHelpModal()">
+        {{ 'importMatches.button.understood' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MATCH MODAL -->
+<div *ngIf="isAddMatchModalVisible" class="modal-overlay fullscreen-modal" (click)="closeAddMatchModal()">
+  <div class="modal-content add-match-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header with Steps -->
+    <div class="modal-header">
+      <div class="header-left">
+        <h3>{{ 'importMatches.addMatch.title' | translate }}</h3>
+        <div class="step-indicator">
+          <span class="current-step">{{ 'importMatches.steps.step' | translate }} {{ currentStep }}/3:</span>
+          <span class="step-title">{{ getStepTitle() }}</span>
+        </div>
+      </div>
+      <button class="close-button" (click)="closeAddMatchModal()">×</button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="(currentStep / 3) * 100"></div>
+      </div>
+      <div class="step-labels">
+        <span [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">{{ 'importMatches.steps.matchInfo' | translate }}</span>
+        <span [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">{{ 'importMatches.steps.radiantTeam' | translate }}</span>
+        <span [class.active]="currentStep >= 3">{{ 'importMatches.steps.direTeam' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- STEP 1: Match Information -->
+      <div *ngIf="currentStep === 1" class="step-content">
+        <div class="step-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'importMatches.form.matchResult' | translate }}</label>
+              <select [(ngModel)]="newMatch.userWon" class="form-select compact">
+                <option [value]="true">{{ 'importMatches.result.victory' | translate }}</option>
+                <option [value]="false">{{ 'importMatches.result.defeat' | translate }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'importMatches.form.duration' | translate }}</label>
+              <input type="number" [(ngModel)]="newMatch.duration" placeholder="45" class="form-input compact" min="1">
+              <small>{{ 'importMatches.form.durationHelp' | translate }}</small>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'importMatches.form.radiantScore' | translate }}</label>
+              <input type="number" [(ngModel)]="newMatch.radiantScore" placeholder="43" class="form-input compact" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'importMatches.form.direScore' | translate }}</label>
+              <input type="number" [(ngModel)]="newMatch.direScore" placeholder="31" class="form-input compact" min="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Radiant Team -->
+      <div *ngIf="currentStep === 2" class="step-content">
+        <div class="team-step radiant-step">
+          <div class="team-header-step">
+            <svg class="team-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L13 17.77l-5.18 3.25L9 14.14 4 9.27l5.91-.01L13 3z"/>
+            </svg>
+            <h4>{{ 'importMatches.form.radiantTeam' | translate }}</h4>
+          </div>
+
+          <div class="players-compact-grid">
+            <div *ngFor="let player of newMatch.radiantPlayers; let i = index" class="player-compact">
+              <div class="player-number-compact">{{ i + 1 }}</div>
+
+              <div class="player-fields">
+                <div class="hero-field">
+                  <select [(ngModel)]="player.heroId" class="hero-select compact"
+                          (ngModelChange)="onHeroChange($event, player)">
+                    <option [value]="null">{{ 'importMatches.form.selectHero' | translate }}</option>
+                    <option *ngFor="let hero of gameDataService.getHeroes()" [value]="hero.id">
+                      {{ hero.localized_name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="info-fields">
+                  <input type="text" [(ngModel)]="player.name" placeholder="{{ 'importMatches.form.playerName' | translate }}" class="compact-input">
+                  <input type="text" [(ngModel)]="player.rank" placeholder="{{ 'importMatches.form.rank' | translate }}" class="compact-input">
+                </div>
+
+                <div class="stats-fields">
+                  <div class="kda-compact">
+                    <input type="number" [(ngModel)]="player.kills" placeholder="K" class="kda-compact-input" min="0">
+                    <span>/</span>
+                    <input type="number" [(ngModel)]="player.deaths" placeholder="D" class="kda-compact-input" min="0">
+                    <span>/</span>
+                    <input type="number" [(ngModel)]="player.assists" placeholder="A" class="kda-compact-input" min="0">
+                  </div>
+                  <input type="number" [(ngModel)]="player.networth" placeholder="Net Worth" class="compact-input" min="0">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Dire Team -->
+      <div *ngIf="currentStep === 3" class="step-content">
+        <div class="team-step dire-step">
+          <div class="team-header-step">
+            <svg class="team-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L13 17.77l-5.18 3.25L9 14.14 4 9.27l5.91-.01L13 3z"/>
+            </svg>
+            <h4>{{ 'importMatches.form.direTeam' | translate }}</h4>
+          </div>
+
+          <div class="players-compact-grid">
+            <div *ngFor="let player of newMatch.direPlayers; let i = index" class="player-compact">
+              <div class="player-number-compact">{{ i + 6 }}</div>
+
+              <div class="player-fields">
+                <div class="hero-field">
+                  <select [(ngModel)]="player.heroId" class="hero-select compact"
+                          (ngModelChange)="onHeroChange($event, player)">
+                    <option [value]="null">{{ 'importMatches.form.selectHero' | translate }}</option>
+                    <option *ngFor="let hero of gameDataService.getHeroes()" [value]="hero.id">
+                      {{ hero.localized_name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="info-fields">
+                  <input type="text" [(ngModel)]="player.name" placeholder="{{ 'importMatches.form.playerName' | translate }}" class="compact-input">
+                  <input type="text" [(ngModel)]="player.rank" placeholder="{{ 'importMatches.form.rank' | translate }}" class="compact-input">
+                </div>
+
+                <div class="stats-fields">
+                  <div class="kda-compact">
+                    <input type="number" [(ngModel)]="player.kills" placeholder="K" class="kda-compact-input" min="0">
+                    <span>/</span>
+                    <input type="number" [(ngModel)]="player.deaths" placeholder="D" class="kda-compact-input" min="0">
+                    <span>/</span>
+                    <input type="number" [(ngModel)]="player.assists" placeholder="A" class="kda-compact-input" min="0">
+                  </div>
+                  <input type="number" [(ngModel)]="player.networth" placeholder="Net Worth" class="compact-input" min="0">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer with Navigation -->
+    <div class="modal-footer">
+      <div class="footer-left">
+        <button *ngIf="currentStep > 1" class="modal-button secondary" (click)="prevStep()">
+          {{ 'importMatches.button.previous' | translate }}
+        </button>
+      </div>
+
+      <div class="footer-right">
+        <button class="modal-button secondary" (click)="closeAddMatchModal()">
+          {{ 'importMatches.button.cancel' | translate }}
+        </button>
+
+        <!-- Debug button - remover depois -->
+        <button class="modal-button" style="background: #ff6b6b;" (click)="debugStepValidation()">
+          Debug
+        </button>
+
+        <button *ngIf="currentStep < 3" class="modal-button primary" (click)="nextStep()" [disabled]="!canGoNext()">
+          {{ 'importMatches.button.next' | translate }}
+        </button>
+
+        <button *ngIf="currentStep === 3" class="modal-button primary" (click)="saveMatch()" [disabled]="!canSaveMatch()">
+          {{ 'importMatches.button.saveMatch' | translate }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
