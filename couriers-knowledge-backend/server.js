@@ -17,8 +17,8 @@ const gsiRoutes = require('./src/api/routes/gsi.routes');
 const friendsRoutes = require('./src/api/routes/friends.routes');
 const stripeRoutes = require('./src/api/routes/stripe.routes'); 
 const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
-const immortalRoutes = require('./src/routes/immortal.routes');
-
+const immortalRoutes = require('./src/api/routes/immortal.routes'); // ✅ CAMINHO CORRIGIDO
+const dotaScraperRoute = require('./dotaLeaderboardScrapper');
 // 2. Inicializar o aplicativo Express
 const app = express();
 
@@ -59,10 +59,11 @@ app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/status', statusRoutes); 
-app.use('/api/immortal', immortalRoutes);
-
+app.use('/api/immortal', immortalRoutes); // ✅ REGISTRAR ROTAS IMMORTAL
+app.use('/api', dotaScraperRoute);
 
 apiLimitsResetJob.start();
+
 // ===== ADICIONAR MIDDLEWARE DE CORS PARA LEADERBOARD =====
 app.use((req, res, next) => {
   // Permitir requests para leaderboard
@@ -72,9 +73,9 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 // 6. Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor Courier's Knowledge rodando na porta ${PORT}`);
 });
+
+module.exports = app;

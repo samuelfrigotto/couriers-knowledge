@@ -3,6 +3,51 @@
   <div class="page-header">
     <div class="header-content">
       <h1>Análise Ao Vivo - Immortal</h1>
+      <!-- 1. ADICIONAR NO HEADER DA PÁGINA (após o título) -->
+<div class="leaderboard-status">
+  <div class="status-info">
+    <span class="status-label">Leaderboard:</span>
+    <span class="status-value">{{ getLeaderboardStatus() }}</span>
+  </div>
+  
+  <div class="status-actions">
+    <button 
+      class="refresh-leaderboard-btn"
+      (click)="refreshLeaderboard()"
+      [disabled]="immortalService.isLoading"
+      title="Atualizar leaderboard (novo scraping)">
+      {{ immortalService.isLoading ? '⏳' : '🔄' }} Atualizar
+    </button>
+  </div>
+</div>
+
+<!-- 2. ADICIONAR LOADING INDICATOR QUANDO FAZENDO CROSS-REFERENCE -->
+<div *ngIf="isEnhancing" class="enhancement-progress">
+  <div class="progress-content">
+    <div class="progress-icon">🔄</div>
+    <div class="progress-text">
+      <h4>Fazendo cross-reference com leaderboard oficial...</h4>
+      <p>Verificando nomes dos jogadores contra o ranking Immortal (dados reais via Puppeteer)</p>
+    </div>
+  </div>
+</div>
+
+<!-- 3. MELHORAR O DISPLAY DOS STATS IMMORTAL (no match-header) -->
+<div class="immortal-stats">
+  <div class="stat-item highlight">
+    <span class="stat-number">{{ getImmortalPlayersCount() }}</span>
+    <span class="stat-label">No Leaderboard</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number">{{ matchData?.statistics?.totalPlayers }}</span>
+    <span class="stat-label">Total Players</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number">{{ leaderboardData?.totalPlayers || 0 }}</span>
+    <span class="stat-label">Leaderboard Size</span>
+  </div>
+</div>
+
       <div class="immortal-badge-small">
         <span class="rank">#{{ userInfo?.immortalRank }}</span>
         <span class="region">{{ userInfo?.immortalRegion | uppercase }}</span>
@@ -150,12 +195,12 @@
               <div class="player-names">
                 <div class="steam-name">{{ player.name }}</div>
                 <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
-                  {{ player.leaderboardData.officialName }}
+                  {{ player.leaderboardData?.officialName }}
                 </div>
               </div>
               <span *ngIf="player.isBot" class="bot-badge">BOT</span>
               <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
-                #{{ player.leaderboardData.rank }}
+                #{{ player.leaderboardData?.rank }}
               </span>
             </div>
 
@@ -163,7 +208,7 @@
             <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
               <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
                 <span class="confidence-label">Match:</span>
-                <span class="confidence-value" [class]="getConfidenceClass(player.nameMatch.confidence)">
+                <span class="confidence-value" >
                   {{ player.nameMatch.confidence }}%
                 </span>
               </div>
@@ -219,12 +264,12 @@
               <div class="player-names">
                 <div class="steam-name">{{ player.name }}</div>
                 <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
-                  {{ player.leaderboardData.officialName }}
+                  {{ player.leaderboardData?.officialName }}
                 </div>
               </div>
               <span *ngIf="player.isBot" class="bot-badge">BOT</span>
               <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
-                #{{ player.leaderboardData.rank }}
+                #{{ player.leaderboardData?.rank }}
               </span>
             </div>
 
@@ -232,7 +277,7 @@
             <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
               <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
                 <span class="confidence-label">Match:</span>
-                <span class="confidence-value" [class]="getConfidenceClass(player.nameMatch.confidence)">
+                <span class="confidence-value">
                   {{ player.nameMatch.confidence }}%
                 </span>
               </div>
@@ -296,8 +341,8 @@
       <div class="player-header">
         <h3>{{ selectedPlayerForDetails?.name }}</h3>
         <div *ngIf="selectedPlayerForDetails?.leaderboardData?.isVerified" class="player-immortal-info">
-          <span class="official-name">{{ selectedPlayerForDetails.leaderboardData.officialName }}</span>
-          <span class="rank-badge">#{{ selectedPlayerForDetails.leaderboardData.rank }}</span>
+          <span class="official-name">{{ selectedPlayerForDetails?.leaderboardData?.officialName }}</span>
+          <span class="rank-badge">#{{ selectedPlayerForDetails?.leaderboardData?.rank }}</span>
         </div>
       </div>
       <button class="close-btn" (click)="closeDetailModal()">×</button>

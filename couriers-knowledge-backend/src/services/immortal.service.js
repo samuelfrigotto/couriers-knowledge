@@ -1,7 +1,6 @@
-// backend/src/services/immortal.service.js - Web Scraping Service
+// backend/src/services/immortal.service.js - VERSÃO PUPPETEER
 
-const axios = require('axios');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 const db = require('../config/database');
 
 class ImmortalService {
@@ -9,7 +8,7 @@ class ImmortalService {
   constructor() {
     this.cache = new Map();
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 horas
-    this.isUpdating = new Set(); // Prevenir atualizações simultâneas
+    this.isUpdating = new Set();
   }
 
   /**
@@ -24,7 +23,7 @@ class ImmortalService {
         return cached;
       }
 
-      // Verificar se já está atualizando para evitar requests duplicados
+      // Verificar se já está atualizando
       if (this.isUpdating.has(region)) {
         console.log(`🔄 Leaderboard ${region} já está sendo atualizado, aguardando...`);
         await this.waitForUpdate(region);
@@ -32,7 +31,7 @@ class ImmortalService {
       }
 
       this.isUpdating.add(region);
-      console.log(`🕷️ Iniciando web scraping do leaderboard ${region}...`);
+      console.log(`🕷️ Iniciando scraping do leaderboard ${region}...`);
 
       const players = await this.scrapeLeaderboard(region);
       
@@ -47,7 +46,7 @@ class ImmortalService {
       // Salvar no cache
       this.setCachedData(region, response);
       
-      // Salvar no banco de dados para persistência
+      // Salvar no banco
       await this.saveLeaderboardToDatabase(region, players);
 
       console.log(`✅ Leaderboard ${region} atualizado: ${players.length} players`);
@@ -71,248 +70,87 @@ class ImmortalService {
   }
 
   /**
-   * Faz o scraping do site oficial do Dota 2
+   * Scraping com Puppeteer - BASEADO NO SEU CÓDIGO
    */
   async scrapeLeaderboard(region) {
-    const url = `https://www.dota2.com/leaderboards#${region}`;
-    
+    const url = `https://www.dota2.com/leaderboards/#${region}`;
+    let browser = null;
+
     try {
-      console.log(`🌐 Fazendo request para: ${url}`);
+      console.log(`🌐 Fazendo scraping para: ${url}`);
       
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1'
-        },
-        timeout: 30000 // 30 segundos
+      browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
+      
+      const page = await browser.newPage();
+      
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-      console.log(`📥 Response recebido, status: ${response.status}`);
+      // Esperar os elementos aparecerem
+      await page.waitForSelector('#leaderboard_body .player_name', { timeout: 15000 });
 
-      if (response.status !== 200) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const $ = cheerio.load(response.data);
-      const players = [];
-
-      // Tentar diferentes seletores pois o site pode mudar
-      const possibleSelectors = [
-        '.leaderboard_row',
-        '[class*="leaderboard"]',
-        '.player-row',
-        '[class*="player"]'
-      ];
-
-      let playersFound = false;
-
-      for (const selector of possibleSelectors) {
-        const rows = $(selector);
+      // Extrair dados completos (rank + nome + outros dados)
+      const players = await page.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('#leaderboard_body tr'));
         
-        if (rows.length > 0) {
-          console.log(`🎯 Encontrado ${rows.length} elementos com seletor: ${selector}`);
+        return rows.map((row, index) => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length < 2) return null;
+
+          // Rank (primeira célula)
+          const rankText = cells[0]?.textContent?.trim() || '';
+          const rank = parseInt(rankText.replace(/[^0-9]/g, '')) || (index + 1);
+
+          // Nome (segunda célula, dentro do span.player_name)
+          const nameSpan = cells[1]?.querySelector('.player_name');
+          const name = nameSpan?.textContent?.trim() || '';
           
-          rows.each((index, element) => {
-            try {
-              const player = this.parsePlayerRow($, element, index + 1);
-              if (player && player.name) {
-                players.push(player);
-              }
-            } catch (parseError) {
-              console.warn(`⚠️ Erro ao processar player ${index + 1}:`, parseError.message);
-            }
-          });
+          if (!name) return null;
 
-          if (players.length > 0) {
-            playersFound = true;
-            break;
-          }
-        }
-      }
+          // Team tag (se existir)
+          const teamElement = row.querySelector('[class*="team"], [class*="tag"]');
+          const teamTag = teamElement?.textContent?.trim() || null;
 
-      if (!playersFound) {
-        console.log('🔍 Tentando métodos alternativos de parsing...');
-        
-        // Método alternativo: buscar por padrões de texto
-        const alternativePlayers = this.parseAlternativeMethod($);
-        players.push(...alternativePlayers);
-      }
-
-      // Validar e limpar dados
-      const validPlayers = players
-        .filter(p => p && p.name && p.name.trim().length > 0)
-        .slice(0, 1000) // Limitar a 1000 players
-        .map((p, index) => ({
-          rank: p.rank || (index + 1),
-          name: p.name.trim(),
-          teamTag: p.teamTag || null,
-          country: p.country || null,
-          steamId: p.steamId || null
-        }));
-
-      console.log(`✅ ${validPlayers.length} players válidos extraídos para ${region}`);
-      
-      // Log dos primeiros 5 para debug
-      console.log('📋 Primeiros players:', validPlayers.slice(0, 5));
-
-      return validPlayers;
-
-    } catch (error) {
-      console.error(`❌ Erro no scraping de ${region}:`, error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * Processa uma linha de jogador
-   */
-  parsePlayerRow($, element, defaultRank) {
-    const $el = $(element);
-    
-    // Diferentes formas de extrair o nome
-    let name = null;
-    const nameSelectors = [
-      '.name',
-      '.player-name',
-      '.player_name',
-      '[class*="name"]',
-      'td:nth-child(2)', // Segunda coluna geralmente é o nome
-      'td:nth-child(3)'  // Terceira coluna às vezes é o nome
-    ];
-
-    for (const selector of nameSelectors) {
-      const nameEl = $el.find(selector).first();
-      if (nameEl.length > 0) {
-        name = nameEl.text().trim();
-        if (name && name.length > 0) break;
-      }
-    }
-
-    // Se não encontrou nome, pegar todo o texto e tentar extrair
-    if (!name) {
-      const fullText = $el.text().trim();
-      const textParts = fullText.split(/\s+/).filter(part => part.length > 2);
-      name = textParts.find(part => isNaN(parseInt(part))) || null;
-    }
-
-    if (!name) return null;
-
-    // Tentar extrair rank
-    let rank = defaultRank;
-    const rankSelectors = ['.rank', '.position', '[class*="rank"]', 'td:first-child'];
-    
-    for (const selector of rankSelectors) {
-      const rankEl = $el.find(selector).first();
-      if (rankEl.length > 0) {
-        const rankText = rankEl.text().trim();
-        const rankNum = parseInt(rankText.replace(/[^0-9]/g, ''));
-        if (!isNaN(rankNum) && rankNum > 0) {
-          rank = rankNum;
-          break;
-        }
-      }
-    }
-
-    // Tentar extrair team tag (texto entre colchetes)
-    let teamTag = null;
-    const teamMatch = name.match(/\[([^\]]+)\]/);
-    if (teamMatch) {
-      teamTag = teamMatch[1];
-      name = name.replace(/\[([^\]]+)\]/, '').trim();
-    }
-
-    return {
-      rank: rank,
-      name: name,
-      teamTag: teamTag,
-      country: null, // TODO: implementar extração de país
-      steamId: null  // TODO: implementar se disponível
-    };
-  }
-
-  /**
-   * Método alternativo de parsing quando seletores padrão falham
-   */
-  parseAlternativeMethod($) {
-    const players = [];
-    
-    try {
-      // Buscar por padrões de texto que parecem nomes de players
-      const bodyText = $('body').text();
-      const lines = bodyText.split('\n');
-      
-      let currentRank = 1;
-      
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        
-        // Pular linhas muito curtas ou que são claramente não-players
-        if (trimmedLine.length < 3 || 
-            /^(rank|position|name|team|country)$/i.test(trimmedLine) ||
-            /^\d+$/.test(trimmedLine)) {
-          continue;
-        }
-
-        // Verificar se parece com um nome de player
-        if (this.looksLikePlayerName(trimmedLine)) {
-          let name = trimmedLine;
-          let teamTag = null;
-
-          // Extrair team tag se presente
-          const teamMatch = name.match(/\[([^\]]+)\]/);
-          if (teamMatch) {
-            teamTag = teamMatch[1];
-            name = name.replace(/\[([^\]]+)\]/, '').trim();
+          // País (da imagem da bandeira)
+          const flagImg = row.querySelector('img[src*="flag"], img[class*="flag"]');
+          let country = null;
+          if (flagImg) {
+            const flagSrc = flagImg.src || '';
+            // Extrair código do país da URL da bandeira
+            const countryMatch = flagSrc.match(/flags\/([a-z]{2})\./i);
+            country = countryMatch ? countryMatch[1].toUpperCase() : null;
           }
 
-          players.push({
-            rank: currentRank++,
+          return {
+            rank: rank,
             name: name,
             teamTag: teamTag,
-            country: null,
+            country: country,
             steamId: null
-          });
+          };
+        }).filter(player => player !== null);
+      });
 
-          // Limitar para evitar muitos resultados falsos
-          if (players.length >= 100) break;
-        }
+      await browser.close();
+      browser = null;
+
+      console.log(`✅ Scraping concluído: ${players.length} players extraídos`);
+      
+      if (players.length > 0) {
+        console.log('📋 Primeiros 5 players:', players.slice(0, 5));
       }
 
-      console.log(`🔄 Método alternativo encontrou ${players.length} possíveis players`);
       return players;
 
     } catch (error) {
-      console.warn('⚠️ Erro no método alternativo:', error.message);
-      return [];
+      if (browser) {
+        await browser.close();
+      }
+      console.error(`❌ Erro no scraping de ${region}:`, error.message);
+      throw error;
     }
-  }
-
-  /**
-   * Verifica se uma string parece ser um nome de player
-   */
-  looksLikePlayerName(text) {
-    if (!text || text.length < 2 || text.length > 50) return false;
-    
-    // Não deve ser apenas números
-    if (/^\d+$/.test(text)) return false;
-    
-    // Não deve conter apenas caracteres especiais
-    if (!/[a-zA-Z0-9]/.test(text)) return false;
-    
-    // Não deve ser uma palavra comum de interface
-    const commonWords = [
-      'leaderboard', 'rank', 'position', 'name', 'team', 'country',
-      'loading', 'error', 'refresh', 'update', 'back', 'next',
-      'americas', 'europe', 'china', 'asia'
-    ];
-    
-    if (commonWords.includes(text.toLowerCase())) return false;
-    
-    return true;
   }
 
   // ===== MÉTODOS DE CACHE =====
@@ -338,7 +176,7 @@ class ImmortalService {
 
   async waitForUpdate(region) {
     let attempts = 0;
-    const maxAttempts = 30; // 30 segundos
+    const maxAttempts = 30;
     
     while (this.isUpdating.has(region) && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -350,10 +188,8 @@ class ImmortalService {
 
   async saveLeaderboardToDatabase(region, players) {
     try {
-      // Primeiro, deletar dados antigos da região
       await db.query('DELETE FROM leaderboard_cache WHERE region = $1', [region]);
 
-      // Inserir novos dados
       for (const player of players) {
         await db.query(`
           INSERT INTO leaderboard_cache (region, rank, name, team_tag, country, steam_id, updated_at)
@@ -416,7 +252,7 @@ class ImmortalService {
   }
 
   /**
-   * Força atualização de uma região específica
+   * Força atualização de uma região
    */
   async forceUpdate(region) {
     this.cache.delete(region);

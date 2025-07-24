@@ -36,7 +36,7 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   // ===== DEPENDENCY INJECTION =====
   private statusService = inject(StatusService);
   private userService = inject(UserService);
-  private immortalService = inject(ImmortalService);
+  protected immortalService = inject(ImmortalService);
   public gameDataService = inject(GameDataService);
   private toastr = inject(ToastrService);
 
@@ -80,7 +80,9 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
 
   // ===== LIFECYCLE HOOKS =====
   ngOnInit(): void {
-    this.initializeComponent();
+    this.loadUserInfo();
+    this.startReminderTimer();
+    this.preloadLeaderboardData();
   }
 
   ngOnDestroy(): void {
@@ -114,18 +116,51 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
 
   // ===== LEADERBOARD INTEGRATION =====
   private preloadLeaderboardData(): void {
-    if (this.userInfo?.immortalRegion) {
-      this.immortalService.getLeaderboardData(this.userInfo.immortalRegion).subscribe({
-        next: (data) => {
-          this.leaderboardData = data;
-          console.log(`Leaderboard ${this.userInfo.immortalRegion} carregado:`, data.players?.length, 'players');
-        },
-        error: (error) => {
-          console.warn('Erro ao carregar leaderboard:', error);
+    const region = this.userInfo?.immortalRegion || 'americas';
+    
+    console.log(`📋 Pré-carregando leaderboard ${region}...`);
+    
+    this.immortalService.getLeaderboardData(region).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log(`✅ Leaderboard ${region} pré-carregado: ${response.totalPlayers} players`);
+          this.leaderboardData = response;
+        } else {
+          console.warn(`⚠️ Falha ao pré-carregar leaderboard ${region}`);
         }
-      });
-    }
+      },
+      error: (error) => {
+        console.error(`❌ Erro ao pré-carregar leaderboard:`, error);
+      }
+    });
   }
+
+  refreshLeaderboard(): void {
+    const region = this.userInfo?.immortalRegion || 'americas';
+    
+    this.toastr.info(`Atualizando leaderboard ${region}... Isso pode demorar alguns segundos.`, 'Atualizando', { timeOut: 3000 });
+    
+    this.immortalService.refreshLeaderboard(region).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.leaderboardData = response;
+          this.toastr.success(`Leaderboard ${region} atualizado com ${response.totalPlayers} players!`, 'Atualizado');
+          
+          // Se há uma partida analisada, refazer o cross-reference
+          if (this.matchData) {
+            this.enhanceWithLeaderboardData();
+          }
+        } else {
+          this.toastr.error('Falha ao atualizar leaderboard', 'Erro');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Erro ao atualizar leaderboard:', error);
+        this.toastr.error('Erro ao atualizar leaderboard', 'Erro');
+      }
+    });
+  }
+
 
   // ===== REMINDER SYSTEM =====
   private startReminderTimer(): void {
@@ -181,63 +216,108 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
 
   // ===== IMMORTAL ENHANCEMENT =====
   private enhanceWithLeaderboardData(): void {
-    if (!this.matchData || !this.leaderboardData) {
-      console.log('Dados insuficientes para enhancement');
+    if (!this.matchData) {
+      console.log('⚠️ Dados insuficientes para enhancement');
       return;
     }
 
     this.isEnhancing = true;
-    console.log('🔍 Fazendo cross-reference com leaderboard...');
+    console.log('🔍 Fazendo cross-reference com leaderboard REAL...');
 
+    // Extrair nomes de todos os players humanos
     const allPlayers = [
       ...this.matchData.teams.radiant,
       ...this.matchData.teams.dire
     ];
 
-    this.enhancedPlayers = allPlayers.map(player => {
-      const enhanced: EnhancedStatusPlayer = { ...player };
+    const humanPlayers = allPlayers.filter(p => !p.isBot);
+    const playerNames = humanPlayers.map(p => p.name);
 
-      // Buscar no leaderboard
-      const leaderboardMatch = this.findPlayerInLeaderboard(player.name);
+    console.log(`📋 Players para verificar no leaderboard:`, playerNames);
 
-      if (leaderboardMatch) {
-        enhanced.leaderboardData = {
-          officialName: leaderboardMatch.name,
-          rank: leaderboardMatch.rank,
-          region: this.userInfo.immortalRegion,
-          isVerified: true
-        };
+    // Buscar na região configurada do usuário (ou americas como padrão)
+    const region = this.userInfo?.immortalRegion || 'americas';
 
-        // Calcular confiança do match
-        enhanced.nameMatch = {
-          confidence: this.calculateNameMatchConfidence(player.name, leaderboardMatch.name),
-          suggestions: []
-        };
+    this.immortalService.findPlayersInLeaderboard(playerNames, region).subscribe({
+      next: (crossReferenceResults) => {
+        console.log(`🎯 Cross-reference concluído:`, crossReferenceResults);
 
-        console.log(`✅ Match encontrado: ${player.name} -> ${leaderboardMatch.name} (#${leaderboardMatch.rank})`);
-      } else {
-        // Buscar sugestões similares
-        const suggestions = this.findSimilarNames(player.name);
-        enhanced.nameMatch = {
-          confidence: 0,
-          suggestions: suggestions
-        };
+        // Enriquecer dados dos players com informações do leaderboard
+        this.enhancedPlayers = humanPlayers.map(player => {
+          const enhanced: EnhancedStatusPlayer = { ...player };
 
-        console.log(`❓ Player não encontrado no leaderboard: ${player.name}`);
+          // Buscar resultado do cross-reference
+          const leaderboardMatch = crossReferenceResults.find(
+            result => result.inputName.toLowerCase() === player.name.toLowerCase()
+          );
+
+          if (leaderboardMatch && leaderboardMatch.found && leaderboardMatch.leaderboardData) {
+            enhanced.leaderboardData = {
+              officialName: leaderboardMatch.leaderboardData.name,
+              rank: leaderboardMatch.leaderboardData.rank,
+              region: region,
+              isVerified: true
+            };
+
+            enhanced.nameMatch = {
+              confidence: leaderboardMatch.confidence,
+              suggestions: []
+            };
+
+            console.log(`✅ MATCH ENCONTRADO: ${player.name} -> #${leaderboardMatch.leaderboardData.rank} ${leaderboardMatch.leaderboardData.name} (${leaderboardMatch.confidence}% confiança)`);
+          } else {
+            // Tentar buscar sugestões similares
+            const suggestions = this.findSimilarNames(player.name);
+            
+            enhanced.nameMatch = {
+              confidence: 0,
+              suggestions: suggestions
+            };
+
+            console.log(`❌ Player não encontrado no leaderboard: ${player.name}`);
+            if (suggestions.length > 0) {
+              console.log(`💡 Sugestões similares:`, suggestions);
+            }
+          }
+
+          return enhanced;
+        });
+
+        // Estatísticas finais
+        const immortalsFound = this.enhancedPlayers.filter(p => p.leaderboardData?.isVerified).length;
+        const totalPlayers = this.enhancedPlayers.length;
+
+        console.log(`🏆 RESULTADO FINAL: ${immortalsFound}/${totalPlayers} players encontrados no leaderboard Immortal ${region.toUpperCase()}`);
+
+        if (immortalsFound > 0) {
+          console.log('🎮 Players Immortal na partida:');
+          this.enhancedPlayers
+            .filter(p => p.leaderboardData?.isVerified)
+            .forEach(p => {
+              console.log(`   #${p.leaderboardData!.rank}: ${p.leaderboardData!.officialName} (time: ${p.team})`);
+            });
+
+          this.toastr.success(
+            `${immortalsFound} player(s) Immortal encontrado(s) no leaderboard!`,
+            '🏆 Players Immortal Detectados',
+            { timeOut: 8000 }
+          );
+        } else {
+          this.toastr.info(
+            'Nenhum player desta partida está no top 1000 Immortal da região.',
+            '📊 Análise Concluída',
+            { timeOut: 5000 }
+          );
+        }
+
+        this.isEnhancing = false;
+      },
+      error: (error) => {
+        console.error('❌ Erro no cross-reference:', error);
+        this.toastr.error('Erro ao verificar players no leaderboard', 'Erro');
+        this.isEnhancing = false;
       }
-
-      return enhanced;
     });
-
-    this.isEnhancing = false;
-
-    // Mostrar resultado do enhancement
-    const foundCount = this.enhancedPlayers.filter(p => p.leaderboardData?.isVerified).length;
-    this.toastr.info(
-      `${foundCount}/10 jogadores encontrados no leaderboard oficial`,
-      'Cross-Reference Completo',
-      { timeOut: 4000 }
-    );
   }
 
   private findPlayerInLeaderboard(playerName: string): any {
@@ -368,4 +448,15 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   getEnhancedPlayersByTeam(team: 'radiant' | 'dire'): EnhancedStatusPlayer[] {
     return this.enhancedPlayers.filter(p => p.team === team);
   }
+
+   getLeaderboardStatus(): string {
+    if (!this.leaderboardData) return 'Não carregado';
+    if (this.immortalService.isLoading) return 'Carregando...';
+    
+    const source = this.leaderboardData.source === 'database' ? 'Cache' : 'Tempo Real';
+    const updatedAt = new Date(this.leaderboardData.lastUpdated).toLocaleTimeString('pt-BR');
+    
+    return `${source} - ${this.leaderboardData.totalPlayers} players (${updatedAt})`;
+  }
+
 }
