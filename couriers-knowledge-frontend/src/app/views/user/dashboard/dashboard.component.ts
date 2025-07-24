@@ -135,7 +135,13 @@ export class DashboardComponent implements OnInit {
     this.loadImportExportStats();
     this.setupHeroes();
     this.setupPermanentSearch();
+    this.toastr.clear();
   }
+
+
+  public clearAllToasts(): void {
+  this.toastr.clear();
+}
 
   // ===== MÉTODOS DE CONFIGURAÇÃO =====
 
@@ -208,20 +214,32 @@ export class DashboardComponent implements OnInit {
   // ===== MÉTODOS DE DADOS =====
 
   private loadAllEvaluations(): void {
-    this.isLoading = true;
-    this.evaluationService.getMyEvaluations().subscribe({
-      next: (evaluations) => {
-        this.allEvaluations = evaluations;
-        this.applyPermanentSearch(this.permanentSearchControl.value || '');
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Erro ao carregar avaliações:', err);
-        this.toastr.error(this.i18nService.translate('dashboard.errors.loadEvaluations'));
-        this.isLoading = false;
-      },
-    });
-  }
+  this.isLoading = true;
+  this.evaluationService.getMyEvaluations().subscribe({
+    next: (evaluations) => {
+      this.allEvaluations = evaluations;
+      this.filteredBySearch = evaluations;
+      this.displayedEvaluations = evaluations;
+      this.isLoading = false;
+    },
+    error: (err) => {
+      console.error('Erro ao carregar avaliações:', err);
+
+      // ✅ CORREÇÃO: Adicionar timeout ao toast de erro
+      this.toastr.error(
+        this.i18nService.translate('dashboard.errors.loadEvaluations'),
+        'Erro', // título
+        {
+          timeOut: 5000,  // 5 segundos
+          closeButton: true,
+          progressBar: true
+        }
+      );
+
+      this.isLoading = false;
+    },
+  });
+}
 
   private checkEvaluationLimit(): void {
     this.evaluationService.getEvaluationStatus().subscribe({
@@ -244,12 +262,8 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadImportExportStats(): void {
-  // ✅ VERIFICAR SE O ENDPOINT EXISTE ANTES DE CHAMAR
-  console.log('🔍 [DASHBOARD] Tentando carregar stats de import/export...');
-
   this.evaluationService.getImportExportStats().subscribe({
     next: (stats) => {
-      console.log('✅ [DASHBOARD] Stats recebidos:', stats);
       this.importExportStats = stats;
       this.updateLimitFlags(stats);
     },
@@ -258,7 +272,6 @@ export class DashboardComponent implements OnInit {
 
       // ✅ TRATAMENTO ESPECÍFICO POR TIPO DE ERRO
       if (err.status === 404) {
-        console.log('📝 [DASHBOARD] Endpoint de import/export não implementado - usando valores padrão');
         // Não mostrar toast para 404, apenas logs
       } else if (err.status === 401) {
         console.warn('🔐 [DASHBOARD] Não autorizado para import/export stats');
@@ -280,11 +293,9 @@ export class DashboardComponent implements OnInit {
 }
 
   private updateLimitFlags(stats: any): void {
-  console.log('🔍 [DASHBOARD] updateLimitFlags chamado com:', stats);
 
   // ✅ VERIFICAÇÃO DEFENSIVA - estrutura do stats pode variar
   if (!stats) {
-    console.warn('⚠️ [DASHBOARD] Stats is null/undefined');
     this.canExportToday = false;
     this.canImportToday = false;
     this.canExportThisMonth = false;
@@ -295,7 +306,6 @@ export class DashboardComponent implements OnInit {
   // ✅ VERIFICAR DIFERENTES ESTRUTURAS POSSÍVEIS
   // Estrutura 1: stats.exports.today / stats.imports.today
   if (stats.exports && stats.imports) {
-    console.log('📊 [DASHBOARD] Usando estrutura: stats.exports/imports');
     this.canExportToday = (stats.exports.today || 0) < (stats.exports.dailyLimit || 999);
     this.canImportToday = (stats.imports.today || 0) < (stats.imports.dailyLimit || 999);
     this.canExportThisMonth = (stats.exports.thisMonth || 0) < (stats.exports.monthlyLimit || 999);
@@ -305,7 +315,6 @@ export class DashboardComponent implements OnInit {
 
   // Estrutura 2: stats.usage.export.daily / stats.usage.import.daily
   if (stats.usage && stats.usage.export && stats.usage.import) {
-    console.log('📊 [DASHBOARD] Usando estrutura: stats.usage');
     this.canExportToday = stats.canExport?.daily !== false;
     this.canImportToday = stats.canImport?.daily !== false;
     this.canExportThisMonth = stats.canExport?.monthly !== false;
@@ -315,17 +324,12 @@ export class DashboardComponent implements OnInit {
 
   // Estrutura 3: stats.canExport / stats.canImport (diretamente)
   if (stats.canExport !== undefined || stats.canImport !== undefined) {
-    console.log('📊 [DASHBOARD] Usando estrutura: stats.canExport/canImport');
     this.canExportToday = stats.canExport?.daily !== false;
     this.canImportToday = stats.canImport?.daily !== false;
     this.canExportThisMonth = stats.canExport?.monthly !== false;
     this.canImportThisMonth = stats.canImport?.monthly !== false;
     return;
   }
-
-  // ✅ FALLBACK: Se nenhuma estrutura conhecida, permitir operações
-  console.warn('⚠️ [DASHBOARD] Estrutura de stats desconhecida, permitindo todas operações');
-  console.log('📊 [DASHBOARD] Stats completo:', JSON.stringify(stats, null, 2));
   this.canExportToday = true;
   this.canImportToday = true;
   this.canExportThisMonth = true;

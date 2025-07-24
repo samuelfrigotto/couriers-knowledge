@@ -72,10 +72,13 @@ export class LayoutComponent implements OnInit {
 
   public userProfile: UserProfile | null = null;
 
+  // ✅ CACHE PARA getUpdatesCounterText() - EVITA CHAMADAS EXCESSIVAS
+  private _updatesCounterCache: string | null = null;
+  private _lastUserProfileHash: string | null = null;
+
   readonly updateLimitTooltip = 'Cada atualização consulta dados de fontes externas para buscar seu histórico mais recente. Para garantir a estabilidade do serviço para todos, o plano gratuito possui um limite diário. Assinantes Premium apoiam o projeto e desfrutam de um limite muito maior!';
 
   ngOnInit(): void {
-    this.debugAuth();
     this.loadUserProfile();
     this.refreshMatchData();
   }
@@ -84,10 +87,8 @@ export class LayoutComponent implements OnInit {
    * Carrega perfil do usuário e verifica status Immortal e Admin
    */
  private loadUserProfile(): void {
-
   this.userService.getUserStats().subscribe({
     next: (statsData) => {
-
       this.userProfile = {
         ...statsData,
         isImmortal: this.checkImmortalStatus(statsData),
@@ -96,8 +97,12 @@ export class LayoutComponent implements OnInit {
         isAdmin: this.checkAdminStatus(statsData)
       };
 
+      // ✅ LIMPAR CACHE quando perfil mudar
+      this._updatesCounterCache = null;
+      this._lastUserProfileHash = null;
     },
     error: (error) => {
+      console.error('Erro ao carregar perfil do usuário:', error);
     }
   });
 }
@@ -175,74 +180,76 @@ export class LayoutComponent implements OnInit {
   }
 
   /**
-   * Retorna texto do contador de atualizações
+   * ✅ Retorna texto do contador de atualizações COM CACHE PARA PERFORMANCE
    */
   getUpdatesCounterText(): string {
-  console.log('🔍 [LAYOUT] getUpdatesCounterText chamado');
-  console.log('🔍 [LAYOUT] userProfile:', this.userProfile);
+    if (!this.userProfile) {
+      return '';
+    }
 
-  if (!this.userProfile) {
-    console.log('❌ [LAYOUT] userProfile é null/undefined');
-    return '';
-  }
+    // ✅ GERAR HASH DO PERFIL PARA DETECTAR MUDANÇAS
+    const profileHash = JSON.stringify({
+      id: this.userProfile.id,
+      isAdmin: this.userProfile.isAdmin,
+      isImmortal: this.userProfile.isImmortal,
+      usesRemaining: this.userProfile.usesRemaining,
+      usesAllowed: this.userProfile.usesAllowed,
+      apiCallsToday: this.userProfile.apiCallsToday,
+      apiLimit: this.userProfile.apiLimit
+    });
 
-  // ✅ ADMIN NÃO MOSTRA CONTADOR (TEM USOS ILIMITADOS)
-  if (this.userProfile.isAdmin) {
-    console.log('🛡️ [LAYOUT] Usuário é admin - sem contador');
-    return '∞ Ilimitado';
-  }
+    // ✅ SE PERFIL NÃO MUDOU, RETORNAR CACHE
+    if (this._lastUserProfileHash === profileHash && this._updatesCounterCache !== null) {
+      return this._updatesCounterCache;
+    }
 
-  // ✅ IMMORTAL TAMBÉM NÃO MOSTRA CONTADOR (NÃO USA API)
-  if (this.userProfile.isImmortal) {
-    console.log('⭐ [LAYOUT] Usuário é immortal - sem contador');
-    return 'N/A Immortal';
-  }
+    // ✅ CALCULAR NOVO VALOR
+    let result = '';
 
-  // ✅ PRIORIZAR OS NOVOS CAMPOS DE USOS
-  if (this.userProfile.usesRemaining !== undefined && this.userProfile.usesAllowed !== undefined) {
-    console.log('🔍 [LAYOUT] Usando campos de usos:');
-    console.log('🔍 [LAYOUT] usesRemaining:', this.userProfile.usesRemaining);
-    console.log('🔍 [LAYOUT] usesAllowed:', this.userProfile.usesAllowed);
+    // ADMIN NÃO MOSTRA CONTADOR (TEM USOS ILIMITADOS)
+    if (this.userProfile.isAdmin) {
+      result = '∞ Ilimitado';
+    }
+    // IMMORTAL TAMBÉM NÃO MOSTRA CONTADOR (NÃO USA API)
+    else if (this.userProfile.isImmortal) {
+      result = 'N/A Immortal';
+    }
+    // PRIORIZAR OS NOVOS CAMPOS DE USOS
+    else if (this.userProfile.usesRemaining !== undefined && this.userProfile.usesAllowed !== undefined) {
+      const remaining = this.userProfile.usesRemaining;
+      const total = this.userProfile.usesAllowed;
+      result = `${remaining}/${total}`;
+    }
+    // FALLBACK PARA OS CAMPOS ANTIGOS (caso não venham os novos)
+    else {
+      const used = this.userProfile.apiCallsToday || 0;
+      const limit = this.userProfile.apiLimit || 0;
+      const remaining = Math.max(0, Math.floor((limit - used) / 4)); // Dividir por 4 para obter usos
+      const totalUses = Math.floor(limit / 4);
+      result = `${remaining}/${totalUses}`;
+    }
 
-    const remaining = this.userProfile.usesRemaining;
-    const total = this.userProfile.usesAllowed;
+    // ✅ CACHEAR RESULTADO
+    this._updatesCounterCache = result;
+    this._lastUserProfileHash = profileHash;
 
-    const result = `${remaining}/${total}`;
-    console.log('✅ [LAYOUT] Resultado (usos):', result);
     return result;
   }
 
-  // ✅ FALLBACK PARA OS CAMPOS ANTIGOS (caso não venham os novos)
-  console.log('🔍 [LAYOUT] Usando campos antigos (API calls):');
-  console.log('🔍 [LAYOUT] apiCallsToday:', this.userProfile.apiCallsToday);
-  console.log('🔍 [LAYOUT] apiLimit:', this.userProfile.apiLimit);
-
-  const used = this.userProfile.apiCallsToday || 0;
-  const limit = this.userProfile.apiLimit || 0;
-  const remaining = Math.max(0, Math.floor((limit - used) / 4)); // Dividir por 4 para obter usos
-  const totalUses = Math.floor(limit / 4);
-
-  console.log('🔍 [LAYOUT] Cálculo (fallback):', { used, limit, remaining, totalUses });
-
-  const result = `${remaining}/${totalUses}`;
-  console.log('✅ [LAYOUT] Resultado final (fallback):', result);
-
-  return result;
-}
   /**
    * Retorna tooltip das limitações de update
    */
   getUpdateLimitTooltip(): string {
-  if (this.userProfile?.isImmortal) {
-    return 'Como jogador Immortal (8.5k+ MMR), o histórico automático não está disponível devido às restrições da Valve. Use as funcionalidades de importação manual.';
-  }
+    if (this.userProfile?.isImmortal) {
+      return 'Como jogador Immortal (8.5k+ MMR), o histórico automático não está disponível devido às restrições da Valve. Use as funcionalidades de importação manual.';
+    }
 
-  if (this.userProfile?.isAdmin) {
-    return 'Como administrador, você tem usos ilimitados para manter e gerenciar o sistema.';
-  }
+    if (this.userProfile?.isAdmin) {
+      return 'Como administrador, você tem usos ilimitados para manter e gerenciar o sistema.';
+    }
 
-  return 'Cada atualização consulta dados de fontes externas para buscar seu histórico mais recente. Para garantir a estabilidade do serviço para todos, o plano gratuito possui um limite diário de usos. Assinantes Premium apoiam o projeto e desfrutam de muito mais usos por dia!';
-}
+    return 'Cada atualização consulta dados de fontes externas para buscar seu histórico mais recente. Para garantir a estabilidade do serviço para todos, o plano gratuito possui um limite diário de usos. Assinantes Premium apoiam o projeto e desfrutam de muito mais usos por dia!';
+  }
 
   /**
    * Logout do usuário
@@ -321,57 +328,24 @@ export class LayoutComponent implements OnInit {
    * Verifica se o usuário é admin (ID 1)
    */
   private checkAdminStatus(userData: any): boolean {
-  console.log('🔍 [LAYOUT] Verificando admin status...');
-  console.log('🔍 [LAYOUT] userData.id:', userData.id, 'Tipo:', typeof userData.id);
-
-  // Verificar pelo token JWT primeiro (mais confiável)
-  const token = this.authService.getDecodedToken();
-  if (token) {
-    console.log('🔍 [LAYOUT] Token ID:', token.id, 'Tipo:', typeof token.id);
-    const isAdminByToken = token.id === 1 || token.id === '1';
-    console.log('🔍 [LAYOUT] É admin pelo token?', isAdminByToken);
-
-    if (isAdminByToken) {
-      return true;
+    // Verificar pelo token JWT primeiro (mais confiável)
+    const token = this.authService.getDecodedToken();
+    if (token) {
+      const isAdminByToken = token.id === 1 || token.id === '1';
+      if (isAdminByToken) {
+        return true;
+      }
     }
+
+    // Fallback: verificar pelos dados do usuário
+    const isAdminByData = userData.id === 1 || userData.id === '1';
+    return isAdminByData;
   }
-
-  // Fallback: verificar pelos dados do usuário
-  const isAdminByData = userData.id === 1 || userData.id === '1';
-  console.log('🔍 [LAYOUT] É admin pelos dados?', isAdminByData);
-
-  return isAdminByData;
-}
-
-// ✅ ADICIONAR MÉTODO DE DEBUG TEMPORÁRIO
-private debugAuth(): void {
-  console.log('🔍 [DEBUG] Verificando autenticação...');
-
-  const token = this.authService.getToken();
-  console.log('🔍 [DEBUG] Token presente:', !!token);
-
-  if (token) {
-    const decodedToken = this.authService.getDecodedToken();
-    console.log('🔍 [DEBUG] Token decodificado:', decodedToken);
-    console.log('🔍 [DEBUG] User ID no token:', decodedToken?.id, 'Tipo:', typeof decodedToken?.id);
-    console.log('🔍 [DEBUG] É admin?', decodedToken?.id === 1 || decodedToken?.id === '1');
-
-    const isAuth = this.authService.isAuthenticated();
-    console.log('🔍 [DEBUG] Está autenticado:', isAuth);
-  }
-}
 
   /**
    * Verifica se deve mostrar menu admin
    */
   get shouldShowAdminMenu(): boolean {
     return this.userProfile?.isAdmin === true;
-  }
-
-  /**
-   * Verifica se deve mostrar verificação MMR (usuários não-admin)
-   */
-  get shouldShowMmrVerification(): boolean {
-    return this.userProfile?.isAdmin !== true;
   }
 }

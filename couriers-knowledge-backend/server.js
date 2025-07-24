@@ -84,6 +84,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// ===== CONFIGURAÇÃO ESPECIAL PARA SERVIR IMAGENS =====
+app.use('/api/mmr-verification/screenshot', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 // 6. Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor Courier's Knowledge rodando na porta ${PORT}`);

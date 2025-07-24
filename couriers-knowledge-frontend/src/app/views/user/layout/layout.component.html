@@ -83,16 +83,6 @@
         <span>{{ 'layout.nav.premium' | translate }}</span>
       </a>
 
-      <!-- Verificação MMR (usuários não-admin) -->
-      <a routerLink="/mmr-verification"
-         routerLinkActive="active"
-         *ngIf="shouldShowMmrVerification">
-        <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L13.09 8.26L22 9L14 14L17 23L12 19L7 23L10 14L2 9L10.91 8.26L12 2Z"/>
-        </svg>
-        <span>Verificação MMR</span>
-      </a>
-
       <!-- Settings -->
       <a routerLink="/app/settings" routerLinkActive="active">
         <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
