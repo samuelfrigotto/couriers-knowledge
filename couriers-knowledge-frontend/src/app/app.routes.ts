@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   // Rotas públicas (aponta para public.routes.ts)
@@ -14,7 +15,6 @@ export const routes: Routes = [
     path: 'app',
     loadChildren: () =>
       import('./views/user/user.routes').then((m) => m.USER_ROUTES),
-    canActivate: [authGuard], // <-- Adicione esta linha para proteger a rota e suas filhas
   },
 
   // Rotas do usuário premium (aponta para premium.routes.ts)
@@ -29,6 +29,13 @@ export const routes: Routes = [
     path: 'admin',
     loadChildren: () =>
       import('./views/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'unauthorized',
+    loadComponent: () => import('./components/unauthorized/unauthorized.component')
+      .then(m => m.UnauthorizedComponent),
+    title: 'Acesso Negado'
   },
 
   // Redirecionamento para qualquer rota não encontrada

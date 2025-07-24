@@ -244,23 +244,93 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadImportExportStats(): void {
-    this.evaluationService.getImportExportStats().subscribe({
-      next: (stats) => {
-        this.importExportStats = stats;
-        this.updateLimitFlags(stats);
-      },
-      error: (err) => {
-        console.error('Erro ao carregar estatísticas de import/export:', err);
-      },
-    });
-  }
+  // ✅ VERIFICAR SE O ENDPOINT EXISTE ANTES DE CHAMAR
+  console.log('🔍 [DASHBOARD] Tentando carregar stats de import/export...');
+
+  this.evaluationService.getImportExportStats().subscribe({
+    next: (stats) => {
+      console.log('✅ [DASHBOARD] Stats recebidos:', stats);
+      this.importExportStats = stats;
+      this.updateLimitFlags(stats);
+    },
+    error: (err) => {
+      console.error('❌ [DASHBOARD] Erro ao carregar estatísticas de import/export:', err);
+
+      // ✅ TRATAMENTO ESPECÍFICO POR TIPO DE ERRO
+      if (err.status === 404) {
+        console.log('📝 [DASHBOARD] Endpoint de import/export não implementado - usando valores padrão');
+        // Não mostrar toast para 404, apenas logs
+      } else if (err.status === 401) {
+        console.warn('🔐 [DASHBOARD] Não autorizado para import/export stats');
+        // Token pode ter expirado
+      } else {
+        console.warn('⚠️ [DASHBOARD] Erro inesperado no import/export:', err.status);
+        // Mostrar toast apenas para erros realmente inesperados
+        this.toastr.warning('Não foi possível verificar limites de import/export. Operações permitidas por segurança.');
+      }
+
+      // ✅ DEFINIR VALORES PADRÃO SEGUROS (permitir operações)
+      this.importExportStats = null;
+      this.canExportToday = true;
+      this.canImportToday = true;
+      this.canExportThisMonth = true;
+      this.canImportThisMonth = true;
+    },
+  });
+}
 
   private updateLimitFlags(stats: any): void {
-    this.canExportToday = stats.exports.today < stats.exports.dailyLimit;
-    this.canImportToday = stats.imports.today < stats.imports.dailyLimit;
-    this.canExportThisMonth = stats.exports.thisMonth < stats.exports.monthlyLimit;
-    this.canImportThisMonth = stats.imports.thisMonth < stats.imports.monthlyLimit;
+  console.log('🔍 [DASHBOARD] updateLimitFlags chamado com:', stats);
+
+  // ✅ VERIFICAÇÃO DEFENSIVA - estrutura do stats pode variar
+  if (!stats) {
+    console.warn('⚠️ [DASHBOARD] Stats is null/undefined');
+    this.canExportToday = false;
+    this.canImportToday = false;
+    this.canExportThisMonth = false;
+    this.canImportThisMonth = false;
+    return;
   }
+
+  // ✅ VERIFICAR DIFERENTES ESTRUTURAS POSSÍVEIS
+  // Estrutura 1: stats.exports.today / stats.imports.today
+  if (stats.exports && stats.imports) {
+    console.log('📊 [DASHBOARD] Usando estrutura: stats.exports/imports');
+    this.canExportToday = (stats.exports.today || 0) < (stats.exports.dailyLimit || 999);
+    this.canImportToday = (stats.imports.today || 0) < (stats.imports.dailyLimit || 999);
+    this.canExportThisMonth = (stats.exports.thisMonth || 0) < (stats.exports.monthlyLimit || 999);
+    this.canImportThisMonth = (stats.imports.thisMonth || 0) < (stats.imports.monthlyLimit || 999);
+    return;
+  }
+
+  // Estrutura 2: stats.usage.export.daily / stats.usage.import.daily
+  if (stats.usage && stats.usage.export && stats.usage.import) {
+    console.log('📊 [DASHBOARD] Usando estrutura: stats.usage');
+    this.canExportToday = stats.canExport?.daily !== false;
+    this.canImportToday = stats.canImport?.daily !== false;
+    this.canExportThisMonth = stats.canExport?.monthly !== false;
+    this.canImportThisMonth = stats.canImport?.monthly !== false;
+    return;
+  }
+
+  // Estrutura 3: stats.canExport / stats.canImport (diretamente)
+  if (stats.canExport !== undefined || stats.canImport !== undefined) {
+    console.log('📊 [DASHBOARD] Usando estrutura: stats.canExport/canImport');
+    this.canExportToday = stats.canExport?.daily !== false;
+    this.canImportToday = stats.canImport?.daily !== false;
+    this.canExportThisMonth = stats.canExport?.monthly !== false;
+    this.canImportThisMonth = stats.canImport?.monthly !== false;
+    return;
+  }
+
+  // ✅ FALLBACK: Se nenhuma estrutura conhecida, permitir operações
+  console.warn('⚠️ [DASHBOARD] Estrutura de stats desconhecida, permitindo todas operações');
+  console.log('📊 [DASHBOARD] Stats completo:', JSON.stringify(stats, null, 2));
+  this.canExportToday = true;
+  this.canImportToday = true;
+  this.canExportThisMonth = true;
+  this.canImportThisMonth = true;
+}
 
   // ===== MÉTODOS DE FILTROS =====
 

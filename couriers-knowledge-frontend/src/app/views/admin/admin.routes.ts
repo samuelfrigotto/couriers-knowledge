@@ -1,9 +1,14 @@
+// src/app/admin/admin.routes.ts
+
 import { Routes } from '@angular/router';
-import { AdminPanelComponent } from './admin-panel/admin-panel.component';
+import { MmrReviewComponent } from './mmr-review/mmr-review.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
-    component: AdminPanelComponent
+    children: [
+      { path: 'mmr-review', component: MmrReviewComponent },
+      { path: '', redirectTo: 'mmr-review', pathMatch: 'full' }
+    ]
   }
 ];

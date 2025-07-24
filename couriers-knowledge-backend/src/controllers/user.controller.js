@@ -121,6 +121,8 @@ exports.getMatchDataFromOpenDota = async (req, res) => {
 // ===================================================================================
 // ROTA: GET /users/me/stats
 // ===================================================================================
+
+
 exports.getUserStats = async (req, res) => {
     const authorId = req.user.id;
     const userSteamId = req.user.steam_id;
@@ -138,14 +140,17 @@ exports.getUserStats = async (req, res) => {
         ] = await Promise.all([
             // Avaliações feitas pelo usuário
             db.query('SELECT rating, tags, evaluated_steam_id FROM evaluations WHERE author_id = $1', [authorId]),
-            // ✅ DADOS DO USUÁRIO + CAMPOS IMMORTAL
+            // ✅ DADOS DO USUÁRIO + CAMPOS IMMORTAL + API LIMITS
             db.query(`
                 SELECT 
+                    id,
                     steam_username, 
                     avatar_url, 
                     created_at, 
-                    account_status, 
+                    account_status,
+                    premium_expires_at,
                     api_calls_today,
+                    last_api_call_date,
                     mmr,
                     is_immortal,
                     immortal_rank,
@@ -168,16 +173,62 @@ exports.getUserStats = async (req, res) => {
         const receivedEvaluations = receivedEvaluationsResult.rows;
         const selfEvaluations = selfEvaluationsResult.rows;
 
-        console.log(`📊 Dados coletados:`);
-        console.log(`   - Avaliações feitas: ${evaluations.length}`);
-        console.log(`   - Avaliações recebidas: ${receivedEvaluations.length}`);
-        console.log(`   - Autoavaliações: ${selfEvaluations.length}`);
-        console.log(`   - Partidas em cache: ${detailedMatches.length}`);
-
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
 
+        // ✅ CALCULAR DATAS E LIMITES DE API (CORRIGIDO)
+        const today = new Date().toISOString().slice(0, 10);
+        const userCreationDate = new Date(user.created_at);
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+        // Reset diário se necessário
+        let apiCallsToday = user.api_calls_today || 0;
+        if (user.last_api_call_date && 
+            user.last_api_call_date.toISOString().slice(0, 10) < today) {
+            apiCallsToday = 0;
+        }
+
+        // ✅ VERIFICAR STATUS E CALCULAR LIMITE
+        const isAdmin = authorId === 1; // Usando authorId do token
+        const accountStatus = user.account_status || 'Free';
+        const isPremiumValid = accountStatus === 'Premium' && 
+            (!user.premium_expires_at || new Date(user.premium_expires_at) > new Date());
+        const effectiveStatus = isPremiumValid ? 'Premium' : 'Free';
+        const isNewUser = userCreationDate > threeDaysAgo;
+        
+        // ✅ CADA USO CONSOME 4 CHAMADAS DE API
+        const callsPerUse = 4;
+        let usesAllowed;
+        
+        if (isAdmin) {
+            // ✅ ADMIN: 999 usos (praticamente ilimitado)
+            usesAllowed = 999;
+            console.log('🛡️ [USER STATS] Admin detectado - 999 usos');
+        } else if (effectiveStatus === 'Premium') {
+            // ✅ PREMIUM: 25 usos por dia
+            usesAllowed = 25;
+            console.log('💎 [USER STATS] Premium detectado - 25 usos');
+        } else if (isNewUser) {
+            // ✅ USUÁRIOS NOVOS: 10 usos nos primeiros 3 dias
+            usesAllowed = 10;
+            console.log('🆕 [USER STATS] Usuário novo - 10 usos');
+        } else {
+            // ✅ USUÁRIOS FREE: 5 usos por dia
+            usesAllowed = 5;
+            console.log('🆓 [USER STATS] Usuário free - 5 usos');
+        }
+
+        // ✅ CALCULAR LIMITE DE CHAMADAS DE API (usos × 4)
+        const apiLimit = usesAllowed * callsPerUse;
+        
+        // ✅ CALCULAR USOS REALIZADOS E RESTANTES
+        const usesConsumed = Math.floor(apiCallsToday / callsPerUse);
+        const usesRemaining = Math.max(0, usesAllowed - usesConsumed);
+
+        console.log(`📊 [USER STATS] User ${authorId}: ${usesConsumed}/${usesAllowed} usos (${apiCallsToday}/${apiLimit} calls) - Status: ${effectiveStatus}, Admin: ${isAdmin}`);
+        console.log(`📊 [USER STATS] Restam: ${usesRemaining} usos`);
         // ✅ VERIFICAÇÃO E ATUALIZAÇÃO AUTOMÁTICA DE STATUS IMMORTAL
         let isImmortalUpdated = user.is_immortal;
         
@@ -207,7 +258,6 @@ exports.getUserStats = async (req, res) => {
         
         if (isImmortalUpdated && needsLeaderboardUpdate) {
             console.log(`🔍 Verificando leaderboard para usuário Immortal ${authorId}...`);
-            // TODO: Implementar verificação do leaderboard oficial
             await db.query(
                 'UPDATE users SET leaderboard_last_check = CURRENT_TIMESTAMP WHERE id = $1',
                 [authorId]
@@ -261,29 +311,21 @@ exports.getUserStats = async (req, res) => {
         console.log(`📊 Taxa de vitória com tóxicos: ${tiltWinRate}%`);
 
         // --- CÁLCULO DAS ATUALIZAÇÕES DIÁRIAS (MANTIDO ORIGINAL) ---
-        const userCreationDate = new Date(user.created_at);
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
         let totalUpdatesLimit;
-        if (user.account_status === 'Premium') {
-            totalUpdatesLimit = 30;
-        } else if (userCreationDate > threeDaysAgo) {
-            totalUpdatesLimit = 3;
+        if (effectiveStatus === 'Premium') {
+            totalUpdatesLimit = 25; // Usando o mesmo valor do apiLimit para Premium
+        } else if (isNewUser) {
+            totalUpdatesLimit = 10; // Usando o mesmo valor do apiLimit para novos
         } else {
-            totalUpdatesLimit = 5;
+            totalUpdatesLimit = 5; // Usando o mesmo valor do apiLimit para free
         }
 
-        const callsPerUpdate = 4;
-        const totalCallsLimit = totalUpdatesLimit * callsPerUpdate;
-        const remainingUpdates = Math.floor((totalCallsLimit - (user.api_calls_today || 0)) / callsPerUpdate);
-        
         // --- ESTATÍSTICAS BÁSICAS (MANTIDAS ORIGINAIS) ---
         const totalEvaluations = evaluations.length;
         const averageRating = totalEvaluations > 0 ? 
             parseFloat((evaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalEvaluations).toFixed(2)) : 0;
         
-        const tagCounts = (evaluations.flatMap(e => e.tags).filter(Boolean)).reduce((acc, tag) => {
+        const tagCounts = (evaluations.flatMap(e => e.tags || []).filter(Boolean)).reduce((acc, tag) => {
             acc[tag] = (acc[tag] || 0) + 1;
             return acc;
         }, {});
@@ -370,48 +412,72 @@ exports.getUserStats = async (req, res) => {
             assists: (totalAssists / matchCount).toFixed(1)
         } : null;
 
-        // ✅ RESULTADO FINAL COM TODOS OS CAMPOS (ORIGINAIS + NOVOS)
-        const stats = {
-            // ===== CAMPOS ORIGINAIS MANTIDOS =====
+        // ✅ RESULTADO FINAL COM TODOS OS CAMPOS CORRETOS
+        const response = {
+            // Informações básicas do usuário
+            id: user.id,
             steamUsername: user.steam_username,
             avatarUrl: user.avatar_url,
-            accountCreatedAt: user.created_at,
-            accountStatus: user.account_status || 'Free',
-            totalEvaluations,
-            averageRating,
-            mostUsedTags,
-            evaluationPercentage: Math.min(100, evaluationPercentage),
-            winsLast20,
-            averageMatchTime,
-            mostUsedHeroId: mostUsedHeroId ? parseInt(mostUsedHeroId) : null,
-            mostFacedHeroId: mostFacedHeroId ? parseInt(mostFacedHeroId) : null,
-            selfAverageRating,
-            totalReceivedEvaluations,
-            receivedAverageRating,
-            remainingUpdates: Math.max(0, remainingUpdates),
-            totalUpdates: totalUpdatesLimit,
-            tiltWinRate,
-            averageKda,
+            accountStatus: effectiveStatus,
+            created_at: user.created_at,
             
-            // ===== NOVOS CAMPOS IMMORTAL =====
-            mmr: user.mmr,
+              // ✅ CAMPOS DE API LIMITS CORRETOS (em chamadas de API)
+            apiCallsToday: apiCallsToday,
+            apiLimit: apiLimit,
+            
+               // ✅ CAMPOS DE USOS (para exibição no frontend)
+            usesConsumed: usesConsumed,
+            usesAllowed: usesAllowed,
+            usesRemaining: usesRemaining,
+            callsPerUse: callsPerUse,
+
+            // Campos Immortal
             isImmortal: isImmortalUpdated,
             immortalRank: user.immortal_rank,
             immortalRegion: user.immortal_region || 'americas',
-            leaderboardLastCheck: user.leaderboard_last_check
+            mmr: user.mmr,
+            
+            // Estatísticas de avaliações
+            totalEvaluations: totalEvaluations,
+            averageRating: averageRating,
+            mostUsedTags: mostUsedTags,
+            
+            // Avaliações recebidas
+            receivedEvaluationsCount: totalReceivedEvaluations,
+            averageReceivedRating: receivedAverageRating,
+            selfAverageRating: selfAverageRating,
+                
+            // Estatísticas de partidas
+            totalMatches: matchCount,
+            winsLast20: winsLast20,
+            averageMatchTime: averageMatchTime,
+            averageKda: averageKda,
+            mostUsedHeroId: mostUsedHeroId,
+            mostFacedHeroId: mostFacedHeroId,
+                
+            // Porcentagem de avaliação
+            evaluationPercentage: evaluationPercentage,
+            
+            // Análise de tilt
+            tiltAnalysis: {
+                matchesWithLowRatedTeammates: matchesWithLowRatedTeammates,
+                winsWithLowRatedTeammates: winsWithLowRatedTeammates,
+                tiltWinRate: tiltWinRate
+            }
         };
 
-        console.log(`✅ Estatísticas finais calculadas:`);
-        console.log(`   - Avaliações recebidas: ${totalReceivedEvaluations}`);
-        console.log(`   - Média recebidas: ${receivedAverageRating}`);
-        console.log(`   - % jogadores avaliados: ${evaluationPercentage}%`);
-        console.log(`   - Taxa vitória c/ tóxicos: ${tiltWinRate}%`);
-        console.log(`   - MMR: ${user.mmr} | Immortal: ${isImmortalUpdated}`);
+        console.log(`✅ [USER STATS] Resposta gerada:`, {
+            id: response.id,
+            apiCallsToday: response.apiCallsToday,
+            apiLimit: response.apiLimit,
+            accountStatus: response.accountStatus,
+            isAdmin: isAdmin
+        });
 
-        res.status(200).json(stats);
+        res.json(response);
 
     } catch (error) {
-        console.error('❌ Erro ao buscar estatísticas do usuário:', error);
+        console.error('❌ [USER STATS] Erro:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };

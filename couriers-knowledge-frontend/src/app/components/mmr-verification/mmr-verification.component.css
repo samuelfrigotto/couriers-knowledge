@@ -1,0 +1,262 @@
+/* src/app/components/mmr-verification/mmr-verification.component.css */
+
+.mmr-verification-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #7f8c8d;
+  font-size: 16px;
+}
+
+/* Formulário */
+.form-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.verification-form .form-group {
+  margin-bottom: 20px;
+}
+
+.verification-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2c3e50;
+}
+
+.verification-form input,
+.verification-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.verification-form input:focus,
+.verification-form textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.verification-form input[type="file"] {
+  padding: 8px;
+  border: 2px dashed #bdc3c7;
+  background: #f8f9fa;
+}
+
+.file-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #e8f5e8;
+  color: #27ae60;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.help-text {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.error {
+  margin-top: 5px;
+  color: #e74c3c;
+  font-size: 12px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Aviso de Pendente */
+.pending-notice {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.notice-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.pending-notice h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+}
+
+.pending-notice p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Histórico */
+.history-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.history-section h3 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.requests-list {
+  space-y: 15px;
+}
+
+.request-item {
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #bdc3c7;
+  background: #f8f9fa;
+  margin-bottom: 15px;
+}
+
+.request-item.status-pending {
+  border-left-color: #f39c12;
+  background: #fef9e7;
+}
+
+.request-item.status-approved {
+  border-left-color: #27ae60;
+  background: #e8f5e8;
+}
+
+.request-item.status-rejected {
+  border-left-color: #e74c3c;
+  background: #fdf2f2;
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.mmr-badge {
+  background: #3498db;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending .status-badge {
+  background: #f39c12;
+  color: white;
+}
+
+.status-approved .status-badge {
+  background: #27ae60;
+  color: white;
+}
+
+.status-rejected .status-badge {
+  background: #e74c3c;
+  color: white;
+}
+
+.date {
+  color: #7f8c8d;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.request-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.admin-notes strong {
+  color: #2c3e50;
+}
+
+.admin-notes p {
+  margin: 5px 0 0 0;
+  color: #7f8c8d;
+}
+
+.review-date {
+  margin-top: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mmr-verification-container {
+    padding: 15px;
+  }
+
+  .form-section {
+    padding: 20px;
+  }
+
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .date {
+    margin-left: 0;
+  }
+}

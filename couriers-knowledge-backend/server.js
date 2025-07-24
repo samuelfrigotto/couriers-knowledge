@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
+const path = require('path');
 const apiLimitsResetJob = require('./src/jobs/resetApiLimits');
 
 // Importa as rotas
@@ -19,6 +20,8 @@ const stripeRoutes = require('./src/api/routes/stripe.routes');
 const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
 const immortalRoutes = require('./src/api/routes/immortal.routes'); // ✅ CAMINHO CORRIGIDO
 const dotaScraperRoute = require('./dotaLeaderboardScrapper');
+
+const mmrVerificationRoutes = require('./src/api/routes/mmr.verification.routes');
 // 2. Inicializar o aplicativo Express
 const app = express();
 
@@ -49,6 +52,9 @@ app.get('/', (req, res) => {
   res.json({ message: "Bem-vindo à API do Courier's Knowledge! O servidor está funcionando." });
 });
 
+
+app.use('/uploads', express.static(path.join(__dirname, './src/uploads')));
+
 // Carrega as rotas da API
 app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
@@ -61,6 +67,11 @@ app.use('/api/stripe', stripeRoutes);
 app.use('/api/status', statusRoutes); 
 app.use('/api/immortal', immortalRoutes); // ✅ REGISTRAR ROTAS IMMORTAL
 app.use('/api', dotaScraperRoute);
+app.use('/api/mmr-verification', mmrVerificationRoutes);
+ // Rotas existentes... 
+
+
+
 
 apiLimitsResetJob.start();
 

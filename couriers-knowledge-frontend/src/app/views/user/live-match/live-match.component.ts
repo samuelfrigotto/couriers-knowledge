@@ -1,7 +1,7 @@
 // couriers-knowledge-frontend/src/app/views/user/live-match/live-match.component.ts
 
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StatusService, StatusParseResponse, StatusPlayer } from '../../../core/status.service';
 import { GameDataService } from '../../../core/game-data.service';
@@ -17,7 +17,7 @@ import { ToastrService } from 'ngx-toastr';
   styleUrls: ['./live-match.component.css']
 })
 export class LiveMatchComponent implements OnInit, OnDestroy {
-
+  private platformId = inject(PLATFORM_ID); // ← ADICIONAR
   // ===== VIEW REFERENCES =====
   @ViewChild('notificationSound') notificationSound!: ElementRef<HTMLAudioElement>;
 
@@ -63,7 +63,9 @@ export class LiveMatchComponent implements OnInit, OnDestroy {
   private initializeComponent(): void {
     this.loadInstructions();
     this.loadUserInfo();
-    this.startReminderTimer();
+    if (isPlatformBrowser(this.platformId)) {
+      this.startReminderTimer();
+    }
   }
 
   private cleanupComponent(): void {
@@ -118,6 +120,16 @@ export class LiveMatchComponent implements OnInit, OnDestroy {
   // ===== REMINDER SYSTEM METHODS =====
 
   private startReminderTimer(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('🔍 [LIVE MATCH] SSR detectado, não iniciando timer');
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      console.log('🔍 [LIVE MATCH] Window não disponível, não iniciando timer');
+      return;
+    }
+
     this.reminderTimer = window.setTimeout(() => {
       if (!this.hasPlayedReminder && !this.matchData) {
         this.playReminderNotification();
