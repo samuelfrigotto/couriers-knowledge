@@ -8,6 +8,8 @@ import { FriendsComponent } from './friends/friends.component';
 import { GetPremiumComponent } from './get-premium/get-premium.component';
 import { PaymentSuccessComponent } from './payment-success/payment-success.component';
 import { SettingsComponent } from '../../components/settings/settings.component';
+import { ImmortalLiveMatchComponent } from './immortal-live-match/immortal-live-match.component';
+import { ImmortalRecentMatchesComponent } from './immortal-recent-matches/immortal-recent-matches.component';
 
 export const USER_ROUTES: Routes = [
   {
@@ -23,6 +25,10 @@ export const USER_ROUTES: Routes = [
       { path: 'get-premium',component: GetPremiumComponent },
       { path: 'payment-success', component: PaymentSuccessComponent },
       { path: 'settings', component: SettingsComponent },
+      // Rotas para Immortals
+      { path: 'immortal-live', component: ImmortalLiveMatchComponent },
+      { path: 'immortal-matches', component: ImmortalRecentMatchesComponent },
+
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

@@ -3,28 +3,28 @@
     <!-- Header modernizado -->
     <div class="details-header">
       <button class="back-button" (click)="backToMatches()">
-        ← Voltar para Partidas
+        {{ 'matches.header.backButton' | translate }}
       </button>
       <div class="details-title">
         <h2>
-          {{ selectedMatch.radiant_win ? 'Vitória do Time Iluminado' : 'Vitória do Time Temido' }}
+          {{ selectedMatch.radiant_win ? ('matches.teams.radiant' | translate) + ' ' + ('matches.result.victory' | translate) : ('matches.teams.dire' | translate) + ' ' + ('matches.result.victory' | translate) }}
         </h2>
-        <span class="match-duration">{{ (selectedMatch.duration / 60) | number:'1.0-0' }} min</span>
+        <span class="match-duration">{{ (selectedMatch.duration / 60) | number:'1.0-0' }}{{ 'matches.result.minutes' | translate }}</span>
       </div>
       <div class="details-score">
         <span class="radiant-score">{{ selectedMatch.radiant_score }}</span>
-        <span class="vs-text"> vs </span>
+        <span class="vs-text">{{ 'matches.result.vs' | translate }}</span>
         <span class="dire-score">{{ selectedMatch.dire_score }}</span>
       </div>
     </div>
 
-    <div *ngIf="isDetailsLoading" class="loading-message">Carregando detalhes...</div>
+    <div *ngIf="isDetailsLoading" class="loading-message">{{ 'matches.loading.details' | translate }}</div>
 
     <div *ngIf="!isDetailsLoading" class="teams-container">
       <!-- Time Iluminado (Radiant) -->
       <div class="team-column">
         <div class="team-header">
-          <h3 class="team-title">Time Iluminado</h3>
+          <h3 class="team-title">{{ 'matches.teams.radiantFull' | translate }}</h3>
         </div>
 
         <div *ngFor="let player of selectedMatch.players | filter:true:'is_radiant'" class="player-detail-card">
@@ -33,7 +33,7 @@
                [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
 
           <div class="player-info-detail">
-            <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
+            <span class="player-name-detail">{{ player.personaname || ('matches.player.anonymous' | translate) }}</span>
             <div class="kda">
               <span>{{ player.kills }}</span> /
               <span>{{ player.deaths }}</span> /
@@ -41,7 +41,7 @@
             </div>
             <div class="player-gold">
               <span class="gold-value">{{ player.net_worth | number }}</span>
-              <span class="gold-label">Gold</span>
+              <span class="gold-label">{{ 'matches.player.gold' | translate }}</span>
             </div>
           </div>
 
@@ -69,7 +69,7 @@
           <button class="evaluate-button"
                   [disabled]="player.is_already_evaluated || !player.steam_id_64"
                   (click)="evaluatePlayer(player)">
-            {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
+            {{ player.is_already_evaluated ? ('matches.evaluation.evaluated' | translate) : ('matches.evaluation.evaluate' | translate) }}
           </button>
         </div>
       </div>
@@ -77,7 +77,7 @@
       <!-- Time Temido (Dire) -->
       <div class="team-column">
         <div class="team-header">
-          <h3 class="team-title">Time Temido</h3>
+          <h3 class="team-title">{{ 'matches.teams.direFull' | translate }}</h3>
         </div>
 
         <div *ngFor="let player of selectedMatch.players | filter:false:'is_radiant'" class="player-detail-card">
@@ -86,7 +86,7 @@
                [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
 
           <div class="player-info-detail">
-            <span class="player-name-detail">{{ player.personaname || 'Anônimo' }}</span>
+            <span class="player-name-detail">{{ player.personaname || ('matches.player.anonymous' | translate) }}</span>
             <div class="kda">
               <span>{{ player.kills }}</span> /
               <span>{{ player.deaths }}</span> /
@@ -94,7 +94,7 @@
             </div>
             <div class="player-gold">
               <span class="gold-value">{{ player.net_worth | number }}</span>
-              <span class="gold-label">Gold</span>
+              <span class="gold-label">{{ 'matches.player.gold' | translate }}</span>
             </div>
           </div>
 
@@ -122,7 +122,7 @@
           <button class="evaluate-button"
                   [disabled]="player.is_already_evaluated || !player.steam_id_64"
                   (click)="evaluatePlayer(player)">
-            {{ player.is_already_evaluated ? 'Avaliado' : 'Avaliar' }}
+            {{ player.is_already_evaluated ? ('matches.evaluation.evaluated' | translate) : ('matches.evaluation.evaluate' | translate) }}
           </button>
         </div>
       </div>
@@ -134,32 +134,31 @@
           📊
         </div>
         <div class="analysis-text">
-          <h4>Análise Avançada da Partida</h4>
-          <p>Clique aqui para ver estatísticas detalhadas, gráficos de economia, timeline e muito mais no Stratz</p>
+          <h4>{{ 'matches.details.advancedAnalysis' | translate }}</h4>
+          <p>{{ 'matches.details.stratzDescription' | translate }}</p>
         </div>
         <div class="analysis-arrow">
           →
         </div>
       </div>
       <div class="analysis-footer">
-        <span class="powered-by">Powered by Stratz</span>
-        <span class="match-id">Match ID: {{ selectedMatch.match_id }}</span>
+        <span class="powered-by">{{ 'matches.details.poweredBy' | translate }}</span>
+        <span class="match-id">{{ 'matches.details.matchId' | translate:{ matchId: selectedMatch.match_id } }}</span>
       </div>
     </div>
-
 
   </div>
 
   <!-- Lista de partidas (mantida igual) -->
   <ng-template #matchList>
-    <h1>Partidas Recentes</h1>
+    <h1>{{ 'matches.title' | translate }}</h1>
     <!-- Estado de carregamento -->
   <div *ngIf="isLoading$ | async">
     <app-empty-state
       [config]="{
         type: 'matches',
-        title: 'Carregando suas partidas...',
-        subtitle: 'Buscando seu histórico de partidas recentes',
+        title: ('matches.loading.title' | translate),
+        subtitle: ('matches.loading.subtitle' | translate),
         showAction: false
       }">
     </app-empty-state>
@@ -170,9 +169,9 @@
     <app-empty-state
       [config]="{
         type: 'matches',
-        title: 'Nenhuma partida encontrada',
-        subtitle: 'Suas partidas aparecerão aqui quando você começar a jogar',
-        actionText: 'Configurar GSI',
+        title: ('matches.empty.title' | translate),
+        subtitle: ('matches.empty.subtitle' | translate),
+        actionText: ('matches.empty.action' | translate),
         showAction: false
       }"
       (emptyStateAction)="onEmptyStateAction($event)">
@@ -181,10 +180,10 @@
 
     <div class="match-list-container" *ngIf="matches$ | async as matches">
       <div *ngIf="matches.length > 0" class="match-row-header">
-          <div class="header-player">Seu Herói</div>
-          <div class="header-result">Resultado</div>
-          <div class="header-heroes">Heróis na Partida</div>
-          <div class="header-info">Duração & Data</div>
+          <div class="header-player">{{ 'matches.table.yourHero' | translate }}</div>
+          <div class="header-result">{{ 'matches.table.result' | translate }}</div>
+          <div class="header-heroes">{{ 'matches.table.heroes' | translate }}</div>
+          <div class="header-info">{{ 'matches.table.duration' | translate }}</div>
       </div>
       <div *ngFor="let match of matches"
            class="match-row"
@@ -197,7 +196,7 @@
           <span class="hero-name">{{ gameDataService.getHeroById(match.user_hero_id)?.localized_name }}</span>
         </div>
         <div class="match-result-col">
-          <span class="result-text">{{ match.user_won ? 'Vitória' : 'Derrota' }}</span>
+          <span class="result-text">{{ match.user_won ? ('matches.result.victory' | translate) : ('matches.result.defeat' | translate) }}</span>
         </div>
         <div class="match-heroes-col">
           <div class="team-heroes radiant">
@@ -209,7 +208,7 @@
           </div>
           <div class="score-vs">
             <span class="radiant-score">{{ match.radiant_score }}</span>
-            <span class="vs-text"> vs </span>
+            <span class="vs-text">{{ 'matches.result.vs' | translate }}</span>
             <span class="dire-score">{{ match.dire_score }}</span>
           </div>
           <div class="team-heroes dire">
@@ -221,7 +220,7 @@
           </div>
         </div>
         <div class="match-info-col">
-          <span>{{ (match.duration / 60) | number:'1.0-0' }} min</span>
+          <span>{{ (match.duration / 60) | number:'1.0-0' }}{{ 'matches.result.minutes' | translate }}</span>
           <small>{{ match.start_time * 1000 | date:'dd/MM/yy HH:mm' }}</small>
         </div>
       </div>

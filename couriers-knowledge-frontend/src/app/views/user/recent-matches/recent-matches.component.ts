@@ -1,4 +1,4 @@
-// Arquivo: couriers-knowledge-frontend/src/app/views/user/recent-matches/recent-matches.component.ts
+// Arquivo: recent-matches.component.ts - VERSÃO 100% TRADUZIDA
 
 import { Component, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
@@ -10,17 +10,26 @@ import { SteamService } from '../../../core/steam.service';
 import { GameDataService } from '../../../core/game-data.service';
 import { MatchDataService } from '../../../core/match-data.service';
 import { EvaluationService } from '../../../core/evaluation.service';
+import { I18nService } from '../../../core/i18n.service'; // ← ADICIONAR
 
 // Componentes e Pipes
 import { EvaluationFormComponent } from '../../../components/evaluation-form/evaluation-form.component';
 import { FilterByPropertyPipe } from '../../../pipes/filter-by-property.pipe';
 import { EmptyStateComponent } from '../../../components/empty-state/empty-state.component';
-
+import { TranslatePipe } from '../../../pipes/translate.pipe'; // ← ADICIONAR
 
 @Component({
   selector: 'app-recent-matches',
   standalone: true,
-  imports: [CommonModule, EvaluationFormComponent, DecimalPipe, DatePipe, FilterByPropertyPipe, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    EvaluationFormComponent,
+    DecimalPipe,
+    DatePipe,
+    FilterByPropertyPipe,
+    EmptyStateComponent,
+    TranslatePipe // ← ADICIONAR
+  ],
   templateUrl: './recent-matches.component.html',
   styleUrls: ['./recent-matches.component.css']
 })
@@ -31,6 +40,7 @@ export class RecentMatchesComponent {
   private steamService = inject(SteamService);
   private matchDataService = inject(MatchDataService);
   private evaluationService = inject(EvaluationService);
+  private i18nService = inject(I18nService); // ← ADICIONAR
 
   // --- ESTADO REATIVO PARA A LISTA ---
   matches$: Observable<any[]>;
@@ -85,7 +95,8 @@ export class RecentMatchesComponent {
       error: (err) => {
         this.isDetailsLoading = false;
         this.selectedMatch = null;
-        this.toastr.error('Não foi possível carregar os detalhes desta partida.');
+        // ✅ TRADUZIDO
+        this.toastr.error(this.i18nService.translate('matches.errors.loadDetails'));
         console.error('Erro ao carregar detalhes:', err);
       }
     });
@@ -103,35 +114,38 @@ export class RecentMatchesComponent {
    */
   evaluatePlayer(player: any): void {
     if (this.isLimitReached) {
-      this.toastr.warning('Você atingiu o limite de avaliações. Considere assinar o Premium para avaliar mais jogadores.');
+      // ✅ TRADUZIDO
+      this.toastr.warning(this.i18nService.translate('matches.errors.limitReached'));
       return;
     }
 
     if (!player.steam_id_64) {
-      this.toastr.error('Não é possível avaliar jogadores anônimos.');
+      // ✅ TRADUZIDO
+      this.toastr.error(this.i18nService.translate('matches.errors.anonymousPlayer'));
       return;
     }
 
     if (player.is_already_evaluated) {
-      this.toastr.info('Você já avaliou este jogador nesta partida.');
+      // ✅ TRADUZIDO
+      this.toastr.info(this.i18nService.translate('matches.errors.alreadyEvaluated'));
       return;
     }
 
     // Configurar dados iniciais para o formulário
-  // ✅ CORREÇÃO: Dados no formato correto
     this.evaluationInitialData = {
       targetPlayerName: player.personaname || 'Jogador Anônimo',
-      targetSteamId: player.steam_id_64, // ← NOME CORRETO
-      target_player_steam_id: player.steam_id_64, // Compatibilidade
+      targetSteamId: player.steam_id_64,
+      target_player_steam_id: player.steam_id_64,
       matchId: this.selectedMatch.match_id,
-      match_id: this.selectedMatch.match_id, // Compatibilidade
-      hero_id: player.hero_id, // ← PUXAR HERÓI AUTOMATICAMENTE
+      match_id: this.selectedMatch.match_id,
+      hero_id: player.hero_id,
       rating: null,
       notes: null,
       tags: [],
       role: null
     };
-     console.log('📋 Dados preparados:', this.evaluationInitialData); // Debug
+
+    console.log('📋 Dados preparados:', this.evaluationInitialData);
     this.isFormVisible = true;
   }
 
@@ -147,7 +161,8 @@ export class RecentMatchesComponent {
    * Callback executado quando uma avaliação é salva com sucesso
    */
   onEvaluationSaved(): void {
-    this.toastr.success('Avaliação salva com sucesso!');
+    // ✅ TRADUZIDO
+    this.toastr.success(this.i18nService.translate('matches.success.evaluationSaved'));
     this.closeForm();
 
     // Atualizar o status do jogador como avaliado
@@ -168,8 +183,26 @@ export class RecentMatchesComponent {
    * Callback executado quando ocorre erro ao salvar avaliação
    */
   onEvaluationError(error: any): void {
-    this.toastr.error(error.message || 'Erro ao salvar avaliação.');
+    // ✅ TRADUZIDO
+    const errorMessage = error.message || this.i18nService.translate('matches.errors.saveEvaluation');
+    this.toastr.error(errorMessage);
     console.error('Erro na avaliação:', error);
+  }
+
+  /**
+   * Retorna o tooltip apropriado para o botão de avaliação
+   */
+  getEvaluationTooltip(player: any): string {
+    if (player.is_already_evaluated) {
+      return this.i18nService.translate('matches.errors.alreadyEvaluated');
+    }
+    if (!player.steam_id_64) {
+      return this.i18nService.translate('matches.errors.anonymousPlayer');
+    }
+    if (this.isLimitReached) {
+      return this.i18nService.translate('matches.errors.limitReached');
+    }
+    return this.i18nService.translate('matches.evaluation.evaluate');
   }
 
   /**
@@ -184,7 +217,9 @@ export class RecentMatchesComponent {
     window.open(stratzUrl, '_blank', 'noopener,noreferrer');
   }
 
-
+  /**
+   * Callback para ações do empty state
+   */
   onEmptyStateAction(event: any): void {
     if (event.detail.type === 'matches') {
       // Redirecionar para configuração do GSI ou tutorial

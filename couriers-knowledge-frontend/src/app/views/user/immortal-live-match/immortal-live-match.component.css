@@ -1,0 +1,486 @@
+/* ===== IMMORTAL LIVE MATCH STYLES ===== */
+
+.immortal-live-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.02), rgba(59, 130, 246, 0.02));
+  min-height: 100vh;
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #8b5cf6;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-content h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.immortal-badge-small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+}
+
+.immortal-badge-small .rank {
+  font-size: 1rem;
+}
+
+/* ===== IMMORTAL NOTICE BANNER ===== */
+.immortal-notice-banner {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.notice-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.notice-icon {
+  font-size: 3rem;
+  color: #8b5cf6;
+}
+
+.notice-text h3 {
+  margin: 0 0 8px 0;
+  color: #8b5cf6;
+  font-size: 1.3rem;
+}
+
+.notice-text p {
+  margin: 0;
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+/* ===== IMMORTAL STYLED COMPONENTS ===== */
+.immortal-style {
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+}
+
+.immortal-style h3 {
+  color: #8b5cf6;
+}
+
+.immortal-textarea {
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.immortal-textarea:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.immortal-btn {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: white;
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.immortal-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* ===== ENHANCEMENT PROGRESS ===== */
+.enhancement-progress {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+.progress-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.progress-icon {
+  font-size: 2rem;
+  animation: spin 2s linear infinite;
+}
+
+.progress-text h4 {
+  margin: 0 0 8px 0;
+  color: #8b5cf6;
+}
+
+.progress-text p {
+  margin: 0;
+  color: #ffffff;
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5); }
+}
+
+/* ===== IMMORTAL RESULTS ===== */
+.immortal-results {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.immortal-header {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 2px solid #8b5cf6;
+}
+
+.immortal-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.immortal-stats .stat-item {
+  background: rgba(139, 92, 246, 0.1);
+  border: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.immortal-stats .stat-item.highlight {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.immortal-stats .stat-number {
+  color: #8b5cf6;
+}
+
+/* ===== IMMORTAL TEAMS ===== */
+.immortal-teams {
+  gap: 30px;
+}
+
+.immortal-team {
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+}
+
+.immortal-team.radiant {
+  border-left: 4px solid #68d391;
+  background: linear-gradient(135deg, rgba(104, 211, 145, 0.05), rgba(139, 92, 246, 0.05));
+}
+
+.immortal-team.dire {
+  border-left: 4px solid #fc8181;
+  background: linear-gradient(135deg, rgba(252, 129, 129, 0.05), rgba(139, 92, 246, 0.05));
+}
+
+/* ===== IMMORTAL PLAYER CARDS ===== */
+.immortal-player {
+  border: 2px solid rgba(139, 92, 246, 0.2);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03), rgba(59, 130, 246, 0.03));
+  transition: all 0.3s ease;
+}
+
+.immortal-player:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+}
+
+.immortal-player.is-immortal {
+  border: 2px solid #8b5cf6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.immortal-player.is-immortal::before {
+  content: "👑";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
+}
+
+/* ===== PLAYER NAMES ===== */
+.player-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.steam-name {
+  font-weight: bold;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.official-name {
+  font-size: 0.9rem;
+  color: #8b5cf6;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.immortal-rank-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+/* ===== NAME MATCHING ===== */
+.name-match-info {
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.match-confidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confidence-label {
+  color: #a0aec0;
+}
+
+.confidence-value {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.confidence-value.high-confidence {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.confidence-value.medium-confidence {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.confidence-value.low-confidence {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.suggestions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.suggestions-label {
+  color: #a0aec0;
+}
+
+.suggestion {
+  background: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+
+/* ===== IMMORTAL BUTTONS ===== */
+.immortal-btn-small {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.immortal-btn-small:hover {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(139, 92, 246, 0.4);
+}
+
+/* ===== IMMORTAL SUMMARY ===== */
+.immortal-summary {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.immortal-summary h4 {
+  color: #8b5cf6;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+.summary-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.summary-stat {
+  text-align: center;
+}
+
+.summary-stat .stat-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #8b5cf6;
+  margin-bottom: 8px;
+}
+
+.summary-stat .stat-description {
+  color: #ffffff;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* ===== IMMORTAL MODAL ===== */
+.immortal-modal {
+  border: 2px solid #8b5cf6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
+}
+
+.player-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-immortal-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.official-name {
+  color: #8b5cf6;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.rank-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.immortal-summary-modal {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(59, 130, 246, 0.08));
+  border: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.immortal-rank {
+  color: #f59e0b !important;
+  font-weight: bold;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .immortal-teams {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .summary-stats {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .immortal-live-container {
+    padding: 15px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .immortal-stats {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .notice-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .player-immortal-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ===== UTILITY HELPERS ===== */
+.high-confidence { color: #10b981 !important; }
+.medium-confidence { color: #f59e0b !important; }
+.low-confidence { color: #ef4444 !important; }

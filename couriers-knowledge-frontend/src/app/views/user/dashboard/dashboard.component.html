@@ -1,4 +1,4 @@
-<!-- DASHBOARD.COMPONENT.HTML COMPLETO COM IMPORT/EXPORT -->
+<!-- DASHBOARD.COMPONENT.HTML COMPLETO COM IMPORT/EXPORT - 100% TRADUZIDO -->
 
 <div class="dashboard-container">
   <!-- Header principal -->
@@ -6,7 +6,7 @@
    <div class="dashboard-header">
     <!-- Primeira linha -->
     <div class="header-row-1">
-      <h1>Minhas Avaliações</h1>
+      <h1>{{ 'dashboard.title' | translate }}</h1>
 
       <div class="row1-actions">
         <div class="import-export-aligned">
@@ -15,10 +15,10 @@
             [class.limit-reached]="isImportLimitReached()"
             [disabled]="isImportLimitReached()"
             (click)="openImportModal()"
-            title="Importar avaliações"
+            [title]="'dashboard.tooltips.import' | translate"
           >
-            Importar
-            <span *ngIf="isImportLimitReached()" class="limit-badge">Limite</span>
+            {{ 'dashboard.buttons.import' | translate }}
+            <span *ngIf="isImportLimitReached()" class="limit-badge">{{ 'dashboard.buttons.limit' | translate }}</span>
           </button>
         </div>
 
@@ -26,9 +26,9 @@
           class="selection-toggle-btn"
           [class.active]="isSelectionMode"
           (click)="toggleSelectionMode()"
-          title="Ativar/desativar modo de seleção"
+          [title]="'dashboard.tooltips.selection' | translate"
         >
-          {{ isSelectionMode ? 'Sair da Seleção' : 'Selecionar' }}
+          {{ isSelectionMode ? ('dashboard.buttons.exitSelection' | translate) : ('dashboard.buttons.select' | translate) }}
         </button>
 
         <button
@@ -38,11 +38,11 @@
           (click)="openFormModal()"
           [title]="
             isLimitReached
-              ? 'Limite de avaliações atingido. Faça upgrade para Premium!'
-              : 'Criar nova avaliação'
+              ? ('dashboard.tooltips.newEvaluationLimit' | translate)
+              : ('dashboard.tooltips.newEvaluation' | translate)
           "
         >
-          Nova Avaliação
+          {{ 'dashboard.buttons.newEvaluation' | translate }}
         </button>
       </div>
     </div>
@@ -55,7 +55,7 @@
           <i class="search-icon">⌕</i>
           <input
             type="text"
-            placeholder="Buscar Jogador"
+            [placeholder]="'dashboard.search.placeholder' | translate"
             [formControl]="permanentSearchControl"
             class="permanent-search-input"
             #searchInput
@@ -64,7 +64,7 @@
             *ngIf="permanentSearchControl.value"
             class="clear-search-btn"
             (click)="clearPermanentSearch()"
-            title="Limpar busca"
+            [title]="'dashboard.search.clear' | translate"
           >
             ×
           </button>
@@ -75,13 +75,13 @@
           *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length > 0"
           class="search-results-count"
         >
-          {{ filteredBySearch.length }} resultado(s)
+          {{ filteredBySearch.length }} {{ 'dashboard.search.resultsText' | translate }}
         </div>
         <div
           *ngIf="permanentSearchControl.value && filteredBySearch && filteredBySearch.length === 0"
           class="search-no-results"
         >
-          Nenhum jogador encontrado
+          {{ 'dashboard.search.noResults' | translate }}
         </div>
       </div>
 
@@ -92,10 +92,10 @@
             [class.limit-reached]="isExportLimitReached()"
             [disabled]="isExportLimitReached()"
             (click)="openExportModal()"
-            title="Exportar avaliações"
+            [title]="'dashboard.tooltips.export' | translate"
           >
-            Exportar
-            <span *ngIf="isExportLimitReached()" class="limit-badge">Limite</span>
+            {{ 'dashboard.buttons.export' | translate }}
+            <span *ngIf="isExportLimitReached()" class="limit-badge">{{ 'dashboard.buttons.limit' | translate }}</span>
           </button>
         </div>
 
@@ -103,9 +103,9 @@
           class="refresh-button"
           (click)="refreshNames()"
           [disabled]="isRefreshing"
-          title="Atualizar nomes dos jogadores"
+          [title]="'dashboard.tooltips.updateNames' | translate"
         >
-          {{ isRefreshing ? "Atualizando..." : "Atualizar Nomes" }}
+          {{ isRefreshing ? ('dashboard.buttons.updating' | translate) : ('dashboard.buttons.updateNames' | translate) }}
         </button>
 
         <!-- Status das avaliações -->
@@ -115,7 +115,7 @@
               {{ evaluationStatus.currentCount }}{{ evaluationStatus.limit ? '/' + evaluationStatus.limit : '' }}
             </span>
             <span class="plan-badge" [class.premium]="evaluationStatus.isPremium">
-              {{ evaluationStatus.isPremium ? 'Premium' : 'Free' }}
+              {{ evaluationStatus.isPremium ? ('dashboard.status.premium' | translate) : ('dashboard.status.free' | translate) }}
             </span>
           </div>
         </div>
@@ -126,21 +126,21 @@
     <div *ngIf="isSelectionMode" class="selection-controls-row">
       <div class="selection-controls">
         <span class="selection-count">
-          {{ getSelectedCount() }}/{{ getTotalDisplayed() }} selecionados
+          {{ getSelectedCount() }}/{{ getTotalDisplayed() }} {{ 'dashboard.selection.selectedText' | translate }}
         </span>
         <button
           class="select-all-btn"
           (click)="selectAllEvaluations()"
           [disabled]="getSelectedCount() === getTotalDisplayed()"
         >
-          Selecionar Todos
+          {{ 'dashboard.selection.selectAll' | translate }}
         </button>
         <button
           class="clear-selection-btn"
           (click)="clearAllSelections()"
           [disabled]="getSelectedCount() === 0"
         >
-          Limpar Seleção
+          {{ 'dashboard.selection.clearSelection' | translate }}
         </button>
       </div>
     </div>
@@ -152,7 +152,7 @@
     <!-- Loading -->
     <div *ngIf="isLoading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Carregando suas avaliações...</p>
+      <p>{{ 'dashboard.loading.evaluations' | translate }}</p>
     </div>
 
     <!-- Lista vazia -->
@@ -160,10 +160,9 @@
       *ngIf="!isLoading && displayedEvaluations.length === 0"
       [config]="{
         type: 'evaluations',
-        title: 'Nenhuma avaliação encontrada',
-        subtitle:
-          'Comece avaliando seus companheiros de equipe para acompanhar o desempenho deles!',
-        actionText: isLimitReached ? '' : 'Criar Primeira Avaliação',
+        title: ('dashboard.empty.title' | translate),
+        subtitle: ('dashboard.empty.subtitle' | translate),
+        actionText: isLimitReached ? '' : ('dashboard.empty.action' | translate),
         showAction: !isLimitReached
       }"
       (actionClick)="openFormModal()"
@@ -181,19 +180,19 @@
           <!-- Empty for checkbox column -->
         </div>
         <div class="header-col col-player">
-          <div class="header-title">Jogador</div>
+          <div class="header-title">{{ 'dashboard.table.player' | translate }}</div>
         </div>
         <div class="header-col col-hero">
-          <div class="header-title">Herói & Função</div>
+          <div class="header-title">{{ 'dashboard.table.hero' | translate }}</div>
         </div>
         <div class="header-col col-rating">
-          <div class="header-title">Avaliação</div>
+          <div class="header-title">{{ 'dashboard.table.rating' | translate }}</div>
         </div>
         <div class="header-col col-notes">
-          <div class="header-title">Anotações</div>
+          <div class="header-title">{{ 'dashboard.table.notes' | translate }}</div>
         </div>
         <div class="header-col col-tags">
-          <div class="header-title">Tags</div>
+          <div class="header-title">{{ 'dashboard.table.tags' | translate }}</div>
         </div>
         <div class="header-col col-actions">
           <!-- Actions column -->
@@ -220,22 +219,22 @@
         </div>
 
         <!-- Coluna do jogador -->
-        <div class="col-player" data-label="Jogador:">
+        <div class="col-player" [attr.data-label]="('dashboard.table.player' | translate) + ':'">
           <div class="player-info-wrapper">
             <strong class="player-name">{{
-              evaluation.targetPlayerName || "Jogador Desconhecido"
+              evaluation.targetPlayerName || ('dashboard.player.unknown' | translate)
             }}</strong>
             <small *ngIf="evaluation.target_player_steam_id" class="steam-id">
-              ID: {{ evaluation.target_player_steam_id }}
+              {{ 'dashboard.player.id' | translate:{ steamId: evaluation.target_player_steam_id } }}
             </small>
             <small *ngIf="evaluation.match_id" class="match-id">
-              Partida: {{ evaluation.match_id }}
+              {{ 'dashboard.player.match' | translate:{ matchId: evaluation.match_id } }}
             </small>
           </div>
         </div>
 
         <!-- Coluna do herói -->
-        <div class="col-hero" data-label="Herói:">
+        <div class="col-hero" [attr.data-label]="('dashboard.table.hero' | translate) + ':'">
           <div class="hero-info">
             <ng-container *ngIf="evaluation.hero_id; else noHero">
               <img
@@ -255,7 +254,7 @@
               </span>
             </ng-container>
             <ng-template #noHero>
-              <span class="no-info">Herói não informado</span>
+              <span class="no-info">{{ 'dashboard.hero.notInformed' | translate }}</span>
             </ng-template>
           </div>
 
@@ -265,22 +264,22 @@
         </div>
 
         <!-- Coluna da avaliação -->
-        <div class="col-rating" data-label="Nota:">
+        <div class="col-rating" [attr.data-label]="'dashboard.notes.label' | translate">
           <app-rating-display [rating]="evaluation.rating" />
         </div>
 
         <!-- Coluna das anotações -->
-        <div class="col-notes" data-label="Anotações:">
+        <div class="col-notes" [attr.data-label]="('dashboard.table.notes' | translate) + ':'">
           <p *ngIf="evaluation.notes; else noNotes">
             {{ evaluation.notes }}
           </p>
           <ng-template #noNotes>
-            <span class="no-info">Sem anotações</span>
+            <span class="no-info">{{ 'dashboard.notes.noNotes' | translate }}</span>
           </ng-template>
         </div>
 
         <!-- Coluna das tags -->
-        <div class="col-tags" data-label="Tags:">
+        <div class="col-tags" [attr.data-label]="('dashboard.table.tags' | translate) + ':'">
           <div class="tags-wrapper">
             <ng-container
               *ngIf="evaluation.tags && evaluation.tags.length > 0; else noTags"
@@ -290,7 +289,7 @@
               </span>
             </ng-container>
             <ng-template #noTags>
-              <span class="no-info">Sem tags</span>
+              <span class="no-info">{{ 'dashboard.tags.noTags' | translate }}</span>
             </ng-template>
           </div>
         </div>
@@ -314,19 +313,19 @@
                 (click)="openFormModal(evaluation)"
                 class="action-item edit"
               >
-                Editar
+                {{ 'dashboard.actions.edit' | translate }}
               </button>
               <button
                 (click)="shareEvaluation(evaluation)"
                 class="action-item share"
               >
-                Compartilhar
+                {{ 'dashboard.actions.share' | translate }}
               </button>
               <button
                 (click)="deleteEvaluation(evaluation.id)"
                 class="action-item delete"
               >
-                Excluir
+                {{ 'dashboard.actions.delete' | translate }}
               </button>
             </div>
           </div>
@@ -341,7 +340,7 @@
   <div class="modal export-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>
-        {{ exportResult ? "Exportação Concluída!" : "Exportar Avaliações" }}
+        {{ exportResult ? ('dashboard.export.success.title' | translate) : ('dashboard.export.title' | translate) }}
       </h3>
       <button class="modal-close-btn" (click)="closeExportModal()">×</button>
     </div>
@@ -359,8 +358,8 @@
               [disabled]="isExporting"
             />
             <span class="radio-label">
-              <strong>Todas as avaliações</strong>
-              <small>({{ getTotalDisplayed() }} avaliações)</small>
+              <strong>{{ 'dashboard.export.all' | translate }}</strong>
+              <small>({{ getTotalDisplayed() }} {{ 'dashboard.export.evaluationsText' | translate }})</small>
             </span>
           </label>
 
@@ -376,20 +375,20 @@
               [disabled]="isExporting || getSelectedCount() === 0"
             />
             <span class="radio-label">
-              <strong>Avaliações selecionadas</strong>
-              <small>({{ getSelectedCount() }} avaliações)</small>
+              <strong>{{ 'dashboard.export.selected' | translate }}</strong>
+              <small>({{ getSelectedCount() }} {{ 'dashboard.export.evaluationsText' | translate }})</small>
             </span>
           </label>
         </div>
 
         <div class="export-info">
           <div class="info-box">
-            <h4>📋 O que será exportado:</h4>
+            <h4>{{ 'dashboard.export.whatWillBeExported' | translate }}</h4>
             <ul>
-              <li>Arquivo JSON para backup local</li>
-              <li>Código de compartilhamento (válido por 30 dias)</li>
-              <li>Dados completos das avaliações</li>
-              <li>Informações dos jogadores e tags</li>
+              <li>{{ 'dashboard.export.jsonFile' | translate }}</li>
+              <li>{{ 'dashboard.export.shareCode' | translate }}</li>
+              <li>{{ 'dashboard.export.completeData' | translate }}</li>
+              <li>{{ 'dashboard.export.playerInfo' | translate }}</li>
             </ul>
           </div>
         </div>
@@ -398,20 +397,20 @@
       <!-- DURANTE a exportação -->
       <div *ngIf="isExporting" class="export-loading">
         <div class="loading-spinner"></div>
-        <p>Processando exportação...</p>
-        <small>Gerando arquivo e código de compartilhamento</small>
+        <p>{{ 'dashboard.export.processing' | translate }}</p>
+        <small>{{ 'dashboard.export.generating' | translate }}</small>
       </div>
 
       <!-- DEPOIS da exportação - MOSTRAR CÓDIGO -->
       <div *ngIf="exportResult && !isExporting" class="export-success">
         <div class="success-message">
-          <h4>✅ Exportação realizada com sucesso!</h4>
-          <p>{{ exportResult.totalEvaluations }} avaliações exportadas</p>
+          <h4>{{ 'dashboard.export.success.completed' | translate }}</h4>
+          <p>{{ exportResult.totalEvaluations }} {{ 'dashboard.export.success.evaluationsExported' | translate }}</p>
         </div>
 
         <!-- CÓDIGO DE COMPARTILHAMENTO -->
         <div class="share-code-section">
-          <h4>🔗 Código de Compartilhamento:</h4>
+          <h4>{{ 'dashboard.export.success.shareCodeTitle' | translate }}</h4>
           <div class="share-code-display">
             <div class="code-box">
               <span class="share-code-text">{{
@@ -420,7 +419,7 @@
               <button
                 class="copy-code-btn"
                 (click)="copyShareCode()"
-                title="Copiar código"
+                [title]="'dashboard.export.success.copyCode' | translate"
               >
                 📋
               </button>
@@ -428,19 +427,18 @@
           </div>
 
           <div class="code-instructions">
-            <p><strong>📱 Como compartilhar:</strong></p>
+            <p><strong>{{ 'dashboard.export.success.howToShare' | translate }}</strong></p>
             <ul>
-              <li>Copie o código acima</li>
-              <li>Envie para outros jogadores via WhatsApp/Discord</li>
-              <li>Eles podem usar esse código na opção "Importar → Código"</li>
+              <li>{{ 'dashboard.export.success.step1' | translate }}</li>
+              <li>{{ 'dashboard.export.success.step2' | translate }}</li>
+              <li>{{ 'dashboard.export.success.step3' | translate }}</li>
             </ul>
 
             <div class="code-details">
               <small>
-                <strong>⏰ Válido até:</strong>
-                {{ exportResult.exportedAt | date : "dd/MM/yyyy" }} (30 dias)<br />
-                <strong>📄 Arquivo JSON:</strong> Baixado automaticamente para
-                backup
+                <strong>{{ 'dashboard.export.success.validUntil' | translate }}</strong>
+                {{ exportResult.exportedAt | date : "dd/MM/yyyy" }} {{ 'dashboard.export.success.thirtyDays' | translate }}<br />
+                <strong>{{ 'dashboard.export.success.jsonFileLabel' | translate }}</strong> {{ 'dashboard.export.success.downloadedAutomatically' | translate }}
               </small>
             </div>
           </div>
@@ -448,13 +446,12 @@
 
         <!-- EXEMPLO DE USO -->
         <div class="usage-example">
-          <h5>💬 Exemplo de mensagem para compartilhar:</h5>
+          <h5>{{ 'dashboard.export.success.messageExample' | translate }}</h5>
           <div class="example-message">
-            "Pessoal, exportei minhas avaliações do Courier's Knowledge!<br />
-            Usem o código:
-            <strong>{{ formatShareCode(exportResult.shareCode) }}</strong
-            ><br />
-            Vão em Importar → Código e colem esse código."
+            {{ 'dashboard.export.success.exampleText1' | translate }}<br />
+            {{ 'dashboard.export.success.exampleText2' | translate }}
+            <strong>{{ formatShareCode(exportResult.shareCode) }}</strong><br />
+            {{ 'dashboard.export.success.exampleText3' | translate }}
           </div>
         </div>
       </div>
@@ -471,10 +468,10 @@
             (exportType === 'selected' && getSelectedCount() === 0)
           "
         >
-          <span *ngIf="!isExporting">Exportar</span>
+          <span *ngIf="!isExporting">{{ 'dashboard.modal.export' | translate }}</span>
           <span *ngIf="isExporting">
             <span class="spinner"></span>
-            Exportando...
+            {{ 'dashboard.export.exporting' | translate }}
           </span>
         </button>
         <button
@@ -482,17 +479,17 @@
           class="btn-secondary"
           [disabled]="isExporting"
         >
-          Cancelar
+          {{ 'dashboard.modal.cancel' | translate }}
         </button>
       </ng-container>
 
       <!-- Botões DEPOIS da exportação -->
       <ng-container *ngIf="exportResult && !isExporting">
         <button (click)="copyShareCode()" class="btn-primary">
-          📋 Copiar Código
+          📋 {{ 'dashboard.export.success.copyCodeButton' | translate }}
         </button>
         <button (click)="closeExportModal()" class="btn-secondary">
-          Fechar
+          {{ 'dashboard.modal.close' | translate }}
         </button>
       </ng-container>
     </div>
@@ -503,7 +500,7 @@
 <div *ngIf="showImportModal" class="modal-overlay" (click)="closeImportModal()">
   <div class="modal import-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Importar Avaliações</h3>
+      <h3>{{ 'dashboard.import.title' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeImportModal()">×</button>
     </div>
 
@@ -516,7 +513,7 @@
           (click)="importTab = 'paste'"
           [disabled]="isImporting"
         >
-          <i>📋</i> Colar
+          <i>📋</i> {{ 'dashboard.import.tabs.paste' | translate }}
         </button>
 
         <button
@@ -525,7 +522,7 @@
           (click)="importTab = 'file'"
           [disabled]="isImporting"
         >
-          <i>📁</i> Arquivo
+          <i>📁</i> {{ 'dashboard.import.tabs.file' | translate }}
         </button>
 
         <button
@@ -534,7 +531,7 @@
           (click)="importTab = 'code'"
           [disabled]="isImporting"
         >
-          <i>🔗</i> Código
+          <i>🔗</i> {{ 'dashboard.import.tabs.code' | translate }}
         </button>
       </div>
 
@@ -545,32 +542,14 @@
           <div class="paste-description">
             <p>
               <i>📋</i>
-              <strong>Cole aqui uma avaliação compartilhada:</strong><br />
-              <small
-                >Aceita tanto texto amigável (WhatsApp/Discord) quanto dados
-                JSON exportados!</small
-              >
+              <strong>{{ 'dashboard.import.paste.description' | translate }}</strong><br />
+              <small>{{ 'dashboard.import.paste.subtitle' | translate }}</small>
             </p>
           </div>
 
           <div class="paste-input-wrapper">
             <textarea
-              placeholder='Cole aqui uma avaliação compartilhada...
-
-Exemplo de texto amigável:
-[Courier&apos;s Knowledge] Avaliação de jogador:
-- Jogador: PlayerName
-- Herói: Pudge
-- Partida: 8383745353
-- Nota: 4/5 (★★★★☆)
-- Anotações: "Jogou bem de suporte"
-- Tags: #bom-suporte #teamwork
-
-Ou dados JSON exportados:
-{
-  "version": "1.0",
-  "evaluations": [...]
-}'
+              [placeholder]="'dashboard.import.paste.placeholder' | translate"
               [(ngModel)]="pastedText"
               (input)="onPastedTextChange()"
               class="paste-textarea"
@@ -581,23 +560,21 @@ Ou dados JSON exportados:
 
           <!-- Preview dos dados colados -->
           <div *ngIf="pastedPreview" class="import-preview">
-            <h4>📊 Prévia da Importação:</h4>
+            <h4>{{ 'dashboard.import.preview.title' | translate }}</h4>
             <div class="preview-info">
               <div class="preview-item">
-                <strong>Total de avaliações:</strong> {{ pastedPreview.total }}
+                <strong>{{ 'dashboard.import.preview.total' | translate }}</strong> {{ pastedPreview.total }}
               </div>
               <div class="preview-item">
-                <strong>Tipo:</strong>
-                <span *ngIf="pastedPreview.type === 'text'"
-                  >Texto Amigável</span
-                >
-                <span *ngIf="pastedPreview.type === 'json'">Dados JSON</span>
+                <strong>{{ 'dashboard.import.preview.type' | translate }}</strong>
+                <span *ngIf="pastedPreview.type === 'text'">{{ 'dashboard.import.preview.friendlyText' | translate }}</span>
+                <span *ngIf="pastedPreview.type === 'json'">{{ 'dashboard.import.preview.jsonData' | translate }}</span>
               </div>
               <div class="preview-item">
-                <strong>Fonte:</strong> {{ pastedPreview.exportedBy }}
+                <strong>{{ 'dashboard.import.preview.source' | translate }}</strong> {{ pastedPreview.exportedBy }}
               </div>
               <div class="preview-item" *ngIf="pastedPreview.exportedAt">
-                <strong>Data:</strong>
+                <strong>{{ 'dashboard.import.preview.date' | translate }}</strong>
                 {{ pastedPreview.exportedAt | date : "dd/MM/yyyy HH:mm" }}
               </div>
               <div
@@ -606,7 +583,7 @@ Ou dados JSON exportados:
                   pastedPreview.type === 'text' && pastedPreview.evaluation
                 "
               >
-                <strong>Jogador:</strong>
+                <strong>{{ 'dashboard.import.preview.player' | translate }}</strong>
                 {{ pastedPreview.evaluation.target_player_name || "N/A" }}
               </div>
               <div
@@ -615,7 +592,7 @@ Ou dados JSON exportados:
                   pastedPreview.type === 'text' && pastedPreview.evaluation
                 "
               >
-                <strong>Nota:</strong>
+                <strong>{{ 'dashboard.import.preview.rating' | translate }}</strong>
                 {{ pastedPreview.evaluation.rating || "N/A" }}/5
               </div>
             </div>
@@ -623,39 +600,34 @@ Ou dados JSON exportados:
 
           <div class="paste-help">
             <div class="help-tips">
-              <h5>💡 Como usar:</h5>
+              <h5>{{ 'dashboard.import.paste.howToUse' | translate }}</h5>
               <ul>
                 <li>
-                  <strong>Receba</strong>: Alguém compartilha uma avaliação por
-                  WhatsApp/Discord
+                  <strong>{{ 'dashboard.import.paste.receive' | translate }}</strong>: {{ 'dashboard.import.paste.receiveDesc' | translate }}
                 </li>
                 <li>
-                  <strong>Cole</strong>: Use Ctrl+V para colar o texto aqui
+                  <strong>{{ 'dashboard.import.paste.paste' | translate }}</strong>: {{ 'dashboard.import.paste.pasteDesc' | translate }}
                 </li>
                 <li>
-                  <strong>Importe</strong>: Clique em "Importar" para adicionar
-                  à sua coleção
+                  <strong>{{ 'dashboard.import.paste.import' | translate }}</strong>: {{ 'dashboard.import.paste.importDesc' | translate }}
                 </li>
               </ul>
 
               <div class="format-examples">
-                <h6>📝 Formatos aceitos:</h6>
+                <h6>{{ 'dashboard.import.paste.acceptedFormats' | translate }}</h6>
                 <div class="format-item">
-                  <strong>✅ Texto amigável:</strong> Compartilhamento casual
-                  via mensagem
+                  <strong>{{ 'dashboard.import.paste.friendlyTextFormat' | translate }}</strong> {{ 'dashboard.import.paste.casualSharing' | translate }}
                 </div>
                 <div class="format-item">
-                  <strong>✅ JSON exportado:</strong> Arquivo de exportação
-                  completo
+                  <strong>{{ 'dashboard.import.paste.jsonFormat' | translate }}</strong> {{ 'dashboard.import.paste.completeExport' | translate }}
                 </div>
               </div>
             </div>
 
             <div class="paste-shortcuts">
-              <small
-                ><strong>Atalhos:</strong> Ctrl+V para colar • Ctrl+A para
-                selecionar tudo</small
-              >
+              <small>
+                <strong>{{ 'dashboard.import.paste.shortcuts' | translate }}</strong> {{ 'dashboard.import.paste.shortcutsList' | translate }}
+              </small>
             </div>
           </div>
         </div>
@@ -683,10 +655,10 @@ Ou dados JSON exportados:
             <div *ngIf="!selectedFile" class="drop-zone-empty">
               <i class="drop-icon">☁️</i>
               <p class="drop-text">
-                <strong>Arraste um arquivo JSON aqui</strong><br />
-                ou clique para selecionar
+                <strong>{{ 'dashboard.import.file.dragHere' | translate }}</strong><br />
+                {{ 'dashboard.import.file.orClickToSelect' | translate }}
               </p>
-              <small>Máximo: 10MB</small>
+              <small>{{ 'dashboard.import.file.maxSize' | translate }}</small>
             </div>
 
             <div *ngIf="selectedFile" class="drop-zone-file">
@@ -711,20 +683,20 @@ Ou dados JSON exportados:
 
           <!-- Preview do arquivo -->
           <div *ngIf="importPreview" class="import-preview">
-            <h4>📊 Prévia da Importação:</h4>
+            <h4>{{ 'dashboard.import.preview.title' | translate }}</h4>
             <div class="preview-info">
               <div class="preview-item">
-                <strong>Total de avaliações:</strong> {{ importPreview.total }}
+                <strong>{{ 'dashboard.import.preview.total' | translate }}</strong> {{ importPreview.total }}
               </div>
               <div class="preview-item">
-                <strong>Exportado por:</strong> {{ importPreview.exportedBy }}
+                <strong>{{ 'dashboard.import.preview.exportedBy' | translate }}</strong> {{ importPreview.exportedBy }}
               </div>
               <div class="preview-item" *ngIf="importPreview.exportedAt">
-                <strong>Data da exportação:</strong>
+                <strong>{{ 'dashboard.import.preview.exportedAt' | translate }}</strong>
                 {{ importPreview.exportedAt | date : "dd/MM/yyyy HH:mm" }}
               </div>
               <div class="preview-item">
-                <strong>Versão:</strong> {{ importPreview.version }}
+                <strong>{{ 'dashboard.import.preview.version' | translate }}</strong> {{ importPreview.version }}
               </div>
             </div>
           </div>
@@ -735,7 +707,7 @@ Ou dados JSON exportados:
           <div class="code-input-wrapper">
             <input
               type="text"
-              placeholder="Digite o código de compartilhamento (ex: ABC12DE4)"
+              [placeholder]="'dashboard.import.code.placeholder' | translate"
               [(ngModel)]="shareCode"
               class="share-code-input"
               [disabled]="isImporting"
@@ -746,8 +718,7 @@ Ou dados JSON exportados:
           <div class="code-help">
             <p class="help-text">
               <i>💡</i>
-              O código de compartilhamento tem 8 caracteres e é fornecido quando
-              alguém exporta avaliações.
+              {{ 'dashboard.import.code.help' | translate }}
             </p>
           </div>
         </div>
@@ -755,7 +726,7 @@ Ou dados JSON exportados:
 
       <!-- Modo de importação -->
       <div class="import-mode-section">
-        <h4>Modo de Importação:</h4>
+        <h4>{{ 'dashboard.import.mode.title' | translate }}</h4>
         <div class="mode-options">
           <label class="mode-option">
             <input
@@ -766,8 +737,8 @@ Ou dados JSON exportados:
               [disabled]="isImporting"
             />
             <span class="mode-label">
-              <strong>Adicionar</strong>
-              <small>Manter existentes, adicionar novas</small>
+              <strong>{{ 'dashboard.import.mode.add.title' | translate }}</strong>
+              <small>{{ 'dashboard.import.mode.add.description' | translate }}</small>
             </span>
           </label>
 
@@ -780,8 +751,8 @@ Ou dados JSON exportados:
               [disabled]="isImporting"
             />
             <span class="mode-label">
-              <strong>Mesclar</strong>
-              <small>Atualizar existentes, adicionar novas</small>
+              <strong>{{ 'dashboard.import.mode.merge.title' | translate }}</strong>
+              <small>{{ 'dashboard.import.mode.merge.description' | translate }}</small>
             </span>
           </label>
 
@@ -794,8 +765,8 @@ Ou dados JSON exportados:
               [disabled]="isImporting"
             />
             <span class="mode-label">
-              <strong>Substituir</strong>
-              <small>Remover todas e importar novas</small>
+              <strong>{{ 'dashboard.import.mode.replace.title' | translate }}</strong>
+              <small>{{ 'dashboard.import.mode.replace.description' | translate }}</small>
             </span>
           </label>
         </div>
@@ -813,10 +784,10 @@ Ou dados JSON exportados:
         class="btn-primary"
         [disabled]="isImporting || !canImport()"
       >
-        <span *ngIf="!isImporting">Importar</span>
+        <span *ngIf="!isImporting">{{ 'dashboard.modal.import' | translate }}</span>
         <span *ngIf="isImporting">
           <span class="spinner"></span>
-          Importando...
+          {{ 'dashboard.import.importing' | translate }}
         </span>
       </button>
       <button
@@ -824,7 +795,7 @@ Ou dados JSON exportados:
         class="btn-secondary"
         [disabled]="isImporting"
       >
-        Cancelar
+        {{ 'dashboard.modal.cancel' | translate }}
       </button>
     </div>
   </div>

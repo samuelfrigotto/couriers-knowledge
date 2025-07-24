@@ -1,0 +1,362 @@
+<div class="immortal-live-container">
+  <!-- Header Immortal -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Análise Ao Vivo - Immortal</h1>
+      <div class="immortal-badge-small">
+        <span class="rank">#{{ userInfo?.immortalRank }}</span>
+        <span class="region">{{ userInfo?.immortalRegion | uppercase }}</span>
+      </div>
+    </div>
+    <button
+      *ngIf="matchData"
+      class="refresh-btn"
+      (click)="resetForm()"
+      title="Nova análise">
+      Nova Análise
+    </button>
+  </div>
+
+  <!-- Immortal Notice -->
+  <div class="immortal-notice-banner" *ngIf="showInstructions">
+    <div class="notice-content">
+      <div class="notice-icon">⚡</div>
+      <div class="notice-text">
+        <h3>Modo Exclusivo Immortal</h3>
+        <p>Funcionalidade especializada para jogadores 8.5k+ MMR com cross-reference automático do leaderboard oficial.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário de Status -->
+  <div *ngIf="showInstructions || !matchData" class="status-form-section">
+    <div class="instructions-card immortal-style">
+      <h3>Como usar - Modo Immortal</h3>
+      <ol class="instructions-list">
+        <li *ngFor="let instruction of instructions">{{ instruction }}</li>
+      </ol>
+
+      <div class="tips-section">
+        <h4>Recursos Exclusivos</h4>
+        <ul class="tips-list">
+          <li *ngFor="let tip of systemTips">{{ tip }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="status-input-card immortal-style">
+      <h3>Cole o comando status aqui</h3>
+
+      <div class="textarea-wrapper">
+        <textarea
+          [(ngModel)]="statusInput"
+          placeholder="Cole aqui o resultado completo do comando 'status' do Dota 2..."
+          class="status-textarea immortal-textarea"
+          rows="10"
+          [disabled]="isProcessing">
+        </textarea>
+
+        <div class="input-actions">
+          <button
+            class="clear-btn"
+            (click)="statusInput = ''"
+            *ngIf="statusInput && !isProcessing"
+            title="Limpar">
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="analyze-btn immortal-btn"
+          [disabled]="!statusInput || isProcessing"
+          (click)="analyzeStatus()">
+          <span *ngIf="!isProcessing">🔍 Analisar Status</span>
+          <span *ngIf="isProcessing">⏳ Processando...</span>
+        </button>
+
+        <button
+          class="reset-btn"
+          *ngIf="matchData"
+          (click)="resetForm()">
+          Nova Análise
+        </button>
+      </div>
+
+      <!-- Error Display -->
+      <div *ngIf="error" class="error-message">
+        <span class="error-icon">❌</span>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhancement Progress -->
+  <div *ngIf="isEnhancing" class="enhancement-progress">
+    <div class="progress-content">
+      <div class="progress-icon">🔄</div>
+      <div class="progress-text">
+        <h4>Fazendo cross-reference com leaderboard oficial...</h4>
+        <p>Verificando nomes dos jogadores contra o ranking Immortal</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados da Partida -->
+  <div *ngIf="matchData && !showInstructions" class="match-results immortal-results">
+    <!-- Header da Partida Enhanced -->
+    <div class="match-header immortal-header">
+      <div class="game-state">
+        <h2>{{ matchData.gameState.translated }}</h2>
+      </div>
+
+      <div class="immortal-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ getImmortalPlayersCount() }}</span>
+          <span class="stat-label">No Leaderboard</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ matchData.statistics.totalPlayers }}</span>
+          <span class="stat-label">Total Players</span>
+        </div>
+        <div class="stat-item highlight">
+          <span class="stat-number">{{ matchData.statistics.evaluatedPlayers }}</span>
+          <span class="stat-label">Com Avaliações</span>
+        </div>
+      </div>
+
+      <button class="refresh-btn-small" (click)="resetForm()" title="Nova análise">
+        🔄
+      </button>
+    </div>
+
+    <!-- Times Enhanced -->
+    <div class="teams-container immortal-teams">
+      <!-- Time Radiant -->
+      <div class="team-section radiant immortal-team">
+        <h3 class="team-title">Iluminados</h3>
+
+        <div class="players-list">
+          <div
+            *ngFor="let player of getEnhancedPlayersByTeam('radiant')"
+            class="player-card immortal-player"
+            [class.has-evaluations]="player.hasEvaluations"
+            [class.is-bot]="player.isBot"
+            [class.is-immortal]="player.leaderboardData?.isVerified">
+
+            <!-- Player Info Enhanced -->
+            <div class="player-info">
+              <div class="player-names">
+                <div class="steam-name">{{ player.name }}</div>
+                <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
+                  {{ player.leaderboardData.officialName }}
+                </div>
+              </div>
+              <span *ngIf="player.isBot" class="bot-badge">BOT</span>
+              <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
+                #{{ player.leaderboardData.rank }}
+              </span>
+            </div>
+
+            <!-- Name Match Confidence -->
+            <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
+              <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
+                <span class="confidence-label">Match:</span>
+                <span class="confidence-value" [class]="getConfidenceClass(player.nameMatch.confidence)">
+                  {{ player.nameMatch.confidence }}%
+                </span>
+              </div>
+              <div *ngIf="!player.leaderboardData?.isVerified && player.nameMatch.suggestions.length > 0"
+                   class="suggestions">
+                <span class="suggestions-label">Similar:</span>
+                <span class="suggestion" *ngFor="let suggestion of player.nameMatch.suggestions.slice(0, 1)">
+                  {{ suggestion }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Evaluation Stats -->
+            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+              <div class="rating-display">
+                <span
+                  class="rating-value"
+                  [style.color]="getRatingColor(player.stats.averageRating)">
+                  {{ formatRating(player.stats.averageRating) }}/5
+                </span>
+                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="player-actions">
+              <button
+                *ngIf="player.hasEvaluations"
+                class="details-btn immortal-btn-small"
+                (click)="showPlayerDetails(player)"
+                title="Ver avaliações">
+                Detalhes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Dire -->
+      <div class="team-section dire immortal-team">
+        <h3 class="team-title">Temidos</h3>
+
+        <div class="players-list">
+          <div
+            *ngFor="let player of getEnhancedPlayersByTeam('dire')"
+            class="player-card immortal-player"
+            [class.has-evaluations]="player.hasEvaluations"
+            [class.is-bot]="player.isBot"
+            [class.is-immortal]="player.leaderboardData?.isVerified">
+
+            <!-- Player Info Enhanced -->
+            <div class="player-info">
+              <div class="player-names">
+                <div class="steam-name">{{ player.name }}</div>
+                <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
+                  {{ player.leaderboardData.officialName }}
+                </div>
+              </div>
+              <span *ngIf="player.isBot" class="bot-badge">BOT</span>
+              <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
+                #{{ player.leaderboardData.rank }}
+              </span>
+            </div>
+
+            <!-- Name Match Confidence -->
+            <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
+              <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
+                <span class="confidence-label">Match:</span>
+                <span class="confidence-value" [class]="getConfidenceClass(player.nameMatch.confidence)">
+                  {{ player.nameMatch.confidence }}%
+                </span>
+              </div>
+              <div *ngIf="!player.leaderboardData?.isVerified && player.nameMatch.suggestions.length > 0"
+                   class="suggestions">
+                <span class="suggestions-label">Similar:</span>
+                <span class="suggestion" *ngFor="let suggestion of player.nameMatch.suggestions.slice(0, 1)">
+                  {{ suggestion }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Evaluation Stats -->
+            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+              <div class="rating-display">
+                <span
+                  class="rating-value"
+                  [style.color]="getRatingColor(player.stats.averageRating)">
+                  {{ formatRating(player.stats.averageRating) }}/5
+                </span>
+                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="player-actions">
+              <button
+                *ngIf="player.hasEvaluations"
+                class="details-btn immortal-btn-small"
+                (click)="showPlayerDetails(player)"
+                title="Ver avaliações">
+                Detalhes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Summary -->
+    <div class="immortal-summary" *ngIf="enhancedPlayers.length > 0">
+      <h4>📊 Análise Immortal</h4>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="stat-value">{{ getImmortalPlayersCount() }}/10</span>
+          <span class="stat-description">Jogadores verificados no leaderboard oficial</span>
+        </div>
+        <div class="summary-stat" *ngIf="hasEvaluations()">
+          <span class="stat-value">{{ matchData.evaluationsSummary.totalFound }}</span>
+          <span class="stat-description">Avaliações encontradas no seu histórico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalhes Enhanced -->
+<div class="modal-overlay" *ngIf="isDetailModalVisible" (click)="closeDetailModal()">
+  <div class="modal-content immortal-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="player-header">
+        <h3>{{ selectedPlayerForDetails?.name }}</h3>
+        <div *ngIf="selectedPlayerForDetails?.leaderboardData?.isVerified" class="player-immortal-info">
+          <span class="official-name">{{ selectedPlayerForDetails.leaderboardData.officialName }}</span>
+          <span class="rank-badge">#{{ selectedPlayerForDetails.leaderboardData.rank }}</span>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeDetailModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Player Summary Enhanced -->
+      <div *ngIf="selectedPlayerForDetails?.stats" class="player-summary immortal-summary-modal">
+        <div class="summary-stat">
+          <span class="label">Nota Média:</span>
+          <span
+            class="value"
+            [style.color]="getRatingColor(selectedPlayerForDetails!.stats!.averageRating)">
+            {{ formatRating(selectedPlayerForDetails!.stats!.averageRating) }}/5
+          </span>
+        </div>
+        <div class="summary-stat">
+          <span class="label">Total de Avaliações:</span>
+          <span class="value">{{ selectedPlayerForDetails!.stats!.totalEvaluations }}</span>
+        </div>
+        <div class="summary-stat" *ngIf="selectedPlayerForDetails!.leaderboardData?.isVerified">
+          <span class="label">Rank Oficial:</span>
+          <span class="value immortal-rank">#{{ selectedPlayerForDetails!.leaderboardData!.rank }}</span>
+        </div>
+        <div class="summary-stat" *ngIf="selectedPlayerForDetails!.stats!.mostCommonRole">
+          <span class="label">Função Mais Comum:</span>
+          <span class="value">{{ selectedPlayerForDetails!.stats!.mostCommonRole!.toUpperCase() }}</span>
+        </div>
+      </div>
+
+      <!-- Evaluations List -->
+      <div class="evaluations-list">
+        <div
+          *ngFor="let evaluation of selectedPlayerForDetails?.evaluations"
+          class="evaluation-item">
+
+          <div class="evaluation-header">
+            <app-rating-display [rating]="evaluation.rating"></app-rating-display>
+            <span class="evaluation-date">{{ formatDate(evaluation.created_at) }}</span>
+          </div>
+
+          <div class="evaluation-context" *ngIf="evaluation.hero_id || evaluation.role">
+            <img
+              *ngIf="evaluation.hero_id"
+              [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
+              [alt]="gameDataService.getHeroById(evaluation.hero_id)"
+              class="hero-icon-tiny">
+            <span *ngIf="evaluation.role" class="role-info">{{ evaluation.role.toUpperCase() }}</span>
+          </div>
+
+          <div *ngIf="evaluation.notes" class="evaluation-notes">
+            {{ evaluation.notes }}
+          </div>
+
+          <div class="evaluation-tags" *ngIf="evaluation.tags && evaluation.tags.length > 0">
+            <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

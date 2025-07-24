@@ -17,7 +17,7 @@ const gsiRoutes = require('./src/api/routes/gsi.routes');
 const friendsRoutes = require('./src/api/routes/friends.routes');
 const stripeRoutes = require('./src/api/routes/stripe.routes'); 
 const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
-
+const immortalRoutes = require('./src/routes/immortal.routes');
 
 // 2. Inicializar o aplicativo Express
 const app = express();
@@ -59,10 +59,20 @@ app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/status', statusRoutes); 
-
+app.use('/api/immortal', immortalRoutes);
 
 
 apiLimitsResetJob.start();
+// ===== ADICIONAR MIDDLEWARE DE CORS PARA LEADERBOARD =====
+app.use((req, res, next) => {
+  // Permitir requests para leaderboard
+  if (req.path.startsWith('/api/immortal')) {
+    res.header('Cache-Control', 'public, max-age=3600'); // Cache de 1 hora
+  }
+  next();
+});
+
+
 
 // 6. Iniciar o servidor
 app.listen(PORT, () => {

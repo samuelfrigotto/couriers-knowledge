@@ -374,7 +374,224 @@
 
 
 .settings-link {
-  margin-top: auto; 
+  margin-top: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 15px;
+}
+
+
+/* ===== IMMORTAL PLAYER STYLES ===== */
+
+.immortal-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 2px solid #a855f7;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.immortal-rank {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.rank-number {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.rank-region {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.immortal-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title-text {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mmr-text {
+  font-size: 0.7rem;
+  color: #e2e8f0;
+  opacity: 0.9;
+}
+
+/* ===== IMMORTAL NAVIGATION ===== */
+
+.immortal-feature {
+  position: relative;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.immortal-feature:hover {
+  border-left-color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.immortal-feature.active {
+  border-left-color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.15);
+}
+
+.feature-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.4);
+}
+
+/* ===== NAVIGATION DIVIDER ===== */
+
+.nav-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #4a5568, transparent);
+  margin: 16px 12px;
+  opacity: 0.6;
+}
+
+/* ===== IMMORTAL NOTICE ===== */
+
+.immortal-notice {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 16px 8px;
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.notice-icon {
+  width: 16px;
+  height: 16px;
+  color: #3b82f6;
+}
+
+.notice-text {
+  font-size: 0.7rem;
+  color: #a0aec0;
+  line-height: 1.4;
+  margin-bottom: 6px;
+  margin: 0;
+}
+
+.notice-benefit {
+  font-size: 0.7rem;
+  color: #10b981;
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ===== COMMON NAVIGATION SPACING ===== */
+
+.common-nav {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+
+@media (max-width: 768px) {
+  .immortal-badge {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .rank-number {
+    font-size: 1.5rem;
+  }
+
+  .title-text {
+    font-size: 0.8rem;
+  }
+
+  .immortal-notice {
+    margin: 12px 4px;
+    padding: 10px;
+  }
+
+  .feature-badge {
+    font-size: 0.5rem;
+    padding: 1px 4px;
+  }
+}
+
+/* ===== ENHANCED HOVER EFFECTS ===== */
+
+.immortal-feature .nav-icon {
+  transition: transform 0.2s ease;
+}
+
+.immortal-feature:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.immortal-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  transition: all 0.3s ease;
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+.immortal-feature:focus {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+.notice-text,
+.notice-benefit {
+  line-height: 1.5;
+}
+
+/* ===== ANIMATION FOR IMMORTAL BADGE ===== */
+
+@keyframes immortalGlow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+  }
+}
+
+.immortal-badge {
+  animation: immortalGlow 3s ease-in-out infinite;
 }

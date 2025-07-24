@@ -1,18 +1,28 @@
 <!-- couriers-knowledge-frontend/src/app/views/user/live-match/live-match.component.html -->
 
 <div class="live-match-container">
-  <h1>Partida Ao Vivo</h1>
+  <!-- Header com título alinhado à esquerda -->
+  <div class="page-header">
+    <h1>Partida Ao Vivo</h1>
+    <button
+      *ngIf="matchData"
+      class="refresh-btn"
+      (click)="resetForm()"
+      title="Nova análise">
+      Nova Análise
+    </button>
+  </div>
 
   <!-- Formulário de Status -->
   <div *ngIf="showInstructions || !matchData" class="status-form-section">
     <div class="instructions-card">
-      <h3>📋 Como usar</h3>
+      <h3>Como usar</h3>
       <ol class="instructions-list">
         <li *ngFor="let instruction of instructions">{{ instruction }}</li>
       </ol>
 
       <div class="tips-section">
-        <h4>💡 Dicas</h4>
+        <h4>Dicas</h4>
         <ul class="tips-list">
           <li *ngFor="let tip of systemTips">{{ tip }}</li>
         </ul>
@@ -20,7 +30,7 @@
     </div>
 
     <div class="status-input-card">
-      <h3>🎮 Cole o comando status aqui</h3>
+      <h3>Cole o comando status aqui</h3>
 
       <div class="textarea-wrapper">
         <textarea
@@ -37,7 +47,7 @@
             (click)="statusInput = ''"
             *ngIf="statusInput && !isProcessing"
             title="Limpar">
-            🗑️ Limpar
+            Limpar
           </button>
         </div>
       </div>
@@ -47,15 +57,15 @@
           class="analyze-btn"
           [disabled]="!statusInput || isProcessing"
           (click)="analyzeStatus()">
-          <span *ngIf="!isProcessing">🔍 Analisar Status</span>
-          <span *ngIf="isProcessing">⏳ Processando...</span>
+          <span *ngIf="!isProcessing">Analisar Status</span>
+          <span *ngIf="isProcessing">Processando...</span>
         </button>
 
         <button
           class="reset-btn"
           *ngIf="matchData"
           (click)="resetForm()">
-          🔄 Nova Análise
+          Nova Análise
         </button>
       </div>
 
@@ -73,26 +83,25 @@
     <div class="match-header">
       <div class="game-state">
         <h2>{{ matchData.gameState.translated }}</h2>
-        <small>{{ matchData.gameState.raw }}</small>
       </div>
 
-      <div class="match-stats">
-        <div class="stat-item">
-          <span class="stat-number">{{ matchData.statistics.humanPlayers }}</span>
-          <span class="stat-label">Humanos</span>
+      <div class="match-info">
+        <div class="info-item">
+          <span class="info-label">Total de Jogadores:</span>
+          <span class="info-value">{{ matchData.statistics.totalPlayers }}</span>
         </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ matchData.statistics.botPlayers }}</span>
-          <span class="stat-label">Bots</span>
+        <div class="info-item" *ngIf="hasEvaluations()">
+          <span class="info-label">Com Avaliações:</span>
+          <span class="info-value highlight">{{ matchData.statistics.evaluatedPlayers }}</span>
         </div>
-        <div class="stat-item highlight">
-          <span class="stat-number">{{ matchData.statistics.evaluatedPlayers }}</span>
-          <span class="stat-label">Avaliados</span>
+        <div class="info-item" *ngIf="matchData.evaluationsSummary.totalFound > 0">
+          <span class="info-label">Total de Avaliações:</span>
+          <span class="info-value">{{ matchData.evaluationsSummary.totalFound }}</span>
         </div>
       </div>
 
-      <button class="reset-btn-small" (click)="resetForm()" title="Nova análise">
-        🔄
+      <button class="refresh-btn-small" (click)="resetForm()" title="Nova análise">
+        <span class="refresh-icon">🔄</span>
       </button>
     </div>
 
@@ -101,7 +110,6 @@
       <!-- Time Radiant -->
       <div class="team-section radiant">
         <h3 class="team-title">
-          <span class="team-icon">☀️</span>
           Iluminados
         </h3>
 
@@ -118,16 +126,10 @@
                 {{ player.name }}
                 <span *ngIf="player.isBot" class="bot-badge">BOT</span>
               </div>
-
-              <div class="player-details">
-                <span class="slot">Slot {{ player.slot }}</span>
-                <span class="ping" *ngIf="!player.isBot">{{ player.ping }}ms</span>
-                <span class="state">{{ player.state }}</span>
-              </div>
             </div>
 
             <!-- Evaluation Stats -->
-            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+            <div *ngIf="player.hasEvaluations && player.stats && canViewDetails()" class="evaluation-stats">
               <div class="rating-display">
                 <span
                   class="rating-value"
@@ -152,21 +154,17 @@
             <!-- Actions -->
             <div class="player-actions">
               <button
-                *ngIf="player.hasEvaluations"
+                *ngIf="player.hasEvaluations && canViewDetails()"
                 class="details-btn"
                 (click)="showPlayerDetails(player)"
                 title="Ver avaliações">
-                📋 Detalhes
+                Detalhes
               </button>
 
-              <button
-                *ngIf="!player.isBot"
-                class="evaluate-btn"
-                [disabled]="isLimitReached"
-                (click)="evaluatePlayer(player)"
-                [title]="isLimitReached ? 'Limite de avaliações atingido' : 'Avaliar jogador'">
-                ⭐ Avaliar
-              </button>
+              <!-- Mensagem para usuários sem acesso -->
+              <div *ngIf="player.hasEvaluations && !canViewDetails()" class="premium-required">
+                <span class="premium-text">Premium necessário</span>
+              </div>
             </div>
           </div>
         </div>
@@ -175,8 +173,7 @@
       <!-- Time Dire -->
       <div class="team-section dire">
         <h3 class="team-title">
-          <span class="team-icon">🌙</span>
-          Sombrios
+          Temidos
         </h3>
 
         <div class="players-list">
@@ -192,16 +189,10 @@
                 {{ player.name }}
                 <span *ngIf="player.isBot" class="bot-badge">BOT</span>
               </div>
-
-              <div class="player-details">
-                <span class="slot">Slot {{ player.slot }}</span>
-                <span class="ping" *ngIf="!player.isBot">{{ player.ping }}ms</span>
-                <span class="state">{{ player.state }}</span>
-              </div>
             </div>
 
             <!-- Evaluation Stats -->
-            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
+            <div *ngIf="player.hasEvaluations && player.stats && canViewDetails()" class="evaluation-stats">
               <div class="rating-display">
                 <span
                   class="rating-value"
@@ -226,21 +217,17 @@
             <!-- Actions -->
             <div class="player-actions">
               <button
-                *ngIf="player.hasEvaluations"
+                *ngIf="player.hasEvaluations && canViewDetails()"
                 class="details-btn"
                 (click)="showPlayerDetails(player)"
                 title="Ver avaliações">
-                📋 Detalhes
+                Detalhes
               </button>
 
-              <button
-                *ngIf="!player.isBot"
-                class="evaluate-btn"
-                [disabled]="isLimitReached"
-                (click)="evaluatePlayer(player)"
-                [title]="isLimitReached ? 'Limite de avaliações atingido' : 'Avaliar jogador'">
-                ⭐ Avaliar
-              </button>
+              <!-- Mensagem para usuários sem acesso -->
+              <div *ngIf="player.hasEvaluations && !canViewDetails()" class="premium-required">
+                <span class="premium-text">Premium necessário</span>
+              </div>
             </div>
           </div>
         </div>
@@ -249,12 +236,30 @@
 
     <!-- Summary -->
     <div class="match-summary" *ngIf="matchData.evaluationsSummary.totalFound > 0">
-      <h4>📊 Resumo das Avaliações</h4>
-      <p>
-        Encontradas <strong>{{ matchData.evaluationsSummary.totalFound }}</strong> avaliações
-        para <strong>{{ matchData.evaluationsSummary.playersWithEvaluations }}</strong> jogadores:
-        <em>{{ matchData.evaluationsSummary.playerNames.join(', ') }}</em>
-      </p>
+      <h4>Resumo das Avaliações</h4>
+      <div class="summary-content">
+        <p>
+          Encontradas <strong>{{ matchData.evaluationsSummary.totalFound }}</strong> avaliações
+          para <strong>{{ matchData.evaluationsSummary.playersWithEvaluations }}</strong> jogadores.
+        </p>
+        <div class="evaluated-players-list">
+          <span class="players-label">Jogadores avaliados:</span>
+          <div class="players-tags">
+            <span
+              *ngFor="let playerName of matchData.evaluationsSummary.playerNames"
+              class="player-tag">
+              {{ playerName }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Evaluations Message -->
+    <div class="no-evaluations-message" *ngIf="matchData && !hasEvaluations()">
+      <h4>Primeira vez jogando com estes jogadores?</h4>
+      <p>Nenhum dos jogadores desta partida possui avaliações no seu histórico.</p>
+      <p>Este é o momento perfeito para conhecer novos estilos de jogo!</p>
     </div>
   </div>
 </div>
@@ -319,20 +324,8 @@
   </div>
 </div>
 
-<!-- Modal de Avaliação -->
-<div class="modal-overlay" *ngIf="isEvaluationModalVisible" (click)="closeEvaluationModal()">
-  <div class="modal-content evaluation-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Avaliar {{ selectedPlayerForEvaluation?.name }}</h3>
-      <button class="close-btn" (click)="closeEvaluationModal()">×</button>
-    </div>
-
-    <div class="modal-body">
-      <app-evaluation-form
-        [evaluationData]="selectedPlayerForEvaluation"
-        (formSubmitted)="onEvaluationSaved()"
-        (formClosed)="closeEvaluationModal()">
-      </app-evaluation-form>
-    </div>
-  </div>
-</div>
+<!-- Audio element for notification sound -->
+<audio #notificationSound preload="auto">
+  <source src="assets/sounds/notification.mp3" type="audio/mpeg">
+  <source src="assets/sounds/notification.ogg" type="audio/ogg">
+</audio>

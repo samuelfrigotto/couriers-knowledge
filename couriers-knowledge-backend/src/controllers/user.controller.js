@@ -128,24 +128,37 @@ exports.getUserStats = async (req, res) => {
     try {
         console.log(`🔍 Buscando estatísticas para usuário ${authorId} (Steam: ${userSteamId})`);
 
-        // ✅ QUERIES SIMPLIFICADAS E CORRIGIDAS
+        // ✅ QUERIES SIMPLIFICADAS E CORRIGIDAS + NOVOS CAMPOS IMMORTAL
         const [
             evaluationsResult, 
             userResult, 
             cachedMatchesResult,
-            // ✅ CORREÇÃO: Query direta usando evaluated_steam_id
             receivedEvaluationsResult,
             selfEvaluationsResult
         ] = await Promise.all([
             // Avaliações feitas pelo usuário
             db.query('SELECT rating, tags, evaluated_steam_id FROM evaluations WHERE author_id = $1', [authorId]),
-            // Dados do usuário
-            db.query('SELECT steam_username, avatar_url, created_at, account_status, api_calls_today FROM users WHERE id = $1', [authorId]),
+            // ✅ DADOS DO USUÁRIO + CAMPOS IMMORTAL
+            db.query(`
+                SELECT 
+                    steam_username, 
+                    avatar_url, 
+                    created_at, 
+                    account_status, 
+                    api_calls_today,
+                    mmr,
+                    is_immortal,
+                    immortal_rank,
+                    immortal_region,
+                    leaderboard_last_check
+                FROM users 
+                WHERE id = $1
+            `, [authorId]),
             // Partidas em cache
             db.query('SELECT * FROM matches WHERE user_id = $1 ORDER BY start_time DESC LIMIT 20', [authorId]),
-            // ✅ CORREÇÃO: Buscar avaliações recebidas usando evaluated_steam_id diretamente
+            // Avaliações recebidas
             db.query('SELECT rating FROM evaluations WHERE evaluated_steam_id = $1 AND author_id != $2', [userSteamId, authorId]),
-            // Autoavaliações (avaliações que o usuário fez de si mesmo)
+            // Autoavaliações
             db.query('SELECT rating FROM evaluations WHERE author_id = $1 AND evaluated_steam_id = $2', [authorId, userSteamId]),
         ]);
 
@@ -164,11 +177,46 @@ exports.getUserStats = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
+
+        // ✅ VERIFICAÇÃO E ATUALIZAÇÃO AUTOMÁTICA DE STATUS IMMORTAL
+        let isImmortalUpdated = user.is_immortal;
         
-        // --- CÁLCULO DA ANÁLISE DE TILT (CORRIGIDO) ---
+        // Se MMR >= 8500 mas flag não está ativa, atualizar
+        if (user.mmr >= 8500 && !user.is_immortal) {
+            console.log(`🔄 Atualizando status Immortal para usuário ${authorId} (MMR: ${user.mmr})`);
+            await db.query(
+                'UPDATE users SET is_immortal = TRUE WHERE id = $1',
+                [authorId]
+            );
+            isImmortalUpdated = true;
+        }
+        
+        // Se MMR < 8500 mas flag está ativa, desativar
+        if (user.mmr < 8500 && user.is_immortal) {
+            console.log(`🔄 Removendo status Immortal para usuário ${authorId} (MMR: ${user.mmr})`);
+            await db.query(
+                'UPDATE users SET is_immortal = FALSE WHERE id = $1',
+                [authorId]
+            );
+            isImmortalUpdated = false;
+        }
+
+        // ✅ VERIFICAR SE PRECISA ATUALIZAR DADOS DO LEADERBOARD
+        const needsLeaderboardUpdate = !user.leaderboard_last_check || 
+            (new Date() - new Date(user.leaderboard_last_check)) > (24 * 60 * 60 * 1000);
+        
+        if (isImmortalUpdated && needsLeaderboardUpdate) {
+            console.log(`🔍 Verificando leaderboard para usuário Immortal ${authorId}...`);
+            // TODO: Implementar verificação do leaderboard oficial
+            await db.query(
+                'UPDATE users SET leaderboard_last_check = CURRENT_TIMESTAMP WHERE id = $1',
+                [authorId]
+            );
+        }
+        
+        // --- CÁLCULO DA ANÁLISE DE TILT (MANTIDO ORIGINAL) ---
         console.log(`🔍 Calculando análise de tilt...`);
         
-        // Jogadores mal avaliados (nota <= 2.0)
         const lowRatedPlayerSteamIds = new Set(
             evaluations
                 .filter(e => parseFloat(e.rating) <= 2.0 && e.evaluated_steam_id)
@@ -188,7 +236,7 @@ exports.getUserStats = async (req, res) => {
                 const teammates = match.players.filter(p => 
                     p.is_radiant === userPlayerInfo.is_radiant && 
                     p.steam_id_64 !== userSteamId &&
-                    p.steam_id_64 // Garantir que tem steam_id
+                    p.steam_id_64
                 );
                 
                 const hasLowRatedTeammate = teammates.some(t => 
@@ -212,7 +260,7 @@ exports.getUserStats = async (req, res) => {
         console.log(`🏆 Vitórias nessas partidas: ${winsWithLowRatedTeammates}`);
         console.log(`📊 Taxa de vitória com tóxicos: ${tiltWinRate}%`);
 
-        // --- CÁLCULO DAS ATUALIZAÇÕES DIÁRIAS ---
+        // --- CÁLCULO DAS ATUALIZAÇÕES DIÁRIAS (MANTIDO ORIGINAL) ---
         const userCreationDate = new Date(user.created_at);
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -230,7 +278,7 @@ exports.getUserStats = async (req, res) => {
         const totalCallsLimit = totalUpdatesLimit * callsPerUpdate;
         const remainingUpdates = Math.floor((totalCallsLimit - (user.api_calls_today || 0)) / callsPerUpdate);
         
-        // --- ESTATÍSTICAS BÁSICAS ---
+        // --- ESTATÍSTICAS BÁSICAS (MANTIDAS ORIGINAIS) ---
         const totalEvaluations = evaluations.length;
         const averageRating = totalEvaluations > 0 ? 
             parseFloat((evaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalEvaluations).toFixed(2)) : 0;
@@ -241,17 +289,15 @@ exports.getUserStats = async (req, res) => {
         }, {});
         const mostUsedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a).slice(0, 5).map(([tag]) => tag);
 
-        // ✅ CORREÇÃO: Porcentagem real de jogadores avaliados
+        // ✅ PORCENTAGEM DE JOGADORES AVALIADOS (MANTIDA ORIGINAL)
         console.log(`🔍 Calculando porcentagem real de jogadores avaliados...`);
         
-        // Contar jogadores únicos avaliados (usando evaluated_steam_id)
         const uniqueEvaluatedPlayers = new Set(
             evaluations
                 .filter(e => e.evaluated_steam_id)
                 .map(e => e.evaluated_steam_id)
         );
 
-        // Contar jogadores únicos nas partidas (excluindo o próprio usuário)
         const uniquePlayersInMatches = new Set();
         detailedMatches.forEach(match => {
             if (match && match.players) {
@@ -273,7 +319,7 @@ exports.getUserStats = async (req, res) => {
         console.log(`✅ Jogadores únicos avaliados: ${totalUniqueEvaluatedPlayers}`);
         console.log(`📊 Porcentagem real: ${evaluationPercentage}%`);
 
-        // ✅ ESTATÍSTICAS DE AVALIAÇÕES RECEBIDAS
+        // ✅ ESTATÍSTICAS DE AVALIAÇÕES RECEBIDAS (MANTIDAS ORIGINAIS)
         const totalReceivedEvaluations = receivedEvaluations.length;
         const receivedAverageRating = totalReceivedEvaluations > 0 ? 
             parseFloat((receivedEvaluations.reduce((sum, e) => sum + parseFloat(e.rating), 0) / totalReceivedEvaluations).toFixed(2)) : 0;
@@ -283,7 +329,7 @@ exports.getUserStats = async (req, res) => {
         
         console.log(`📊 Avaliações recebidas: ${totalReceivedEvaluations} (média: ${receivedAverageRating})`);
 
-        // --- OUTRAS ESTATÍSTICAS (KDA, heróis, etc.) ---
+        // --- OUTRAS ESTATÍSTICAS (MANTIDAS ORIGINAIS) ---
         let winsLast20 = 0;
         let totalDuration = 0;
         let totalKills = 0;
@@ -324,8 +370,9 @@ exports.getUserStats = async (req, res) => {
             assists: (totalAssists / matchCount).toFixed(1)
         } : null;
 
-        // ✅ RESULTADO FINAL
+        // ✅ RESULTADO FINAL COM TODOS OS CAMPOS (ORIGINAIS + NOVOS)
         const stats = {
+            // ===== CAMPOS ORIGINAIS MANTIDOS =====
             steamUsername: user.steam_username,
             avatarUrl: user.avatar_url,
             accountCreatedAt: user.created_at,
@@ -339,12 +386,19 @@ exports.getUserStats = async (req, res) => {
             mostUsedHeroId: mostUsedHeroId ? parseInt(mostUsedHeroId) : null,
             mostFacedHeroId: mostFacedHeroId ? parseInt(mostFacedHeroId) : null,
             selfAverageRating,
-            totalReceivedEvaluations,    // ✅ Corrigido
-            receivedAverageRating,       // ✅ Corrigido
+            totalReceivedEvaluations,
+            receivedAverageRating,
             remainingUpdates: Math.max(0, remainingUpdates),
             totalUpdates: totalUpdatesLimit,
-            tiltWinRate,                 // ✅ Corrigido
-            averageKda: averageKda
+            tiltWinRate,
+            averageKda,
+            
+            // ===== NOVOS CAMPOS IMMORTAL =====
+            mmr: user.mmr,
+            isImmortal: isImmortalUpdated,
+            immortalRank: user.immortal_rank,
+            immortalRegion: user.immortal_region || 'americas',
+            leaderboardLastCheck: user.leaderboard_last_check
         };
 
         console.log(`✅ Estatísticas finais calculadas:`);
@@ -352,6 +406,7 @@ exports.getUserStats = async (req, res) => {
         console.log(`   - Média recebidas: ${receivedAverageRating}`);
         console.log(`   - % jogadores avaliados: ${evaluationPercentage}%`);
         console.log(`   - Taxa vitória c/ tóxicos: ${tiltWinRate}%`);
+        console.log(`   - MMR: ${user.mmr} | Immortal: ${isImmortalUpdated}`);
 
         res.status(200).json(stats);
 
