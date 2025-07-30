@@ -20,6 +20,7 @@ const stripeRoutes = require('./src/api/routes/stripe.routes');
 const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
 const immortalRoutes = require('./src/api/routes/immortal.routes'); // ✅ CAMINHO CORRIGIDO
 const dotaScraperRoute = require('./dotaLeaderboardScrapper');
+const knownPlayersRoutes = require('./src/api/routes/known.players.routes');
 
 const mmrVerificationRoutes = require('./src/api/routes/mmr.verification.routes');
 // 2. Inicializar o aplicativo Express
@@ -32,7 +33,7 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(cors());
 app.use(express.json());
-
+apiLimitsResetJob.start();
 // --- CONFIGURAÇÃO DA SESSÃO E PASSPORT ---
 app.use(session({
     secret: process.env.JWT_SECRET,
@@ -68,12 +69,11 @@ app.use('/api/status', statusRoutes);
 app.use('/api/immortal', immortalRoutes); // ✅ REGISTRAR ROTAS IMMORTAL
 app.use('/api', dotaScraperRoute);
 app.use('/api/mmr-verification', mmrVerificationRoutes);
+app.use('/api/known-players', knownPlayersRoutes);
  // Rotas existentes... 
 
 
 
-
-apiLimitsResetJob.start();
 
 // ===== ADICIONAR MIDDLEWARE DE CORS PARA LEADERBOARD =====
 app.use((req, res, next) => {

@@ -2,11 +2,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { I18nService, Language } from '../../core/i18n.service';
+import { CurrencyService, Currency } from '../../core/currency.service';
 import { AuthService } from '../../core/auth.service';
 import { UserService } from '../../core/user.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { MmrVerificationComponent } from '../mmr-verification/mmr-verification.component';
-import { Observable } from 'rxjs';
 
 interface UserProfile {
   id: number;
@@ -34,6 +34,10 @@ interface UserProfile {
           <div class="setting-label">
             <h3>{{ 'settings.language' | translate }}</h3>
             <p class="setting-description">{{ 'settings.language.description' | translate }}</p>
+            <div class="current-language-display">
+              <span class="current-label">{{ 'language.current' | translate }}:</span>
+              <span class="current-value">{{ currentLanguageInfo.flag }} {{ currentLanguageInfo.name }}</span>
+            </div>
           </div>
           <div class="setting-control">
             <select
@@ -41,11 +45,41 @@ interface UserProfile {
               [value]="currentLanguage"
               (change)="onLanguageChange($event)"
             >
+              <option value="" disabled>{{ 'language.select' | translate }}</option>
               <option
                 *ngFor="let lang of availableLanguages"
                 [value]="lang.code"
+                [selected]="lang.code === currentLanguage"
               >
                 {{ lang.flag }} {{ lang.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Configurações de Moeda -->
+        <div class="setting-section">
+          <div class="setting-label">
+            <h3>{{ 'settings.currency' | translate }}</h3>
+            <p class="setting-description">{{ 'settings.currency.description' | translate }}</p>
+            <div class="current-language-display">
+              <span class="current-label">{{ 'currency.current' | translate }}:</span>
+              <span class="current-value">{{ currentCurrencyInfo.symbol }} {{ currentCurrencyInfo.name }}</span>
+            </div>
+          </div>
+          <div class="setting-control">
+            <select
+              class="language-select"
+              [value]="currentCurrency"
+              (change)="onCurrencyChange($event)"
+            >
+              <option value="" disabled>{{ 'currency.select' | translate }}</option>
+              <option
+                *ngFor="let currency of availableCurrencies"
+                [value]="currency.code"
+                [selected]="currency.code === currentCurrency"
+              >
+                {{ currency.symbol }} {{ currency.name }}
               </option>
             </select>
           </div>
@@ -54,7 +88,7 @@ interface UserProfile {
         <!-- Seção de Verificação MMR (apenas para usuários não-admin e não-immortal) -->
         <div class="setting-section mmr-section" *ngIf="shouldShowMmrVerification">
           <div class="setting-label">
-            <h3>🎯 Verificação de MMR</h3>
+            <h3>Verificação de MMR</h3>
             <p class="setting-description">
               Comprove seu MMR para desbloquear recursos Premium automaticamente
             </p>
@@ -73,6 +107,10 @@ interface UserProfile {
           <div class="setting-control">
             <div class="account-info">
               <div class="info-row">
+                <span class="info-label">Usuário:</span>
+                <span class="info-value">{{ userProfile.steamUsername }}</span>
+              </div>
+              <div class="info-row">
                 <span class="info-label">Status:</span>
                 <span class="info-value" [ngClass]="'status-' + userProfile.accountStatus.toLowerCase()">
                   {{ userProfile.accountStatus }}
@@ -80,15 +118,11 @@ interface UserProfile {
               </div>
               <div class="info-row" *ngIf="userProfile.isAdmin">
                 <span class="info-label">Privilégio:</span>
-                <span class="info-value admin">👑 Administrador</span>
+                <span class="info-value admin">▲ Administrador</span>
               </div>
               <div class="info-row" *ngIf="userProfile.isImmortal">
                 <span class="info-label">Rank:</span>
-                <span class="info-value immortal">⭐ Immortal Player</span>
-              </div>
-              <div class="info-row" *ngIf="userProfile.mmr">
-                <span class="info-label">MMR:</span>
-                <span class="info-value">{{ userProfile.mmr }}</span>
+                <span class="info-value immortal">★ Immortal Player</span>
               </div>
             </div>
           </div>
@@ -104,7 +138,7 @@ interface UserProfile {
             <div class="system-info">
               <div class="info-row">
                 <span class="info-label">Versão:</span>
-                <span class="info-value">v0.0.27 Beta</span>
+                <span class="info-value">v1.0.0 Beta</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Servidor:</span>
@@ -114,12 +148,19 @@ interface UserProfile {
           </div>
         </div>
 
-        <div class="setting-info">
-          <div class="info-item">
-            <span class="info-label">{{ 'language.current' | translate }}:</span>
-            <span class="info-value">
-              {{ currentLanguageInfo.flag }} {{ currentLanguageInfo.name }}
-            </span>
+        <!-- ✅ BOTÃO LOGOUT ESTILIZADO -->
+        <div class="setting-section logout-section">
+          <div class="setting-label">
+            <h3>{{ 'settings.account.title' | translate }}</h3>
+            <p class="setting-description">{{ 'settings.account.description' | translate }}</p>
+          </div>
+          <div class="setting-control">
+            <button class="logout-button" (click)="logout()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+              </svg>
+              {{ 'settings.logout.button' | translate }}
+            </button>
           </div>
         </div>
       </div>
@@ -163,6 +204,11 @@ interface UserProfile {
       margin-top: 20px;
     }
 
+    .setting-section.logout-section {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
     .setting-label {
       flex: 1;
       margin-right: 20px;
@@ -176,10 +222,34 @@ interface UserProfile {
     }
 
     .setting-description {
-      margin: 0;
+      margin: 0 0 12px 0;
       color: rgba(255, 255, 255, 0.7);
       font-size: 14px;
       line-height: 1.4;
+    }
+
+    .current-language-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      margin-top: 8px;
+      max-width: fit-content;
+    }
+
+    .current-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .current-value {
+      color: #667eea;
+      font-weight: 600;
+      font-size: 14px;
     }
 
     .setting-control {
@@ -198,7 +268,7 @@ interface UserProfile {
       border-radius: 8px;
       color: white;
       font-size: 14px;
-      min-width: 160px;
+      min-width: 200px;
       transition: all 0.3s ease;
     }
 
@@ -216,6 +286,11 @@ interface UserProfile {
     .language-select option {
       background: #1a1a1a;
       color: white;
+      padding: 8px;
+    }
+
+    .language-select option:disabled {
+      color: rgba(255, 255, 255, 0.5);
     }
 
     .account-info,
@@ -265,27 +340,62 @@ interface UserProfile {
       color: #f59e0b;
     }
 
-    .setting-info {
-      margin-top: 30px;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-    }
-
-    .info-item {
+    /* ✅ ESTILO DO BOTÃO LOGOUT */
+    .logout-button {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-width: 160px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .info-item .info-label {
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.8);
+    .logout-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+      transition: left 0.5s ease;
     }
 
-    .info-item .info-value {
-      color: #667eea;
-      font-weight: 500;
+    .logout-button:hover::before {
+      left: 100%;
+    }
+
+    .logout-button:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+    }
+
+    .logout-button:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+    }
+
+    .logout-button svg {
+      transition: transform 0.3s ease;
+    }
+
+    .logout-button:hover svg {
+      transform: translateX(3px);
     }
 
     @media (max-width: 768px) {
@@ -311,6 +421,11 @@ interface UserProfile {
       .system-info {
         min-width: auto;
       }
+
+      .logout-button {
+        width: 100%;
+        min-width: auto;
+      }
     }
   `]
 })
@@ -318,19 +433,42 @@ export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private userService = inject(UserService);
 
+  // Language properties
   currentLanguage: string;
   currentLanguageInfo: Language;
   availableLanguages: Language[];
+
+  // Currency properties
+  currentCurrency: string;
+  currentCurrencyInfo: Currency;
+  availableCurrencies: Currency[];
+
   userProfile: UserProfile | null = null;
 
-  constructor(private i18nService: I18nService) {
+  constructor(
+    private i18nService: I18nService,
+    private currencyService: CurrencyService
+  ) {
+    // Initialize language
     this.availableLanguages = this.i18nService.availableLanguages;
     this.currentLanguage = this.i18nService.getCurrentLanguage();
     this.currentLanguageInfo = this.i18nService.getCurrentLanguageInfo();
 
+    // Initialize currency
+    this.availableCurrencies = this.currencyService.availableCurrencies;
+    this.currentCurrency = this.currencyService.getCurrentCurrency();
+    this.currentCurrencyInfo = this.currencyService.getCurrentCurrencyInfo();
+
+    // Subscribe to language changes
     this.i18nService.currentLanguage$.subscribe(lang => {
       this.currentLanguage = lang;
       this.currentLanguageInfo = this.i18nService.getCurrentLanguageInfo();
+    });
+
+    // Subscribe to currency changes
+    this.currencyService.currentCurrency$.subscribe(currency => {
+      this.currentCurrency = currency;
+      this.currentCurrencyInfo = this.currencyService.getCurrentCurrencyInfo();
     });
   }
 
@@ -393,8 +531,30 @@ export class SettingsComponent implements OnInit {
     return this.userProfile?.isAdmin !== true && this.userProfile?.isImmortal !== true;
   }
 
+  /**
+   * Método para mudança de idioma
+   */
   onLanguageChange(event: any): void {
     const selectedLanguage = event.target.value;
-    this.i18nService.setCurrentLanguage(selectedLanguage);
+    if (selectedLanguage && selectedLanguage !== this.currentLanguage) {
+      this.i18nService.setCurrentLanguage(selectedLanguage);
+    }
+  }
+
+  /**
+   * Método para mudança de moeda
+   */
+  onCurrencyChange(event: any): void {
+    const selectedCurrency = event.target.value;
+    if (selectedCurrency && selectedCurrency !== this.currentCurrency) {
+      this.currencyService.setCurrentCurrency(selectedCurrency);
+    }
+  }
+
+  /**
+   * ✅ MÉTODO LOGOUT
+   */
+  logout(): void {
+    this.authService.logout();
   }
 }

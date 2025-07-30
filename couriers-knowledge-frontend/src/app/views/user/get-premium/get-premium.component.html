@@ -1,4 +1,4 @@
-<!-- get-premium.component.html - VERSÃO LIMPA SEM DEPOIMENTOS -->
+<!-- src/app/views/user/get-premium/get-premium.component.html -->
 <div class="floating-elements">
   <div class="floating-circle circle-1"></div>
   <div class="floating-circle circle-2"></div>
@@ -14,7 +14,7 @@
 
   <!-- Error State -->
   <div *ngIf="error && !isLoading" class="error-container">
-    <h3>⚠️ {{ error }}</h3>
+    <h3>▲ {{ error }}</h3>
     <button class="retry-btn" (click)="loadPlans()">{{ 'premium.retryButton' | translate }}</button>
   </div>
 
@@ -34,8 +34,9 @@
       >
         <h3 class="plan-name">{{ plan.name }}</h3>
 
+        <!-- Preço Principal - CORRIGIDO -->
         <div class="plan-price" *ngIf="plan.price !== null && !plan.comingSoon; else comingSoonPrice">
-          R$ {{ plan.price | number:'1.2-2' }}
+          {{ plan.display_amount }}
         </div>
         <ng-template #comingSoonPrice>
           <div class="plan-price">{{ 'premium.comingSoon' | translate }}</div>
@@ -43,60 +44,75 @@
 
         <div class="plan-period">{{ plan.period }}</div>
 
+        <!-- Equivalente Mensal (se houver) -->
+        <div *ngIf="plan.monthly_equivalent && !plan.comingSoon" class="monthly-equivalent">
+          {{ plan.monthly_equivalent }}
+        </div>
+
+        <!-- Total do Período -->
         <div class="plan-total">
           <div class="plan-total-label">{{ plan.comingSoon ? ('premium.status' | translate) : ('premium.totalPeriod' | translate) }}</div>
           <div class="plan-total-price">{{ plan.total }}</div>
-          <div *ngIf="plan.monthly_equivalent" class="monthly-equivalent">
-            {{ plan.monthly_equivalent }}
-          </div>
         </div>
 
+        <!-- Features -->
         <ul class="plan-features">
           <li *ngFor="let feature of plan.features">
             <span [class]="feature.included ? 'check-icon' : 'x-icon'">
-              {{ feature.included ? '✅' : '❌' }}
+              {{ feature.included ? '✓' : '✗' }}
             </span>
             {{ feature.text }}
           </li>
         </ul>
 
+        <!-- Action Button -->
         <button
           class="plan-button"
           [class]="plan.buttonClass"
-          [disabled]="plan.comingSoon"
+          [class.loading]="isProcessing(plan.id)"
+          [disabled]="plan.comingSoon || isProcessing(plan.id)"
+          (click)="onSelectPlan(plan)"
         >
-          {{ plan.buttonText }}
+          <span *ngIf="!isProcessing(plan.id)">{{ plan.buttonText }}</span>
+          <span *ngIf="isProcessing(plan.id)">Processando...</span>
         </button>
+
+
+        <div class="popular-badge" *ngIf="plan.popular">
+          {{ 'premium.mostPopular' | translate }}
+        </div>
+        <!-- ✅ BADGE EM PRODUÇÃO TRADUZIDA -->
+        <div class="coming-soon-badge" *ngIf="plan.comingSoon">
+          {{ 'premium.inProduction' | translate }}
+        </div>
       </div>
     </div>
 
     <!-- FAQ Section -->
     <div class="faq-section">
       <h2 class="faq-title">{{ 'premium.faq.title' | translate }}</h2>
+
       <div class="faq-grid">
         <div class="faq-item">
           <h4>{{ 'premium.faq.security.title' | translate }}</h4>
           <p>{{ 'premium.faq.security.content' | translate }}</p>
         </div>
+
         <div class="faq-item">
           <h4>{{ 'premium.faq.export.title' | translate }}</h4>
           <p>{{ 'premium.faq.export.content' | translate }}</p>
         </div>
+
         <div class="faq-item">
           <h4>{{ 'premium.faq.activation.title' | translate }}</h4>
           <p>{{ 'premium.faq.activation.content' | translate }}</p>
         </div>
+
         <div class="faq-item">
           <h4>{{ 'premium.faq.features.title' | translate }}</h4>
           <p>{{ 'premium.faq.features.content' | translate }}</p>
         </div>
       </div>
-    </div>
-
-    <!-- Call to Action Final -->
-    <div class="final-cta">
-      <h2>{{ 'premium.finalCta.title' | translate }}</h2>
-      <p>{{ 'premium.finalCta.subtitle' | translate }}</p>
     </div>
   </div>
 </div>

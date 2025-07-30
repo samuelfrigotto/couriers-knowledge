@@ -1,6 +1,4 @@
-// couriers-knowledge-backend/src/jobs/resetApiLimits.js
-// Job para resetar os contadores de API diariamente
-
+// src/jobs/resetApiLimits.js - VERSÃO FINAL SEM NOVA COLUNA
 const cron = require('node-cron');
 const db = require('../config/database');
 
@@ -9,7 +7,6 @@ class ApiLimitsResetJob {
     this.isRunning = false;
   }
 
-  // Função principal que executa o reset
   async resetApiLimits() {
     if (this.isRunning) {
       console.log('⚠️ Reset já está executando, pulando...');
@@ -23,15 +20,11 @@ class ApiLimitsResetJob {
       console.log('🔄 [CRON] Iniciando reset diário dos contadores de API...');
       console.log(`📅 Horário: ${startTime.toLocaleString('pt-BR')}`);
 
-      // Query para resetar contadores de usuários que não fizeram chamadas hoje
+      // ✅ CORRIGIDO: Reseta TODOS os usuários (sem WHERE)
       const resetQuery = `
         UPDATE users 
         SET 
-          api_calls_today = 0,
-          last_api_call_date = CURRENT_DATE
-        WHERE 
-          last_api_call_date < CURRENT_DATE 
-          OR last_api_call_date IS NULL
+          api_calls_today = 0
         RETURNING id, steam_username, api_calls_today;
       `;
 
@@ -47,7 +40,7 @@ class ApiLimitsResetJob {
       if (result.rowCount > 0) {
         console.log(`👥 Primeiros 5 usuários resetados:`);
         result.rows.slice(0, 5).forEach(user => {
-          console.log(`   - ${user.steam_username} (ID: ${user.id})`);
+          console.log(`   - ${user.steam_username} (ID: ${user.id}) - api_calls_today: ${user.api_calls_today}`);
         });
         
         if (result.rowCount > 5) {
@@ -55,7 +48,6 @@ class ApiLimitsResetJob {
         }
       }
 
-      // Estatísticas adicionais
       await this.logStatistics();
 
     } catch (error) {
@@ -66,7 +58,6 @@ class ApiLimitsResetJob {
     }
   }
 
-  // Função para logar estatísticas do sistema
   async logStatistics() {
     try {
       const statsQuery = `
@@ -74,7 +65,8 @@ class ApiLimitsResetJob {
           COUNT(*) as total_users,
           COUNT(CASE WHEN account_status = 'Premium' THEN 1 END) as premium_users,
           COUNT(CASE WHEN account_status = 'Free' THEN 1 END) as free_users,
-          COUNT(CASE WHEN api_calls_today > 0 THEN 1 END) as users_with_calls_today
+          COUNT(CASE WHEN api_calls_today > 0 THEN 1 END) as users_with_calls_today,
+          COUNT(CASE WHEN DATE(last_api_call_date) = CURRENT_DATE THEN 1 END) as users_used_today
         FROM users;
       `;
 
@@ -86,50 +78,50 @@ class ApiLimitsResetJob {
       console.log(`   💎 Usuários Premium: ${stats.premium_users}`);
       console.log(`   🆓 Usuários Free: ${stats.free_users}`);
       console.log(`   📞 Usuários com chamadas hoje: ${stats.users_with_calls_today}`);
+      console.log(`   📅 Usuários que usaram hoje: ${stats.users_used_today}`);
 
     } catch (error) {
       console.error('❌ [CRON] Erro ao buscar estatísticas:', error);
     }
   }
 
-  // Função para testar o reset manualmente
-  async testReset() {
-    console.log('🧪 [TEST] Executando reset manual para teste...');
-    await this.resetApiLimits();
-  }
-
-  // Inicia o cron job
   start() {
     console.log('🚀 [CRON] Iniciando agendador de reset de API...');
     
-    // Executa todo dia à meia-noite (00:00)
-    // Formato: segundo minuto hora dia mês dia-da-semana
     const cronExpression = '0 0 * * *';
     
     cron.schedule(cronExpression, () => {
+      console.log('⏰ [CRON] Executando reset diário automático...');
       this.resetApiLimits();
     }, {
       scheduled: true,
-      timezone: "America/Sao_Paulo" // Fuso horário brasileiro
+      timezone: "America/Sao_Paulo"
     });
 
     console.log('✅ [CRON] Job agendado para executar diariamente à meia-noite (GMT-3)');
     console.log('📋 [CRON] Expressão cron:', cronExpression);
     
-    // Executa um reset inicial na inicialização (opcional)
-    console.log('🔄 [CRON] Executando reset inicial...');
-    setTimeout(() => {
-      this.resetApiLimits();
-    }, 2000); // Aguarda 2 segundos para o servidor estar totalmente inicializado
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔄 [CRON] Executando reset inicial (desenvolvimento)...');
+      setTimeout(() => {
+        this.resetApiLimits();
+      }, 3000);
+    }
+
+    console.log(`🕐 [CRON] Próximo reset será à meia-noite (horário de Brasília)`);
+    console.log(`🌎 [CRON] Timezone configurada: America/Sao_Paulo`);
   }
 
-  // Para o cron job (para testes ou shutdown)
   stop() {
     console.log('🛑 [CRON] Parando agendador de reset de API...');
     cron.destroy();
   }
 
-  // Função para verificar status do job
+  async testReset() {
+    console.log('🧪 [TEST] Executando reset manual para teste...');
+    await this.resetApiLimits();
+  }
+
   getStatus() {
     return {
       isRunning: this.isRunning,
@@ -139,13 +131,9 @@ class ApiLimitsResetJob {
   }
 }
 
-// Criar instância do job
 const apiLimitsResetJob = new ApiLimitsResetJob();
-
-// Exportar para uso no servidor
 module.exports = apiLimitsResetJob;
 
-// Se executado diretamente (para testes)
 if (require.main === module) {
   console.log('🧪 Executando reset manual...');
   apiLimitsResetJob.testReset().then(() => {

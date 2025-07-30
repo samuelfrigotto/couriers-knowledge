@@ -1,405 +1,441 @@
 <div class="immortal-live-container">
-  <!-- Header Immortal -->
-  <div class="page-header">
+  <!-- Header Compacto -->
+  <header class="page-header">
     <div class="header-content">
-      <h1>Análise Ao Vivo - Immortal</h1>
-      <!-- 1. ADICIONAR NO HEADER DA PÁGINA (após o título) -->
-<div class="leaderboard-status">
-  <div class="status-info">
-    <span class="status-label">Leaderboard:</span>
-    <span class="status-value">{{ getLeaderboardStatus() }}</span>
-  </div>
-  
-  <div class="status-actions">
-    <button 
+      <div class="title-section">
+        <h1>Análise Ao Vivo</h1>
+        <div class="immortal-badge-small">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+          </svg>
+          <span class="rank">#{{ userInfo?.immortalRank }}</span>
+          <span class="region">{{ userInfo?.immortalRegion | uppercase }}</span>
+        </div>
+      </div>
+
+      <button *ngIf="matchData" class="refresh-btn" (click)="resetForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+        Nova Análise
+      </button>
+    </div>
+  </header>
+
+  <!-- Status do Leaderboard -->
+  <div class="leaderboard-status">
+    <div class="status-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+      </svg>
+      <span class="status-label">Leaderboard:</span>
+      <span class="status-value">{{ getLeaderboardStatus() }}</span>
+    </div>
+
+    <button
       class="refresh-leaderboard-btn"
       (click)="refreshLeaderboard()"
-      [disabled]="immortalService.isLoading"
-      title="Atualizar leaderboard (novo scraping)">
-      {{ immortalService.isLoading ? '⏳' : '🔄' }} Atualizar
+      [disabled]="immortalService.isLoading">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+      </svg>
+      {{ immortalService.isLoading ? 'Atualizando...' : 'Atualizar' }}
     </button>
   </div>
-</div>
 
-<!-- 2. ADICIONAR LOADING INDICATOR QUANDO FAZENDO CROSS-REFERENCE -->
-<div *ngIf="isEnhancing" class="enhancement-progress">
-  <div class="progress-content">
-    <div class="progress-icon">🔄</div>
-    <div class="progress-text">
-      <h4>Fazendo cross-reference com leaderboard oficial...</h4>
-      <p>Verificando nomes dos jogadores contra o ranking Immortal (dados reais via Puppeteer)</p>
-    </div>
-  </div>
-</div>
-
-<!-- 3. MELHORAR O DISPLAY DOS STATS IMMORTAL (no match-header) -->
-<div class="immortal-stats">
-  <div class="stat-item highlight">
-    <span class="stat-number">{{ getImmortalPlayersCount() }}</span>
-    <span class="stat-label">No Leaderboard</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-number">{{ matchData?.statistics?.totalPlayers }}</span>
-    <span class="stat-label">Total Players</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-number">{{ leaderboardData?.totalPlayers || 0 }}</span>
-    <span class="stat-label">Leaderboard Size</span>
-  </div>
-</div>
-
-      <div class="immortal-badge-small">
-        <span class="rank">#{{ userInfo?.immortalRank }}</span>
-        <span class="region">{{ userInfo?.immortalRegion | uppercase }}</span>
+  <!-- Progress do Cross-Reference -->
+  <div *ngIf="isEnhancing" class="enhancement-progress">
+    <div class="progress-content">
+      <div class="progress-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+        </svg>
+      </div>
+      <div class="progress-text">
+        <h4>Cross-reference com leaderboard</h4>
+        <p>Verificando jogadores contra ranking oficial</p>
       </div>
     </div>
-    <button
-      *ngIf="matchData"
-      class="refresh-btn"
-      (click)="resetForm()"
-      title="Nova análise">
-      Nova Análise
-    </button>
   </div>
 
-  <!-- Immortal Notice -->
-  <div class="immortal-notice-banner" *ngIf="showInstructions">
+  <!-- Banner Immortal -->
+  <div *ngIf="showInstructions" class="immortal-notice-banner">
     <div class="notice-content">
-      <div class="notice-icon">⚡</div>
+      <div class="notice-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M13 10V3L4 14h6v7l9-11h-6z"/>
+        </svg>
+      </div>
       <div class="notice-text">
         <h3>Modo Exclusivo Immortal</h3>
-        <p>Funcionalidade especializada para jogadores 8.5k+ MMR com cross-reference automático do leaderboard oficial.</p>
+        <p>Cross-reference automático com leaderboard oficial para jogadores 8.5k+ MMR</p>
       </div>
     </div>
   </div>
 
   <!-- Formulário de Status -->
   <div *ngIf="showInstructions || !matchData" class="status-form-section">
-    <div class="instructions-card immortal-style">
-      <h3>Como usar - Modo Immortal</h3>
+    <div class="instructions-card">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+        </svg>
+        Como usar
+      </h3>
+
       <ol class="instructions-list">
         <li *ngFor="let instruction of instructions">{{ instruction }}</li>
       </ol>
 
       <div class="tips-section">
-        <h4>Recursos Exclusivos</h4>
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+          </svg>
+          Recursos Exclusivos
+        </h4>
         <ul class="tips-list">
           <li *ngFor="let tip of systemTips">{{ tip }}</li>
         </ul>
       </div>
     </div>
 
-    <div class="status-input-card immortal-style">
-      <h3>Cole o comando status aqui</h3>
+    <div class="status-input-card">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        Status do Dota 2
+      </h3>
 
       <div class="textarea-wrapper">
         <textarea
           [(ngModel)]="statusInput"
-          placeholder="Cole aqui o resultado completo do comando 'status' do Dota 2..."
-          class="status-textarea immortal-textarea"
-          rows="10"
+          placeholder="Cole aqui o resultado do comando 'status'..."
+          class="status-textarea"
+          rows="8"
           [disabled]="isProcessing">
         </textarea>
-
-        <div class="input-actions">
-          <button
-            class="clear-btn"
-            (click)="statusInput = ''"
-            *ngIf="statusInput && !isProcessing"
-            title="Limpar">
-            Limpar
-          </button>
-        </div>
       </div>
 
       <div class="form-actions">
         <button
-          class="analyze-btn immortal-btn"
-          [disabled]="!statusInput || isProcessing"
-          (click)="analyzeStatus()">
-          <span *ngIf="!isProcessing">🔍 Analisar Status</span>
-          <span *ngIf="isProcessing">⏳ Processando...</span>
+          *ngIf="statusInput && !isProcessing"
+          class="clear-btn"
+          (click)="statusInput = ''">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+          Limpar
         </button>
 
         <button
-          class="reset-btn"
-          *ngIf="matchData"
-          (click)="resetForm()">
-          Nova Análise
+          class="analyze-btn"
+          [disabled]="!statusInput || isProcessing"
+          (click)="analyzeStatus()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          {{ isProcessing ? 'Processando...' : 'Analisar' }}
         </button>
       </div>
 
-      <!-- Error Display -->
+      <!-- Error -->
       <div *ngIf="error" class="error-message">
-        <span class="error-icon">❌</span>
-        <span>{{ error }}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        </svg>
+        {{ error }}
       </div>
     </div>
   </div>
 
-  <!-- Enhancement Progress -->
-  <div *ngIf="isEnhancing" class="enhancement-progress">
-    <div class="progress-content">
-      <div class="progress-icon">🔄</div>
-      <div class="progress-text">
-        <h4>Fazendo cross-reference com leaderboard oficial...</h4>
-        <p>Verificando nomes dos jogadores contra o ranking Immortal</p>
+  <!-- Seleção de Times -->
+  <div *ngIf="showTeamSelection" class="team-selection-section">
+    <div class="selection-header">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Assinar Jogadores aos Times
+      </h3>
+      <p>Use as setas para mover cada jogador para o time correto. Jogadores com avaliações aparecem primeiro.</p>
+    </div>
+
+    <!-- Jogadores Não Assignados -->
+    <div *ngIf="unassignedPlayers.length > 0" class="unassigned-section">
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.5-12h-8l-2.5 12H12v6h8z"/>
+        </svg>
+        Jogadores Sem Time ({{ unassignedPlayers.length }})
+      </h4>
+
+      <div class="unassigned-players">
+        <div *ngFor="let player of unassignedPlayers" class="unassigned-player">
+          <div class="player-info">
+            <div class="player-name-section">
+              <span class="player-name">{{ player.name }}</span>
+
+              <!-- Indicators -->
+              <div class="player-indicators">
+                <span *ngIf="hasPlayerEvaluation(player)" class="evaluation-indicator" title="Tem avaliações">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  {{ getPlayerEvaluationInfo(player) }}
+                </span>
+
+                <span *ngIf="isImmortalPlayer(player)" class="immortal-indicator" title="Jogador Immortal">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+                  </svg>
+                  #{{ getImmortalData(player)?.rank }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Official Name -->
+            <span *ngIf="isImmortalPlayer(player)" class="official-name">
+              {{ getImmortalData(player)?.officialName }}
+            </span>
+          </div>
+
+          <!-- Team Assignment Buttons -->
+          <div class="team-assignment-buttons">
+            <button
+              class="assign-btn radiant-btn"
+              (click)="assignPlayerToTeam(player, 'radiant')"
+              title="Assignar ao Radiant">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 16.09l-4.58-4.59 4.58-4.59L14 5.5l-6 6 6 6z"/>
+              </svg>
+              Radiant
+            </button>
+
+            <button
+              class="assign-btn dire-btn"
+              (click)="assignPlayerToTeam(player, 'dire')"
+              title="Assignar ao Dire">
+              Dire
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59 16.09l4.58-4.59-4.58-4.59L10 5.5l6 6-6 6z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview dos Times -->
+    <div class="teams-preview">
+      <div class="team-preview radiant-preview">
+        <div class="team-preview-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          <span>Radiant ({{ getTeamPlayers('radiant').length }}/5)</span>
+        </div>
+
+        <div class="team-preview-players">
+          <div *ngFor="let player of getTeamPlayers('radiant')" class="preview-player">
+            <span class="preview-player-name">{{ player.name }}</span>
+            <button
+              class="remove-btn"
+              (click)="unassignPlayer(player)"
+              title="Remover do time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-preview dire-preview">
+        <div class="team-preview-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 6L12 10.5 8.5 8 12 5.5 15.5 8zM12 18.5L8.5 16 12 13.5 15.5 16 12 18.5z"/>
+          </svg>
+          <span>Dire ({{ getTeamPlayers('dire').length }}/5)</span>
+        </div>
+
+        <div class="team-preview-players">
+          <div *ngFor="let player of getTeamPlayers('dire')" class="preview-player">
+            <span class="preview-player-name">{{ player.name }}</span>
+            <button
+              class="remove-btn"
+              (click)="unassignPlayer(player)"
+              title="Remover do time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finalizar Seleção -->
+    <div class="finalize-section">
+      <button
+        *ngIf="isTeamSelectionComplete()"
+        class="finalize-btn"
+        (click)="finalizeTeamSelection()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        Confirmar Times e Continuar
+      </button>
+
+      <div *ngIf="!isTeamSelectionComplete()" class="selection-status">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+        </svg>
+        Assine todos os {{ unassignedPlayers.length }} jogadores restantes aos times
       </div>
     </div>
   </div>
 
   <!-- Resultados da Partida -->
-  <div *ngIf="matchData && !showInstructions" class="match-results immortal-results">
-    <!-- Header da Partida Enhanced -->
-    <div class="match-header immortal-header">
+  <div *ngIf="matchData && !showInstructions && !showTeamSelection" class="match-results">
+    <!-- Header da Partida -->
+    <div class="match-header">
       <div class="game-state">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
         <h2>{{ matchData.gameState.translated }}</h2>
       </div>
 
       <div class="immortal-stats">
-        <div class="stat-item">
+        <div class="stat-item highlight">
           <span class="stat-number">{{ getImmortalPlayersCount() }}</span>
-          <span class="stat-label">No Leaderboard</span>
+          <span class="stat-label">Immortal</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ matchData.statistics.totalPlayers }}</span>
-          <span class="stat-label">Total Players</span>
+          <span class="stat-label">Total</span>
         </div>
-        <div class="stat-item highlight">
+        <div class="stat-item">
           <span class="stat-number">{{ matchData.statistics.evaluatedPlayers }}</span>
-          <span class="stat-label">Com Avaliações</span>
+          <span class="stat-label">Avaliados</span>
         </div>
       </div>
-
-      <button class="refresh-btn-small" (click)="resetForm()" title="Nova análise">
-        🔄
-      </button>
     </div>
 
-    <!-- Times Enhanced -->
-    <div class="teams-container immortal-teams">
-      <!-- Time Radiant -->
-      <div class="team-section radiant immortal-team">
-        <h3 class="team-title">Iluminados</h3>
+    <!-- Times -->
+    <div class="immortal-teams">
+      <!-- Radiant -->
+      <div class="team-section radiant">
+        <div class="team-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          <span class="team-name">Radiant</span>
+        </div>
 
         <div class="players-list">
           <div
-            *ngFor="let player of getEnhancedPlayersByTeam('radiant')"
-            class="player-card immortal-player"
-            [class.has-evaluations]="player.hasEvaluations"
-            [class.is-bot]="player.isBot"
-            [class.is-immortal]="player.leaderboardData?.isVerified">
+            *ngFor="let player of getTeamPlayers('radiant')"
+            class="player-item"
+            [class.immortal-player]="isImmortalPlayer(player)">
 
-            <!-- Player Info Enhanced -->
-            <div class="player-info">
-              <div class="player-names">
-                <div class="steam-name">{{ player.name }}</div>
-                <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
-                  {{ player.leaderboardData?.officialName }}
-                </div>
+            <div class="player-header">
+              <span class="player-name">{{ player.name }}</span>
+
+              <div *ngIf="isImmortalPlayer(player)" class="player-immortal-info">
+                <span class="official-name">{{ getImmortalData(player)?.officialName }}</span>
+                <span class="rank-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+                  </svg>
+                  #{{ getImmortalData(player)?.rank }}
+                </span>
               </div>
-              <span *ngIf="player.isBot" class="bot-badge">BOT</span>
-              <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
-                #{{ player.leaderboardData?.rank }}
+            </div>
+
+            <div *ngIf="hasNameMatch(player)" class="match-confidence">
+              <span class="confidence-label">Confiança:</span>
+              <span class="confidence-value" [ngClass]="getConfidenceClass(getNameMatch(player)?.confidence || 0)">
+                {{ getNameMatch(player)?.confidence }}%
               </span>
             </div>
 
-            <!-- Name Match Confidence -->
-            <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
-              <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
-                <span class="confidence-label">Match:</span>
-                <span class="confidence-value" >
-                  {{ player.nameMatch.confidence }}%
-                </span>
-              </div>
-              <div *ngIf="!player.leaderboardData?.isVerified && player.nameMatch.suggestions.length > 0"
-                   class="suggestions">
-                <span class="suggestions-label">Similar:</span>
-                <span class="suggestion" *ngFor="let suggestion of player.nameMatch.suggestions.slice(0, 1)">
-                  {{ suggestion }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Evaluation Stats -->
-            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
-              <div class="rating-display">
-                <span
-                  class="rating-value"
-                  [style.color]="getRatingColor(player.stats.averageRating)">
-                  {{ formatRating(player.stats.averageRating) }}/5
-                </span>
-                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="player-actions">
-              <button
-                *ngIf="player.hasEvaluations"
-                class="details-btn immortal-btn-small"
-                (click)="showPlayerDetails(player)"
-                title="Ver avaliações">
-                Detalhes
-              </button>
+            <div *ngIf="hasSuggestions(player)" class="suggestions">
+              <span class="suggestions-label">Similar:</span>
+              <span *ngFor="let suggestion of getNameMatch(player)?.suggestions" class="suggestion">
+                {{ suggestion }}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Time Dire -->
-      <div class="team-section dire immortal-team">
-        <h3 class="team-title">Temidos</h3>
+      <!-- Dire -->
+      <div class="team-section dire">
+        <div class="team-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 6L12 10.5 8.5 8 12 5.5 15.5 8zM12 18.5L8.5 16 12 13.5 15.5 16 12 18.5z"/>
+          </svg>
+          <span class="team-name">Dire</span>
+        </div>
 
         <div class="players-list">
           <div
-            *ngFor="let player of getEnhancedPlayersByTeam('dire')"
-            class="player-card immortal-player"
-            [class.has-evaluations]="player.hasEvaluations"
-            [class.is-bot]="player.isBot"
-            [class.is-immortal]="player.leaderboardData?.isVerified">
+            *ngFor="let player of getTeamPlayers('dire')"
+            class="player-item"
+            [class.immortal-player]="isImmortalPlayer(player)">
 
-            <!-- Player Info Enhanced -->
-            <div class="player-info">
-              <div class="player-names">
-                <div class="steam-name">{{ player.name }}</div>
-                <div *ngIf="player.leaderboardData?.isVerified" class="official-name">
-                  {{ player.leaderboardData?.officialName }}
-                </div>
+            <div class="player-header">
+              <span class="player-name">{{ player.name }}</span>
+
+              <div *ngIf="isImmortalPlayer(player)" class="player-immortal-info">
+                <span class="official-name">{{ getImmortalData(player)?.officialName }}</span>
+                <span class="rank-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+                  </svg>
+                  #{{ getImmortalData(player)?.rank }}
+                </span>
               </div>
-              <span *ngIf="player.isBot" class="bot-badge">BOT</span>
-              <span *ngIf="player.leaderboardData?.isVerified" class="immortal-rank-badge">
-                #{{ player.leaderboardData?.rank }}
+            </div>
+
+            <div *ngIf="hasNameMatch(player)" class="match-confidence">
+              <span class="confidence-label">Confiança:</span>
+              <span class="confidence-value" [ngClass]="getConfidenceClass(getNameMatch(player)?.confidence || 0)">
+                {{ getNameMatch(player)?.confidence }}%
               </span>
             </div>
 
-            <!-- Name Match Confidence -->
-            <div *ngIf="player.nameMatch && !player.isBot" class="name-match-info">
-              <div *ngIf="player.leaderboardData?.isVerified" class="match-confidence">
-                <span class="confidence-label">Match:</span>
-                <span class="confidence-value">
-                  {{ player.nameMatch.confidence }}%
-                </span>
-              </div>
-              <div *ngIf="!player.leaderboardData?.isVerified && player.nameMatch.suggestions.length > 0"
-                   class="suggestions">
-                <span class="suggestions-label">Similar:</span>
-                <span class="suggestion" *ngFor="let suggestion of player.nameMatch.suggestions.slice(0, 1)">
-                  {{ suggestion }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Evaluation Stats -->
-            <div *ngIf="player.hasEvaluations && player.stats" class="evaluation-stats">
-              <div class="rating-display">
-                <span
-                  class="rating-value"
-                  [style.color]="getRatingColor(player.stats.averageRating)">
-                  {{ formatRating(player.stats.averageRating) }}/5
-                </span>
-                <span class="evaluation-count">({{ player.stats.totalEvaluations }})</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="player-actions">
-              <button
-                *ngIf="player.hasEvaluations"
-                class="details-btn immortal-btn-small"
-                (click)="showPlayerDetails(player)"
-                title="Ver avaliações">
-                Detalhes
-              </button>
+            <div *ngIf="hasSuggestions(player)" class="suggestions">
+              <span class="suggestions-label">Similar:</span>
+              <span *ngFor="let suggestion of getNameMatch(player)?.suggestions" class="suggestion">
+                {{ suggestion }}
+              </span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Summary -->
-    <div class="immortal-summary" *ngIf="enhancedPlayers.length > 0">
-      <h4>📊 Análise Immortal</h4>
+    <!-- Resumo Immortal -->
+    <div *ngIf="getImmortalPlayersCount() > 0" class="immortal-summary">
+      <h4>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M5 16L3 5l5.5-1L12 10l3.5-6L21 5l-2 11H5z"/>
+        </svg>
+        Resumo Immortal
+      </h4>
+
       <div class="summary-stats">
         <div class="summary-stat">
-          <span class="stat-value">{{ getImmortalPlayersCount() }}/10</span>
-          <span class="stat-description">Jogadores verificados no leaderboard oficial</span>
-        </div>
-        <div class="summary-stat" *ngIf="hasEvaluations()">
-          <span class="stat-value">{{ matchData.evaluationsSummary.totalFound }}</span>
-          <span class="stat-description">Avaliações encontradas no seu histórico</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de Detalhes Enhanced -->
-<div class="modal-overlay" *ngIf="isDetailModalVisible" (click)="closeDetailModal()">
-  <div class="modal-content immortal-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <div class="player-header">
-        <h3>{{ selectedPlayerForDetails?.name }}</h3>
-        <div *ngIf="selectedPlayerForDetails?.leaderboardData?.isVerified" class="player-immortal-info">
-          <span class="official-name">{{ selectedPlayerForDetails?.leaderboardData?.officialName }}</span>
-          <span class="rank-badge">#{{ selectedPlayerForDetails?.leaderboardData?.rank }}</span>
-        </div>
-      </div>
-      <button class="close-btn" (click)="closeDetailModal()">×</button>
-    </div>
-
-    <div class="modal-body">
-      <!-- Player Summary Enhanced -->
-      <div *ngIf="selectedPlayerForDetails?.stats" class="player-summary immortal-summary-modal">
-        <div class="summary-stat">
-          <span class="label">Nota Média:</span>
-          <span
-            class="value"
-            [style.color]="getRatingColor(selectedPlayerForDetails!.stats!.averageRating)">
-            {{ formatRating(selectedPlayerForDetails!.stats!.averageRating) }}/5
-          </span>
+          <span class="stat-value">{{ getImmortalPlayersCount() }}</span>
+          <span class="stat-description">Jogadores no Leaderboard</span>
         </div>
         <div class="summary-stat">
-          <span class="label">Total de Avaliações:</span>
-          <span class="value">{{ selectedPlayerForDetails!.stats!.totalEvaluations }}</span>
-        </div>
-        <div class="summary-stat" *ngIf="selectedPlayerForDetails!.leaderboardData?.isVerified">
-          <span class="label">Rank Oficial:</span>
-          <span class="value immortal-rank">#{{ selectedPlayerForDetails!.leaderboardData!.rank }}</span>
-        </div>
-        <div class="summary-stat" *ngIf="selectedPlayerForDetails!.stats!.mostCommonRole">
-          <span class="label">Função Mais Comum:</span>
-          <span class="value">{{ selectedPlayerForDetails!.stats!.mostCommonRole!.toUpperCase() }}</span>
-        </div>
-      </div>
-
-      <!-- Evaluations List -->
-      <div class="evaluations-list">
-        <div
-          *ngFor="let evaluation of selectedPlayerForDetails?.evaluations"
-          class="evaluation-item">
-
-          <div class="evaluation-header">
-            <app-rating-display [rating]="evaluation.rating"></app-rating-display>
-            <span class="evaluation-date">{{ formatDate(evaluation.created_at) }}</span>
-          </div>
-
-          <div class="evaluation-context" *ngIf="evaluation.hero_id || evaluation.role">
-            <img
-              *ngIf="evaluation.hero_id"
-              [src]="gameDataService.getHeroImageUrl(evaluation.hero_id)"
-              [alt]="gameDataService.getHeroById(evaluation.hero_id)"
-              class="hero-icon-tiny">
-            <span *ngIf="evaluation.role" class="role-info">{{ evaluation.role.toUpperCase() }}</span>
-          </div>
-
-          <div *ngIf="evaluation.notes" class="evaluation-notes">
-            {{ evaluation.notes }}
-          </div>
-
-          <div class="evaluation-tags" *ngIf="evaluation.tags && evaluation.tags.length > 0">
-            <span *ngFor="let tag of evaluation.tags" class="tag-badge">#{{ tag }}</span>
-          </div>
+          <span class="stat-value">{{ leaderboardData?.totalPlayers || 0 }}</span>
+          <span class="stat-description">Total no Ranking</span>
         </div>
       </div>
     </div>

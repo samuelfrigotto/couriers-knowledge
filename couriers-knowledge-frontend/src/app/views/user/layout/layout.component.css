@@ -162,9 +162,9 @@
 .user-profile-link {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 15px 15px 0 15px;
   padding: 15px;
-  margin: -15px -15px 15px -15px;
+  margin: -15px -15px 0 -15px; /* ✅ MUDOU: 15px → 0 */
   border-radius: 12px;
   text-decoration: none;
   color: inherit;
@@ -301,37 +301,6 @@
   opacity: 1;
 }
 
-/* Botão de logout modernizado mas mantendo funcionalidade */
-.logout-button {
-  width: 100%;
-  padding: 12px;
-  background: rgba(197, 48, 48, 0.1);
-  border: 1px solid rgba(197, 48, 48, 0.3);
-  color: #ff6b6b;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.logout-button:hover {
-  background: rgba(197, 48, 48, 0.2);
-  border-color: rgba(197, 48, 48, 0.5);
-  transform: translateY(-1px);
-}
-
-.logout-button svg {
-  transition: transform 0.3s ease;
-}
-
-.logout-button:hover svg {
-  transform: translateX(2px);
-}
 
 /* Main content */
 .main-content {

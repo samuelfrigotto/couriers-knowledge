@@ -1,35 +1,54 @@
-/* ===== IMMORTAL LIVE MATCH STYLES ===== */
+/* ===== IMMORTAL LIVE MATCH - CSS REFORMULADO ===== */
 
+/* Variáveis específicas do Immortal */
+:root {
+  --immortal-primary: #8b5cf6;
+  --immortal-secondary: #3b82f6;
+  --immortal-accent: #f59e0b;
+  --immortal-bg-subtle: rgba(139, 92, 246, 0.05);
+  --immortal-bg-medium: rgba(139, 92, 246, 0.1);
+  --immortal-border: rgba(139, 92, 246, 0.3);
+  --immortal-glow: rgba(139, 92, 246, 0.4);
+  --immortal-success: #10b981;
+  --immortal-warning: #f59e0b;
+  --immortal-error: #ef4444;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
 .immortal-live-container {
-  padding: 20px;
-  max-width: 1400px;
+  padding: 16px;
+  max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.02), rgba(59, 130, 246, 0.02));
+  background: var(--primary-bg-color);
   min-height: 100vh;
 }
 
-/* ===== PAGE HEADER ===== */
+/* ===== HEADER COMPACTO ===== */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #8b5cf6;
+  margin-bottom: 20px;
 }
 
 .header-content {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 16px 20px;
 }
 
-.header-content h1 {
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-section h1 {
   margin: 0;
-  color: #ffffff;
-  font-size: 2rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--immortal-primary), var(--immortal-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -38,463 +57,47 @@
 .immortal-badge-small {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-}
-
-.immortal-badge-small .rank {
-  font-size: 1rem;
-}
-
-/* ===== IMMORTAL NOTICE BANNER ===== */
-.immortal-notice-banner {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 2px solid #8b5cf6;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.notice-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.notice-icon {
-  font-size: 3rem;
-  color: #8b5cf6;
-}
-
-.notice-text h3 {
-  margin: 0 0 8px 0;
-  color: #8b5cf6;
-  font-size: 1.3rem;
-}
-
-.notice-text p {
-  margin: 0;
-  color: #ffffff;
-  opacity: 0.9;
-}
-
-/* ===== IMMORTAL STYLED COMPONENTS ===== */
-.immortal-style {
-  border: 2px solid rgba(139, 92, 246, 0.3);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
-}
-
-.immortal-style h3 {
-  color: #8b5cf6;
-}
-
-.immortal-textarea {
-  border: 2px solid rgba(139, 92, 246, 0.3);
-  background: rgba(139, 92, 246, 0.05);
-}
-
-.immortal-textarea:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-}
-
-.immortal-btn {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-  color: white;
-  border: none;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.immortal-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
-/* ===== ENHANCEMENT PROGRESS ===== */
-.enhancement-progress {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 2px solid #8b5cf6;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  animation: pulse 2s infinite;
-}
-
-.progress-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.progress-icon {
-  font-size: 2rem;
-  animation: spin 2s linear infinite;
-}
-
-.progress-text h4 {
-  margin: 0 0 8px 0;
-  color: #8b5cf6;
-}
-
-.progress-text p {
-  margin: 0;
-  color: #ffffff;
-  opacity: 0.8;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
-  50% { box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5); }
-}
-
-/* ===== IMMORTAL RESULTS ===== */
-.immortal-results {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.immortal-header {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 2px solid #8b5cf6;
-}
-
-.immortal-stats {
-  display: flex;
-  gap: 20px;
-}
-
-.immortal-stats .stat-item {
-  background: rgba(139, 92, 246, 0.1);
-  border: 2px solid rgba(139, 92, 246, 0.3);
-}
-
-.immortal-stats .stat-item.highlight {
-  border-color: #8b5cf6;
-  background: rgba(139, 92, 246, 0.2);
-}
-
-.immortal-stats .stat-number {
-  color: #8b5cf6;
-}
-
-/* ===== IMMORTAL TEAMS ===== */
-.immortal-teams {
-  gap: 30px;
-}
-
-.immortal-team {
-  border: 2px solid rgba(139, 92, 246, 0.3);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
-}
-
-.immortal-team.radiant {
-  border-left: 4px solid #68d391;
-  background: linear-gradient(135deg, rgba(104, 211, 145, 0.05), rgba(139, 92, 246, 0.05));
-}
-
-.immortal-team.dire {
-  border-left: 4px solid #fc8181;
-  background: linear-gradient(135deg, rgba(252, 129, 129, 0.05), rgba(139, 92, 246, 0.05));
-}
-
-/* ===== IMMORTAL PLAYER CARDS ===== */
-.immortal-player {
-  border: 2px solid rgba(139, 92, 246, 0.2);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03), rgba(59, 130, 246, 0.03));
-  transition: all 0.3s ease;
-}
-
-.immortal-player:hover {
-  border-color: rgba(139, 92, 246, 0.5);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
-}
-
-.immortal-player.is-immortal {
-  border: 2px solid #8b5cf6;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
-.immortal-player.is-immortal::before {
-  content: "👑";
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
-}
-
-/* ===== PLAYER NAMES ===== */
-.player-names {
-  display: flex;
-  flex-direction: column;
   gap: 4px;
-}
-
-.steam-name {
-  font-weight: bold;
-  color: #ffffff;
-  font-size: 1.1rem;
-}
-
-.official-name {
-  font-size: 0.9rem;
-  color: #8b5cf6;
-  font-weight: 500;
-  opacity: 0.9;
-}
-
-.immortal-rank-badge {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  padding: 3px 8px;
+  background: linear-gradient(135deg, var(--immortal-primary), var(--immortal-secondary));
+  padding: 4px 8px;
   border-radius: 12px;
   font-size: 0.7rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
-}
-
-/* ===== NAME MATCHING ===== */
-.name-match-info {
-  margin-top: 8px;
-  font-size: 0.8rem;
-}
-
-.match-confidence {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.confidence-label {
-  color: #a0aec0;
-}
-
-.confidence-value {
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.confidence-value.high-confidence {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-}
-
-.confidence-value.medium-confidence {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-}
-
-.confidence-value.low-confidence {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-}
-
-.suggestions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.suggestions-label {
-  color: #a0aec0;
-}
-
-.suggestion {
-  background: rgba(139, 92, 246, 0.2);
-  color: #8b5cf6;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-}
-
-/* ===== IMMORTAL BUTTONS ===== */
-.immortal-btn-small {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  font-weight: 600;
   color: white;
-  border: none;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  color: var(--text-color);
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.2s;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.immortal-btn-small:hover {
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
+.refresh-btn:hover {
+  background: var(--immortal-bg-subtle);
+  border-color: var(--immortal-primary);
+  color: var(--immortal-primary);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(139, 92, 246, 0.4);
 }
 
-/* ===== IMMORTAL SUMMARY ===== */
-.immortal-summary {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 2px solid #8b5cf6;
-  border-radius: 12px;
-  padding: 25px;
-  text-align: center;
-  margin-top: 30px;
-}
-
-.immortal-summary h4 {
-  color: #8b5cf6;
-  margin-bottom: 20px;
-  font-size: 1.3rem;
-}
-
-.summary-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-}
-
-.summary-stat {
-  text-align: center;
-}
-
-.summary-stat .stat-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #8b5cf6;
-  margin-bottom: 8px;
-}
-
-.summary-stat .stat-description {
-  color: #ffffff;
-  opacity: 0.8;
-  font-size: 0.9rem;
-}
-
-/* ===== IMMORTAL MODAL ===== */
-.immortal-modal {
-  border: 2px solid #8b5cf6;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
-}
-
-.player-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.player-immortal-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.official-name {
-  color: #8b5cf6;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.rank-badge {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.immortal-summary-modal {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(59, 130, 246, 0.08));
-  border: 2px solid rgba(139, 92, 246, 0.3);
-}
-
-.immortal-rank {
-  color: #f59e0b !important;
-  font-weight: bold;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1200px) {
-  .immortal-teams {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .summary-stats {
-    flex-direction: column;
-    gap: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .immortal-live-container {
-    padding: 15px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .immortal-stats {
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .notice-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .player-immortal-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* ===== UTILITY HELPERS ===== */
-.high-confidence { color: #10b981 !important; }
-.medium-confidence { color: #f59e0b !important; }
-.low-confidence { color: #ef4444 !important; }
-
-
+/* ===== STATUS DO LEADERBOARD ===== */
 .leaderboard-status {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
+  background: var(--immortal-bg-subtle);
+  border: 1px solid var(--immortal-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
 }
 
 .status-info {
@@ -504,29 +107,34 @@
 }
 
 .status-label {
-  color: #8b5cf6;
+  color: var(--immortal-primary);
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .status-value {
-  color: #ffffff;
-  font-size: 0.9rem;
-}
-
-.status-actions {
-  display: flex;
-  gap: 8px;
+  color: var(--text-color);
+  font-size: 0.8rem;
 }
 
 .refresh-leaderboard-btn {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, var(--immortal-primary), var(--immortal-secondary));
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+}
+
+.refresh-leaderboard-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--immortal-glow);
 }
 
 .refresh-leaderboard-btn:disabled {
@@ -534,91 +142,928 @@
   cursor: not-allowed;
 }
 
-.refresh-leaderboard-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
-}
-
-.debug-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 6px 12px;
+/* ===== BANNER DE AVISO COMPACTO ===== */
+.immortal-notice-banner {
+  background: var(--immortal-bg-medium);
+  border: 1px solid var(--immortal-border);
   border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
+  padding: 12px;
+  margin-bottom: 16px;
 }
 
-/* Player Immortal Info */
-.player-immortal-info {
+.notice-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notice-icon {
+  color: var(--immortal-primary);
+  flex-shrink: 0;
+}
+
+.notice-text h3 {
+  margin: 0 0 2px 0;
+  color: var(--immortal-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notice-text p {
+  margin: 0;
+  color: var(--text-color);
+  opacity: 0.9;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+/* ===== INDICADOR DE PROGRESSO ===== */
+.enhancement-progress {
+  background: var(--immortal-bg-medium);
+  border: 1px solid var(--immortal-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.progress-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-icon {
+  color: var(--immortal-primary);
+  animation: spin 1s linear infinite;
+}
+
+.progress-text h4 {
+  margin: 0 0 2px 0;
+  color: var(--immortal-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.progress-text p {
+  margin: 0;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 0.75rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== FORMULÁRIO DE STATUS ===== */
+.status-form-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.instructions-card,
+.status-input-card {
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.instructions-card h3,
+.status-input-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--immortal-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.instructions-list {
+  margin: 0 0 16px 0;
+  padding-left: 16px;
+  color: var(--text-color);
+}
+
+.instructions-list li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+  font-size: 0.85rem;
+}
+
+.tips-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--accent-color);
+}
+
+.tips-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--immortal-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.tips-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.tips-list li {
+  margin-bottom: 4px;
+  color: var(--text-color);
+  opacity: 0.9;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+/* ===== TEXTAREA ===== */
+.textarea-wrapper {
+  margin-bottom: 12px;
+}
+
+.status-textarea {
+  width: 100%;
+  background: var(--primary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 10px;
+  color: var(--text-color);
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.status-textarea:focus {
+  outline: none;
+  border-color: var(--immortal-primary);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.status-textarea::placeholder {
+  color: var(--text-color);
+  opacity: 0.5;
+}
+
+/* ===== AÇÕES DO FORMULÁRIO ===== */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  color: var(--text-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: var(--accent-color);
+}
+
+.analyze-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--immortal-primary), var(--immortal-secondary));
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px var(--immortal-glow);
+}
+
+.analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== MENSAGEM DE ERRO ===== */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--immortal-error);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+}
+
+/* ===== SELEÇÃO DE TIMES ===== */
+.team-selection-section {
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--immortal-border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.selection-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--immortal-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.selection-header p {
+  margin: 0 0 16px 0;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ===== JOGADORES NÃO ASSIGNADOS ===== */
+.unassigned-section {
+  margin-bottom: 20px;
+}
+
+.unassigned-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--immortal-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.unassigned-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unassigned-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--primary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 8px 12px;
+  transition: border-color 0.2s ease;
+}
+
+.unassigned-player:hover {
+  border-color: var(--immortal-border);
+}
+
+.player-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 8px;
-  padding: 8px;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 6px;
 }
 
-.immortal-rank {
+.player-name-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-name {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.player-indicators {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.rank-number {
-  color: #ffd700;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.rank-label {
-  color: #ffb347;
-  font-size: 0.8rem;
-  text-transform: uppercase;
+.evaluation-indicator {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--immortal-accent);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
-.confidence-indicator {
+.immortal-indicator {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--immortal-bg-medium);
+  color: var(--immortal-primary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.official-name {
+  color: var(--immortal-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* ===== BOTÕES DE ASSIGNAÇÃO ===== */
+.team-assignment-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.assign-btn {
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.confidence-value {
-  color: #22c55e;
+.radiant-btn {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--immortal-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.radiant-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+.dire-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--immortal-error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.dire-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ===== PREVIEW DOS TIMES ===== */
+.teams-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.team-preview {
+  background: var(--primary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.radiant-preview {
+  border-left: 3px solid var(--immortal-success);
+}
+
+.dire-preview {
+  border-left: 3px solid var(--immortal-error);
+}
+
+.team-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--immortal-bg-subtle);
+  border-bottom: 1px solid var(--accent-color);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.radiant-preview .team-preview-header {
+  color: var(--immortal-success);
+}
+
+.dire-preview .team-preview-header {
+  color: var(--immortal-error);
+}
+
+.team-preview-players {
+  padding: 6px;
+  min-height: 60px;
+}
+
+.preview-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  margin-bottom: 2px;
+  background: var(--immortal-bg-subtle);
+  border-radius: 3px;
+}
+
+.preview-player-name {
+  font-size: 0.8rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--immortal-error);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ===== FINALIZAÇÃO ===== */
+.finalize-section {
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--accent-color);
+}
+
+.finalize-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--immortal-primary), var(--immortal-secondary));
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.finalize-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--immortal-glow);
+}
+
+.selection-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--immortal-accent);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ===== RESPONSIVO PARA SELEÇÃO DE TIMES ===== */
+@media (max-width: 768px) {
+  .teams-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .unassigned-player {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .team-assignment-buttons {
+    justify-content: center;
+  }
+
+  .player-indicators {
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== RESULTADOS DA PARTIDA ===== */
+.match-results {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--immortal-bg-medium);
+  border: 1px solid var(--immortal-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.game-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-state h2 {
+  margin: 0;
+  color: var(--immortal-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ===== STATS IMMORTAL ===== */
+.immortal-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  background: var(--immortal-bg-subtle);
+  border: 1px solid var(--immortal-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  min-width: 70px;
+}
+
+.stat-item.highlight {
+  border-color: var(--immortal-accent);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--immortal-primary);
+  margin-bottom: 2px;
+}
+
+.stat-item.highlight .stat-number {
+  color: var(--immortal-accent);
+}
+
+.stat-label {
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== TIMES E PLAYERS ===== */
+.immortal-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.team-section {
+  background: var(--secondary-bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.team-section.radiant {
+  border-left: 3px solid var(--immortal-success);
+}
+
+.team-section.dire {
+  border-left: 3px solid var(--immortal-error);
+}
+
+.team-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--immortal-bg-subtle);
+  border-bottom: 1px solid var(--accent-color);
+}
+
+.team-name {
   font-weight: 600;
   font-size: 0.9rem;
 }
 
+.team-section.radiant .team-name {
+  color: var(--immortal-success);
+}
+
+.team-section.dire .team-name {
+  color: var(--immortal-error);
+}
+
+.players-list {
+  padding: 4px;
+}
+
+.player-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.player-item:last-child {
+  border-bottom: none;
+}
+
+.player-item:hover {
+  background: var(--immortal-bg-subtle);
+}
+
+.player-item.immortal-player {
+  background: var(--immortal-bg-medium);
+  border-left: 2px solid var(--immortal-accent);
+  position: relative;
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.player-name {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.85rem;
+}
+
+.player-immortal-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.official-name {
+  color: var(--immortal-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: linear-gradient(135deg, var(--immortal-accent), #d97706);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+/* ===== CONFIANÇA E SUGESTÕES ===== */
+.match-confidence {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
 .confidence-label {
-  color: #9ca3af;
+  color: var(--text-color);
+  opacity: 0.7;
   font-size: 0.7rem;
 }
 
-/* Enhancement Progress - melhorar */
-.enhancement-progress {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
-  border: 2px solid #8b5cf6;
-  border-radius: 12px;
-  padding: 20px;
-  margin: 20px 0;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
-  animation: pulse 2s infinite;
+.confidence-value {
+  font-weight: 600;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 0.7rem;
 }
 
-@keyframes pulse {
-  0%, 100% { border-color: #8b5cf6; }
-  50% { border-color: #3b82f6; }
+.confidence-value.high-confidence {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--immortal-success);
 }
 
-.progress-icon {
-  font-size: 2rem;
-  animation: spin 1s linear infinite;
+.confidence-value.medium-confidence {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--immortal-warning);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.confidence-value.low-confidence {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--immortal-error);
+}
+
+.suggestions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.suggestions-label {
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: 0.7rem;
+}
+
+.suggestion {
+  background: var(--immortal-bg-medium);
+  color: var(--immortal-primary);
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  border: 1px solid var(--immortal-border);
+}
+
+/* ===== RESUMO IMMORTAL ===== */
+.immortal-summary {
+  background: var(--immortal-bg-medium);
+  border: 1px solid var(--immortal-border);
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.immortal-summary h4 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--immortal-primary);
+  margin-bottom: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summary-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.summary-stat {
+  text-align: center;
+}
+
+.summary-stat .stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--immortal-primary);
+  margin-bottom: 4px;
+}
+
+.summary-stat .stat-description {
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.high-confidence {
+  color: var(--immortal-success) !important;
+}
+
+.medium-confidence {
+  color: var(--immortal-warning) !important;
+}
+
+.low-confidence {
+  color: var(--immortal-error) !important;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 1024px) {
+  .status-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .immortal-teams {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .immortal-live-container {
+    padding: 12px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .title-section {
+    justify-content: center;
+  }
+
+  .immortal-stats {
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .notice-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .leaderboard-status {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .player-immortal-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .summary-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .match-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .immortal-live-container {
+    padding: 8px;
+  }
+
+  .title-section h1 {
+    font-size: 1.3rem;
+  }
+
+  .immortal-stats {
+    gap: 8px;
+  }
+
+  .stat-item {
+    min-width: 60px;
+    padding: 6px 8px;
+  }
+
+  .stat-number {
+    font-size: 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+  }
+
+  .player-item {
+    padding: 6px 8px;
+  }
+
+  .player-name {
+    font-size: 0.8rem;
+  }
 }

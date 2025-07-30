@@ -22,6 +22,8 @@ interface EnhancedStatusPlayer extends StatusPlayer {
     confidence: number;
     suggestions: string[];
   };
+  assignedTeam?: 'radiant' | 'dire' | null; // Nova propriedade para team assignment
+  evaluationData?: any; // Dados de avaliação do jogador
 }
 
 @Component({
@@ -52,12 +54,20 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   leaderboardData: any = null;
   isEnhancing = false;
 
+  // ===== TEAM ASSIGNMENT STATE =====
+  showTeamSelection = false;
+  unassignedPlayers: EnhancedStatusPlayer[] = [];
+
   // ===== MODAL STATE =====
   isDetailModalVisible = false;
   selectedPlayerForDetails: EnhancedStatusPlayer | null = null;
 
   // ===== USER DATA =====
   userInfo: any = null;
+
+  // ===== TIMER =====
+  private reminderTimer: number | null = null;
+  private hasPlayedReminder = false;
 
   // ===== INSTRUCTIONS =====
   instructions: string[] = [
@@ -70,61 +80,44 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
 
   systemTips: string[] = [
     'Como jogador Immortal, esta é a única forma de obter dados de partida',
-    'O sistema fará cross-reference automático com o leaderboard oficial',
-    'Nomes oficiais serão comparados com nomes Steam automaticamente'
+    'O sistema fará cross-reference automático com leaderboard oficial',
+    'Após análise, você poderá assinalar manualmente os times',
+    'Jogadores com avaliações aparecem primeiro para facilitar escolha'
   ];
-
-  // ===== REMINDER SYSTEM =====
-  private reminderTimer: number | null = null;
-  private hasPlayedReminder = false;
 
   // ===== LIFECYCLE HOOKS =====
   ngOnInit(): void {
     this.loadUserInfo();
+    this.preloadLeaderboard();
     this.startReminderTimer();
-    this.preloadLeaderboardData();
   }
 
   ngOnDestroy(): void {
-    this.cleanupComponent();
-  }
-
-  // ===== INITIALIZATION =====
-  private initializeComponent(): void {
-    this.loadUserInfo();
-    this.startReminderTimer();
-    this.preloadLeaderboardData();
-  }
-
-  private cleanupComponent(): void {
     if (this.reminderTimer) {
       clearTimeout(this.reminderTimer);
     }
   }
 
+  // ===== INITIALIZATION METHODS =====
   private loadUserInfo(): void {
     this.userService.getUserStats().subscribe({
-      next: (user: any) => {
+      next: (user) => {
         this.userInfo = user;
-        console.log('Immortal user loaded:', user);
       },
-      error: (error: any) => {
-        console.error('Erro ao carregar informações do usuário:', error);
+      error: (error) => {
+        console.error('Erro ao carregar dados do usuário:', error);
       }
     });
   }
 
-  // ===== LEADERBOARD INTEGRATION =====
-  private preloadLeaderboardData(): void {
+  private preloadLeaderboard(): void {
     const region = this.userInfo?.immortalRegion || 'americas';
-    
-    console.log(`📋 Pré-carregando leaderboard ${region}...`);
-    
+
     this.immortalService.getLeaderboardData(region).subscribe({
       next: (response) => {
         if (response.success) {
-          console.log(`✅ Leaderboard ${region} pré-carregado: ${response.totalPlayers} players`);
           this.leaderboardData = response;
+          console.log(`✅ Leaderboard ${region} pré-carregado:`, response.totalPlayers, 'players');
         } else {
           console.warn(`⚠️ Falha ao pré-carregar leaderboard ${region}`);
         }
@@ -135,34 +128,6 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
     });
   }
 
-  refreshLeaderboard(): void {
-    const region = this.userInfo?.immortalRegion || 'americas';
-    
-    this.toastr.info(`Atualizando leaderboard ${region}... Isso pode demorar alguns segundos.`, 'Atualizando', { timeOut: 3000 });
-    
-    this.immortalService.refreshLeaderboard(region).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.leaderboardData = response;
-          this.toastr.success(`Leaderboard ${region} atualizado com ${response.totalPlayers} players!`, 'Atualizado');
-          
-          // Se há uma partida analisada, refazer o cross-reference
-          if (this.matchData) {
-            this.enhanceWithLeaderboardData();
-          }
-        } else {
-          this.toastr.error('Falha ao atualizar leaderboard', 'Erro');
-        }
-      },
-      error: (error) => {
-        console.error('❌ Erro ao atualizar leaderboard:', error);
-        this.toastr.error('Erro ao atualizar leaderboard', 'Erro');
-      }
-    });
-  }
-
-
-  // ===== REMINDER SYSTEM =====
   private startReminderTimer(): void {
     this.reminderTimer = window.setTimeout(() => {
       if (!this.hasPlayedReminder && !this.matchData) {
@@ -231,11 +196,17 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
     ];
 
     const humanPlayers = allPlayers.filter(p => !p.isBot);
-    const playerNames = humanPlayers.map(p => p.name);
 
+    // Inicializar players enhanceados sem team assignment
+    this.enhancedPlayers = humanPlayers.map(player => ({
+      ...player,
+      assignedTeam: null
+    }));
+
+    const playerNames = humanPlayers.map(p => p.name);
     console.log(`📋 Players para verificar no leaderboard:`, playerNames);
 
-    // Buscar na região configurada do usuário (ou americas como padrão)
+    // Buscar na região configurada do usuário
     const region = this.userInfo?.immortalRegion || 'americas';
 
     this.immortalService.findPlayersInLeaderboard(playerNames, region).subscribe({
@@ -243,7 +214,7 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
         console.log(`🎯 Cross-reference concluído:`, crossReferenceResults);
 
         // Enriquecer dados dos players com informações do leaderboard
-        this.enhancedPlayers = humanPlayers.map(player => {
+        this.enhancedPlayers = this.enhancedPlayers.map(player => {
           const enhanced: EnhancedStatusPlayer = { ...player };
 
           // Buscar resultado do cross-reference
@@ -264,199 +235,205 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
               suggestions: []
             };
 
-            console.log(`✅ MATCH ENCONTRADO: ${player.name} -> #${leaderboardMatch.leaderboardData.rank} ${leaderboardMatch.leaderboardData.name} (${leaderboardMatch.confidence}% confiança)`);
+            console.log(`✅ MATCH ENCONTRADO: ${player.name} -> #${leaderboardMatch.leaderboardData.rank} ${leaderboardMatch.leaderboardData.name}`);
           } else {
-            // Tentar buscar sugestões similares
             const suggestions = this.findSimilarNames(player.name);
-            
             enhanced.nameMatch = {
               confidence: 0,
               suggestions: suggestions
             };
-
-            console.log(`❌ Player não encontrado no leaderboard: ${player.name}`);
-            if (suggestions.length > 0) {
-              console.log(`💡 Sugestões similares:`, suggestions);
-            }
           }
 
           return enhanced;
         });
 
-        // Estatísticas finais
-        const immortalsFound = this.enhancedPlayers.filter(p => p.leaderboardData?.isVerified).length;
-        const totalPlayers = this.enhancedPlayers.length;
+        // Carregar avaliações dos jogadores
+        this.loadPlayerEvaluations();
 
-        console.log(`🏆 RESULTADO FINAL: ${immortalsFound}/${totalPlayers} players encontrados no leaderboard Immortal ${region.toUpperCase()}`);
-
-        if (immortalsFound > 0) {
-          console.log('🎮 Players Immortal na partida:');
-          this.enhancedPlayers
-            .filter(p => p.leaderboardData?.isVerified)
-            .forEach(p => {
-              console.log(`   #${p.leaderboardData!.rank}: ${p.leaderboardData!.officialName} (time: ${p.team})`);
-            });
-
-          this.toastr.success(
-            `${immortalsFound} player(s) Immortal encontrado(s) no leaderboard!`,
-            '🏆 Players Immortal Detectados',
-            { timeOut: 8000 }
-          );
-        } else {
-          this.toastr.info(
-            'Nenhum player desta partida está no top 1000 Immortal da região.',
-            '📊 Análise Concluída',
-            { timeOut: 5000 }
-          );
-        }
+        // Preparar para seleção de times
+        this.prepareTeamSelection();
 
         this.isEnhancing = false;
       },
       error: (error) => {
         console.error('❌ Erro no cross-reference:', error);
-        this.toastr.error('Erro ao verificar players no leaderboard', 'Erro');
         this.isEnhancing = false;
+        this.prepareTeamSelection(); // Continuar mesmo sem leaderboard
       }
     });
-  }
-
-  private findPlayerInLeaderboard(playerName: string): any {
-    if (!this.leaderboardData?.players) return null;
-
-    // Busca exata primeiro
-    let match = this.leaderboardData.players.find((p: any) =>
-      p.name.toLowerCase() === playerName.toLowerCase()
-    );
-
-    if (match) return match;
-
-    // Busca sem caracteres especiais
-    const cleanPlayerName = playerName.replace(/[^\w\s]/g, '').toLowerCase();
-    match = this.leaderboardData.players.find((p: any) =>
-      p.name.replace(/[^\w\s]/g, '').toLowerCase() === cleanPlayerName
-    );
-
-    return match || null;
-  }
-
-  private calculateNameMatchConfidence(playerName: string, officialName: string): number {
-    if (playerName.toLowerCase() === officialName.toLowerCase()) return 100;
-
-    // Algoritmo simples de similaridade
-    const clean1 = playerName.replace(/[^\w]/g, '').toLowerCase();
-    const clean2 = officialName.replace(/[^\w]/g, '').toLowerCase();
-
-    if (clean1 === clean2) return 95;
-    if (clean1.includes(clean2) || clean2.includes(clean1)) return 85;
-
-    return 70; // Match parcial
   }
 
   private findSimilarNames(playerName: string): string[] {
     if (!this.leaderboardData?.players) return [];
 
-    const cleanName = playerName.replace(/[^\w]/g, '').toLowerCase();
-
+    const cleanName = playerName.toLowerCase().trim();
     return this.leaderboardData.players
-      .filter((p: any) => {
-        const cleanLeaderboard = p.name.replace(/[^\w]/g, '').toLowerCase();
-        return cleanLeaderboard.includes(cleanName) || cleanName.includes(cleanLeaderboard);
-      })
+      .filter((p: any) => p.name.toLowerCase().includes(cleanName) || cleanName.includes(p.name.toLowerCase()))
       .slice(0, 3)
       .map((p: any) => p.name);
   }
 
-  // ===== FORM CONTROLS =====
-  resetForm(): void {
-    this.statusInput = '';
-    this.matchData = null;
-    this.enhancedPlayers = [];
-    this.error = null;
-    this.showInstructions = true;
-    this.closeAllModals();
-
-    // Reiniciar timer de lembrete
-    this.hasPlayedReminder = false;
-    if (this.reminderTimer) {
-      clearTimeout(this.reminderTimer);
-    }
-    this.startReminderTimer();
-  }
-
-  // ===== MODAL MANAGEMENT =====
-  showPlayerDetails(player: EnhancedStatusPlayer): void {
-    this.selectedPlayerForDetails = player;
-    this.isDetailModalVisible = true;
-  }
-
-  closeDetailModal(): void {
-    this.isDetailModalVisible = false;
-    this.selectedPlayerForDetails = null;
-  }
-
-  closeAllModals(): void {
-    this.closeDetailModal();
-  }
-
-  // ===== UTILITY METHODS =====
-  formatRating(rating: number): string {
-    return this.statusService.formatRating(rating);
-  }
-
-  getRatingColor(rating: number): string {
-    return this.statusService.getRatingColor(rating);
-  }
-
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  private loadPlayerEvaluations(): void {
+    // TODO: Implementar carregamento de avaliações
+    // Por agora, simular alguns dados
+    this.enhancedPlayers.forEach(player => {
+      // Simular que alguns players têm avaliações
+      if (Math.random() > 0.6) {
+        player.evaluationData = {
+          hasEvaluation: true,
+          averageRating: Math.floor(Math.random() * 5) + 1,
+          totalEvaluations: Math.floor(Math.random() * 10) + 1
+        };
+      }
     });
   }
 
-  // ===== STATE GETTERS =====
-  hasEvaluations(): boolean {
-    return (this.matchData?.evaluationsSummary?.totalFound ?? 0) > 0;
+  private prepareTeamSelection(): void {
+    // Ordenar jogadores: primeiro os com avaliações, depois por rank immortal, depois por nome
+    this.unassignedPlayers = [...this.enhancedPlayers].sort((a, b) => {
+      // Prioridade 1: Jogadores com avaliações
+      if (a.evaluationData?.hasEvaluation && !b.evaluationData?.hasEvaluation) return -1;
+      if (!a.evaluationData?.hasEvaluation && b.evaluationData?.hasEvaluation) return 1;
+
+      // Prioridade 2: Jogadores Immortal (rank menor = melhor)
+      if (a.leaderboardData?.rank && !b.leaderboardData?.rank) return -1;
+      if (!a.leaderboardData?.rank && b.leaderboardData?.rank) return 1;
+      if (a.leaderboardData?.rank && b.leaderboardData?.rank) {
+        return a.leaderboardData.rank - b.leaderboardData.rank;
+      }
+
+      // Prioridade 3: Ordem alfabética
+      return a.name.localeCompare(b.name);
+    });
+
+    this.showTeamSelection = true;
+    this.toastr.info('Agora assine cada jogador ao time correto usando as setas', 'Seleção de Times', { timeOut: 6000 });
   }
 
-  getMatchStatistics() {
-    return this.matchData?.statistics || {
-      totalPlayers: 0,
-      humanPlayers: 0,
-      botPlayers: 0,
-      evaluatedPlayers: 0
-    };
+  // ===== TEAM ASSIGNMENT METHODS =====
+  assignPlayerToTeam(player: EnhancedStatusPlayer, team: 'radiant' | 'dire'): void {
+    const playerIndex = this.enhancedPlayers.findIndex(p => p.name === player.name);
+    if (playerIndex !== -1) {
+      this.enhancedPlayers[playerIndex].assignedTeam = team;
+      this.updateUnassignedPlayers();
+    }
   }
 
-  isLoading(): boolean {
-    return this.isProcessing || this.isEnhancing;
+  unassignPlayer(player: EnhancedStatusPlayer): void {
+    const playerIndex = this.enhancedPlayers.findIndex(p => p.name === player.name);
+    if (playerIndex !== -1) {
+      this.enhancedPlayers[playerIndex].assignedTeam = null;
+      this.updateUnassignedPlayers();
+    }
   }
 
-  hasError(): boolean {
-    return !!this.error;
+  private updateUnassignedPlayers(): void {
+    this.unassignedPlayers = this.enhancedPlayers.filter(p => !p.assignedTeam);
   }
 
-  // ===== ENHANCED GETTERS FOR TEMPLATE =====
+  // ===== HELPER METHODS FOR TEMPLATE =====
+  getLeaderboardStatus(): string {
+    if (!this.leaderboardData) return 'Não carregado';
+
+    const lastUpdate = new Date(this.leaderboardData.lastUpdate);
+    const hoursAgo = Math.floor((Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60));
+
+    return `${this.leaderboardData.totalPlayers} players (${hoursAgo}h atrás)`;
+  }
+
   getImmortalPlayersCount(): number {
     return this.enhancedPlayers.filter(p => p.leaderboardData?.isVerified).length;
   }
 
-  getEnhancedPlayersByTeam(team: 'radiant' | 'dire'): EnhancedStatusPlayer[] {
-    return this.enhancedPlayers.filter(p => p.team === team);
+  getTeamPlayers(team: 'radiant' | 'dire'): EnhancedStatusPlayer[] {
+    return this.enhancedPlayers.filter(p => p.assignedTeam === team);
   }
 
-   getLeaderboardStatus(): string {
-    if (!this.leaderboardData) return 'Não carregado';
-    if (this.immortalService.isLoading) return 'Carregando...';
-    
-    const source = this.leaderboardData.source === 'database' ? 'Cache' : 'Tempo Real';
-    const updatedAt = new Date(this.leaderboardData.lastUpdated).toLocaleTimeString('pt-BR');
-    
-    return `${source} - ${this.leaderboardData.totalPlayers} players (${updatedAt})`;
+  isImmortalPlayer(player: EnhancedStatusPlayer): boolean {
+    return !!player.leaderboardData?.isVerified;
   }
 
+  getImmortalData(player: EnhancedStatusPlayer) {
+    return player.leaderboardData;
+  }
+
+  hasNameMatch(player: EnhancedStatusPlayer): boolean {
+    return !!player.nameMatch && player.nameMatch.confidence > 0;
+  }
+
+  getNameMatch(player: EnhancedStatusPlayer) {
+    return player.nameMatch;
+  }
+
+  hasSuggestions(player: EnhancedStatusPlayer): boolean {
+    return !!player.nameMatch?.suggestions && player.nameMatch.suggestions.length > 0;
+  }
+
+  getConfidenceClass(confidence: number): string {
+    if (confidence >= 80) return 'high-confidence';
+    if (confidence >= 50) return 'medium-confidence';
+    return 'low-confidence';
+  }
+
+  hasPlayerEvaluation(player: EnhancedStatusPlayer): boolean {
+    return !!player.evaluationData?.hasEvaluation;
+  }
+
+  getPlayerEvaluationInfo(player: EnhancedStatusPlayer): string {
+    if (!player.evaluationData) return '';
+    return `⭐ ${player.evaluationData.averageRating}/5 (${player.evaluationData.totalEvaluations} avaliações)`;
+  }
+
+  // ===== LEADERBOARD ACTIONS =====
+  refreshLeaderboard(): void {
+    const region = this.userInfo?.immortalRegion || 'americas';
+
+    this.toastr.info(`Atualizando leaderboard ${region}...`, 'Atualizando', { timeOut: 3000 });
+
+    this.immortalService.refreshLeaderboard(region).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.leaderboardData = response;
+          this.toastr.success(`Leaderboard ${region} atualizado!`, 'Atualizado');
+
+          // Re-fazer cross-reference se há uma partida analisada
+          if (this.matchData) {
+            this.enhanceWithLeaderboardData();
+          }
+        } else {
+          this.toastr.error('Falha ao atualizar leaderboard', 'Erro');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Erro ao atualizar leaderboard:', error);
+        this.toastr.error('Erro ao atualizar leaderboard', 'Erro');
+      }
+    });
+  }
+
+  // ===== RESET FUNCTIONALITY =====
+  resetForm(): void {
+    this.statusInput = '';
+    this.matchData = null;
+    this.enhancedPlayers = [];
+    this.unassignedPlayers = [];
+    this.showInstructions = true;
+    this.showTeamSelection = false;
+    this.error = null;
+    this.hasPlayedReminder = false;
+
+    this.startReminderTimer();
+  }
+
+  // ===== TEAM ASSIGNMENT COMPLETION =====
+  isTeamSelectionComplete(): boolean {
+    return this.unassignedPlayers.length === 0 && this.enhancedPlayers.length > 0;
+  }
+
+  finalizeTeamSelection(): void {
+    if (this.isTeamSelectionComplete()) {
+      this.showTeamSelection = false;
+      this.toastr.success('Times configurados com sucesso!', 'Configuração Completa');
+    }
+  }
 }

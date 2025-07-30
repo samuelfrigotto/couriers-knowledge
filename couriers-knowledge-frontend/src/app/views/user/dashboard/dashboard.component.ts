@@ -225,19 +225,6 @@ export class DashboardComponent implements OnInit {
     error: (err) => {
   console.error('Erro ao carregar avaliações:', err);
 
-  // ✅ CORREÇÃO: Adicionar timeout ao toast de erro
-  this.toastr.error(
-    this.i18nService.translate('dashboard.errors.loadEvaluations'),
-    'Erro', // título
-    {
-      timeOut: 5000,  // 5 segundos
-      closeButton: true,
-      progressBar: true,
-      tapToDismiss: true, // Permite fechar clicando no toast
-      extendedTimeOut: 2000 // Tempo extra quando o mouse está sobre o toast
-    }
-  );
-
   this.isLoading = false;
     },
   });

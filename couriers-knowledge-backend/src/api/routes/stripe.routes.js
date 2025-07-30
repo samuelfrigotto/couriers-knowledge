@@ -54,6 +54,7 @@ router.get('/plans', async (req, res) => {
 });
 
 // 2. Endpoint para criar uma sessão de checkout
+// src/api/routes/stripe.routes.js - CORREÇÃO
 router.post('/create-checkout-session', authMiddleware.verifyToken, async (req, res) => {
   try {
     const { priceId } = req.body;
@@ -72,30 +73,88 @@ router.post('/create-checkout-session', authMiddleware.verifyToken, async (req, 
       });
     }
 
+    // ✅ VERIFICAR PRIMEIRO NO BANCO LOCAL
+    const { rows: userRows } = await db.query(
+      'SELECT account_status, premium_expires_at, stripe_customer_id FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    
+    const user = userRows[0];
+    
+    // Se o usuário já é Premium e ainda não expirou, não permite nova assinatura
+    if (user.account_status === 'Premium' && 
+        user.premium_expires_at && 
+        new Date(user.premium_expires_at) > new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Usuário já possui uma assinatura Premium ativa'
+      });
+    }
+
     // Buscar ou criar customer
     let customer;
     try {
-      // Primeiro, tenta buscar customer existente pelo email
-      const existingCustomers = await stripe.customers.list({
-        email: req.user.email,
-        limit: 1
-      });
+      // Se já tem customer_id no banco, usar ele
+      if (user.stripe_customer_id) {
+        try {
+          customer = await stripe.customers.retrieve(user.stripe_customer_id);
+          console.log('Customer existente recuperado:', customer.id);
+        } catch (error) {
+          console.log('Customer não encontrado no Stripe, criando novo...');
+          customer = null;
+        }
+      }
       
-      if (existingCustomers.data.length > 0) {
-        customer = existingCustomers.data[0];
-        console.log('Customer existente encontrado:', customer.id);
-      } else {
-        // Criar novo customer
-        customer = await stripe.customers.create({
+      // Se não tem customer ou não foi encontrado, criar novo
+      if (!customer) {
+        // Primeiro, buscar por email para evitar duplicatas
+        const existingCustomers = await stripe.customers.list({
           email: req.user.email,
-          name: req.user.steamUsername || 'Usuário Premium',
-          metadata: {
-            user_id: req.user.id.toString(),
-            steam_id: req.user.steamId || '',
-            created_at: new Date().toISOString()
-          }
+          limit: 1
         });
-        console.log('Novo customer criado:', customer.id);
+        
+        if (existingCustomers.data.length > 0) {
+          customer = existingCustomers.data[0];
+          console.log('Customer existente encontrado por email:', customer.id);
+          
+          // ✅ CANCELAR ASSINATURAS ANTIGAS ATIVAS
+          const activeSubscriptions = await stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'active',
+            limit: 10
+          });
+          
+          if (activeSubscriptions.data.length > 0) {
+            console.log(`Cancelando ${activeSubscriptions.data.length} assinatura(s) antiga(s)...`);
+            
+            for (const subscription of activeSubscriptions.data) {
+              try {
+                await stripe.subscriptions.cancel(subscription.id);
+                console.log(`Assinatura ${subscription.id} cancelada`);
+              } catch (cancelError) {
+                console.error(`Erro ao cancelar assinatura ${subscription.id}:`, cancelError);
+              }
+            }
+          }
+        } else {
+          // Criar novo customer
+          customer = await stripe.customers.create({
+            email: req.user.email,
+            name: req.user.steamUsername || 'Usuário Premium',
+            metadata: {
+              user_id: req.user.id.toString(),
+              steam_id: req.user.steamId || '',
+              created_at: new Date().toISOString()
+            }
+          });
+          console.log('Novo customer criado:', customer.id);
+        }
+        
+        // Atualizar o banco com o customer_id
+        await db.query(
+          'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+          [customer.id, req.user.id]
+        );
       }
     } catch (error) {
       console.error('Erro ao gerenciar customer:', error);
@@ -105,20 +164,8 @@ router.post('/create-checkout-session', authMiddleware.verifyToken, async (req, 
       });
     }
 
-    // Verificar se já tem assinatura ativa
-    const existingSubscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'active',
-      limit: 1
-    });
-
-    if (existingSubscriptions.data.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Usuário já possui uma assinatura ativa'
-      });
-    }
-
+    // ✅ REMOVER VERIFICAÇÃO DE ASSINATURA ATIVA (já verificamos no banco local)
+    
     // Criar sessão de checkout
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,

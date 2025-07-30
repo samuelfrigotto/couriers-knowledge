@@ -735,6 +735,16 @@ export class I18nService {
 'importMatches.source.aiAnalysis': 'AI',
 'importMatches.source.unknown': 'Unknown',
 
+
+'premium.mostPopular': '..  Most Popular',
+'premium.inProduction': 'In Production',
+'settings.currency': 'Currency',
+'settings.currency.description': 'Select your preferred currency for pricing',
+'currency.current': 'Current Currency',
+'currency.select': 'Select Currency',
+'settings.account.title': 'Account',
+'settings.account.description': 'Your account and session settings',
+'settings.logout.button': 'Logout',
       },
 
 
@@ -755,7 +765,7 @@ export class I18nService {
 
 
 
-      
+
 
 
 
@@ -1414,6 +1424,15 @@ export class I18nService {
 
 // Confirm Messages
 'importMatches.confirm.deleteMatch': 'Tem certeza que deseja excluir esta partida?',
+
+'premium.mostPopular': '.  Mais Popular',
+'settings.currency': 'Moeda',
+'settings.currency.description': 'Selecione sua moeda preferida para preços',
+'currency.current': 'Moeda Atual',
+'currency.select': 'Selecionar Moeda','premium.inProduction': 'Em Produção',
+'settings.account.title': 'Conta',
+'settings.account.description': 'Configurações da sua conta e sessão',
+'settings.logout.button': 'Sair da Conta',
 
 
       },
