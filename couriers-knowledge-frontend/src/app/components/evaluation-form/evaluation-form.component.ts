@@ -5,6 +5,7 @@ import {
   OnInit,
   Output,
   inject,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -21,6 +22,7 @@ import { GameDataService, Hero } from '../../core/game-data.service';
 import { Observable, of } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 function tagsValidator(control: AbstractControl): ValidationErrors | null {
   if (typeof control.value !== 'string') {
@@ -39,16 +41,19 @@ function tagsValidator(control: AbstractControl): ValidationErrors | null {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule, // ← ADICIONAR ESTA LINHA
+    FormsModule,
+    TranslatePipe,// ← ADICIONAR ESTA LINHA
   ],
   templateUrl: './evaluation-form.component.html',
   styleUrl: './evaluation-form.component.css',
 })
-export class EvaluationFormComponent implements OnInit {
+export class EvaluationFormComponent implements OnInit, OnDestroy {
   @Input() evaluationData: any | null = null;
   @Output() formSubmitted = new EventEmitter<void>(); // ← CORRIGIR NOME
   @Output() formClosed = new EventEmitter<void>(); // ← CORRIGIR NOME
   @Output() evaluationError = new EventEmitter<any>();
+
+
 
   private fb = inject(FormBuilder);
   private evaluationService = inject(EvaluationService);
@@ -132,7 +137,26 @@ export class EvaluationFormComponent implements OnInit {
     if (this.evaluationData) {
       this.populateForm();
     }
+    this.preventBodyScroll(true);
   }
+
+  ngOnDestroy(): void {
+    this.preventBodyScroll(false);
+  }
+
+   onTagsInput(event: any): void {
+    const value = event.target.value;
+    // Remove espaços duplos e vírgulas duplas
+    const cleanValue = value
+      .replace(/,,+/g, ',')  // Remove vírgulas duplas
+      .replace(/\s+,/g, ',') // Remove espaços antes de vírgulas
+      .replace(/,\s+/g, ', '); // Normaliza espaços após vírgulas
+
+    if (cleanValue !== value) {
+      this.evaluationForm.get('tags')?.setValue(cleanValue, { emitEvent: false });
+    }
+  }
+
 
   // evaluation-form.component.ts - CORREÇÃO PARA BLOQUEAR CAMPOS NA EDIÇÃO
 
@@ -248,28 +272,56 @@ export class EvaluationFormComponent implements OnInit {
     console.log('⭐ Rating definido:', rating); // Debug
   }
 
+    // ✅ MÉTODO ADDTAG CORRIGIDO - Lógica simplificada e mais robusta
   public addTag(tagToAdd: string): void {
-    const currentTagsValue = this.evaluationForm.get('tags')?.value || '';
-    let tags: string[];
+    const currentValue = this.evaluationForm.get('tags')?.value || '';
 
-    if (typeof currentTagsValue === 'string') {
-      tags = currentTagsValue.split(',').map((t: string) => t.trim());
-    } else if (Array.isArray(currentTagsValue)) {
-      tags = [...currentTagsValue];
+    console.log('🏷️ Debug - Valor atual:', `"${currentValue}"`);
+    console.log('🏷️ Debug - Tag a adicionar:', tagToAdd);
+
+    // ✅ Se o campo está vazio, apenas adicionar a tag
+    if (!currentValue.trim()) {
+      const newValue = tagToAdd + ', ';
+      this.evaluationForm.get('tags')?.setValue(newValue);
+      this.focusTagsInput(newValue.length);
+      return;
+    }
+
+    // ✅ Verificar se o valor atual termina com vírgula seguida de espaço
+    const endsWithCommaSpace = currentValue.endsWith(', ') || currentValue.endsWith(',');
+
+    console.log('🏷️ Debug - Termina com vírgula?', endsWithCommaSpace);
+
+    if (endsWithCommaSpace) {
+      // ✅ Já termina com vírgula = adicionar nova tag
+      console.log('➕ Adicionando nova tag (após vírgula)');
+      const newValue = currentValue + (currentValue.endsWith(', ') ? '' : ' ') + tagToAdd + ', ';
+      this.evaluationForm.get('tags')?.setValue(newValue);
+      this.focusTagsInput(newValue.length);
+
     } else {
-      tags = [];
-    }
+      // ✅ NÃO termina com vírgula = substituir a última tag parcial
+      console.log('🔄 Substituindo última tag parcial');
 
-    if (tags.length > 0 && !tags[tags.length - 1]) {
-      tags.pop();
-    }
+      const parts = currentValue.split(',').map((part: string) => part.trim());
+      const completeTags = parts.slice(0, -1); // Remove a última parte (tag parcial)
+      completeTags.push(tagToAdd); // Adiciona a tag sugerida
 
-    if (!tags.includes(tagToAdd)) {
-      tags.push(tagToAdd);
+      const newValue = completeTags.join(', ') + ', ';
+      this.evaluationForm.get('tags')?.setValue(newValue);
+      this.focusTagsInput(newValue.length);
     }
-
-    this.evaluationForm.get('tags')?.setValue(tags.join(', ') + ', ');
   }
+
+  private focusTagsInput(cursorPosition: number): void {
+    setTimeout(() => {
+      const inputElement = document.getElementById('tags') as HTMLInputElement;
+      inputElement?.focus();
+      inputElement?.setSelectionRange(cursorPosition, cursorPosition);
+    }, 10);
+  }
+
+
 
   public nextStep(): void {
     console.log('➡️ Próximo passo - tentando ir para passo 2');
@@ -455,9 +507,54 @@ export class EvaluationFormComponent implements OnInit {
     });
   }
 
+  removeTag(tagToRemove: string): void {
+    const currentTagsValue = this.evaluationForm.get('tags')?.value || '';
+    const tags = currentTagsValue
+      .split(',')
+      .map((t: string) => t.trim())
+      .filter((t: string) => t.length > 0 && t !== tagToRemove);
+
+    this.evaluationForm.get('tags')?.setValue(tags.join(', '));
+  }
+
+  private validateTags(control: AbstractControl): ValidationErrors | null {
+    if (!control.value || typeof control.value !== 'string') {
+      return null;
+    }
+
+    const tags = control.value
+      .split(',')
+      .map((tag: string) => tag.trim())
+      .filter((tag: string) => tag.length > 0);
+
+    // Máximo de tags
+    if (tags.length > 5) {
+      return { maxTags: true };
+    }
+
+    // Tag muito longa
+    const longTag = tags.find((tag: string) => tag.length > 25);
+    if (longTag) {
+      return { maxTagLength: { value: longTag } };
+    }
+
+    return null;
+  }
+
+  private preventBodyScroll(prevent: boolean): void {
+    if (prevent) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '15px'; // Compensa a scrollbar
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+  }
+
+
   public onClose(): void {
-    console.log('❌ Fechando formulário'); // Debug
-    this.formClosed.emit(); // ← CORRIGIR NOME DO EVENTO
+    this.formClosed.emit();
+    this.preventBodyScroll(false);
   }
 
   public getRoleDisplayName(role: string): string {

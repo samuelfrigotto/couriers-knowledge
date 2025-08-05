@@ -1,15 +1,19 @@
+/* ===== MODAL OVERLAY COM CORREÇÕES ===== */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;  /* Força viewport width */
+  height: 100vh; /* Força viewport height */
   background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999; /* ✅ Z-index mais alto para garantir que fique por cima */
   backdrop-filter: blur(5px);
+
+  /* ✅ Previne scroll do body quando modal está aberto */
+  overflow: hidden;
 }
 
 .modal-content {
@@ -18,11 +22,20 @@
   border-radius: 12px;
   width: 90%;
   max-width: 550px;
+  max-height: 90vh; /* ✅ Previne overflow vertical */
   color: var(--text-color);
   border: 1px solid var(--accent-color);
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+  /* ✅ Permite scroll interno se necessário */
+  overflow-y: auto;
+
+  /* ✅ Posicionamento mais estável */
+  position: relative;
+  margin: auto;
 }
 
+/* ===== MODAL HEADER ===== */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -45,12 +58,19 @@
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  transition: color 0.2s;
 }
 
+.close-btn:hover {
+  color: #e53e3e;
+}
+
+/* ===== FORM SECTIONS ===== */
 .form-section {
   border: none;
   padding: 0;
   margin: 0 0 25px 0;
+  position: relative;
 }
 
 .form-section legend {
@@ -61,8 +81,9 @@
   color: #3a86ff;
 }
 
+/* ===== FORM GROUPS ===== */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px; /* ✅ Mais espaço entre campos */
 }
 
 .form-group label {
@@ -70,6 +91,13 @@
   margin-bottom: 8px;
   font-weight: 500;
   color: #a0aec0;
+  font-size: 0.9rem; /* Tamanho consistente */
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #718096;
+  opacity: 1;
 }
 
 .form-group input,
@@ -83,6 +111,7 @@
   color: var(--text-color);
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 0.9rem; /* ✅ Tamanho de fonte consistente */
 }
 
 .form-group input:focus,
@@ -102,6 +131,7 @@
   flex: 1;
 }
 
+/* ===== FORM ACTIONS ===== */
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -109,6 +139,7 @@
   margin-top: 30px;
 }
 
+/* ===== BUTTONS ===== */
 button {
   padding: 10px 20px;
   border: none;
@@ -130,6 +161,7 @@ button {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
 .btn-secondary {
   background-color: #4a5568;
   color: white;
@@ -137,82 +169,6 @@ button {
 .btn-secondary:hover {
   background-color: #718096;
 }
-
-.char-counter {
-  text-align: right;
-  font-size: 0.8rem;
-  color: #718096;
-  margin-top: 5px;
-}
-.char-counter.error {
-  color: #e53e3e;
-}
-
-.error-message {
-  color: #e53e3e;
-  font-size: 0.8rem;
-  margin-top: 5px;
-}
-
-.tag-suggestions {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-}
-.tag-suggestion-btn {
-  background-color: var(--accent-color);
-  color: var(--text-color);
-  border: 1px solid #4a5568;
-  border-radius: 12px;
-  padding: 3px 10px;
-  cursor: pointer;
-}
-.tag-suggestion-btn:hover {
-  background-color: #3a86ff;
-  border-color: #3a86ff;
-}
-
-/* --- Novo Input de Rating --- */
-.rating-group label {
-  margin-bottom: 12px;
-}
-.rating-input-container {
-  display: flex;
-  gap: 8px;
-}
-.rating-input-square {
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-}
-.rating-square-inner {
-  width: 100%;
-  height: 100%;
-  background-color: var(--accent-color);
-  border: 1px solid #4a5568;
-  border-radius: 4px;
-  position: relative;
-  display: flex;
-  transition: all 0.1s ease-in-out;
-}
-.rating-square-inner:hover {
-  transform: scale(1.1);
-}
-.rating-square-inner.filled {
-  background-color: #f6e05e;
-  border-color: #f6e05e;
-}
-.rating-square-inner.half {
-  background-image: linear-gradient(to right, #f6e05e 50%, var(--accent-color) 50%);
-}
-.half-left, .half-right {
-  flex: 1;
-  height: 100%;
-}
-
 
 .btn-tertiary {
   background-color: transparent;
@@ -224,7 +180,125 @@ button {
   color: var(--text-color);
 }
 
-/* NOVO ESTILO: Indicador de Etapas */
+/* ===== CHARACTER COUNTER ===== */
+.char-counter {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 5px;
+}
+.char-counter.error {
+  color: #e53e3e;
+}
+
+/* ===== ERROR MESSAGES ===== */
+.error-message {
+  color: #e53e3e;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+/* ===== TAG SUGGESTIONS MELHORADAS ===== */
+.tag-suggestions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  max-height: 120px; /* ✅ Limita altura das sugestões */
+  overflow-y: auto;  /* ✅ Scroll se muitas sugestões */
+}
+
+.tag-suggestion-btn {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  border: 1px solid #4a5568;
+  border-radius: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  white-space: nowrap; /* ✅ Previne quebra de linha */
+
+  /* ✅ Previne seleção de texto */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tag-suggestion-btn:hover {
+  background-color: #3a86ff;
+  border-color: #3a86ff;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.tag-suggestion-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== RATING INPUT MELHORADO ===== */
+
+.rating-group label {
+  display: block;
+  margin-bottom: 12px; /* Pouco mais de espaço para o rating */
+  font-weight: 500;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+.rating-group {
+  margin-bottom: 20px; /* Igual aos outros form-groups */
+}
+
+.rating-input-container {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.rating-input-square {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  /* ✅ Previne seleção de texto */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rating-square-inner {
+  width: 100%;
+  height: 100%;
+  background-color: var(--accent-color);
+  border: 1px solid #4a5568;
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  transition: all 0.15s ease-in-out;
+}
+
+.rating-square-inner:hover {
+  transform: scale(1.05); /* ✅ Efeito hover mais sutil */
+}
+
+.rating-square-inner.filled {
+  background-color: #f6e05e;
+  border-color: #f6e05e;
+}
+
+.rating-square-inner.half {
+  background-image: linear-gradient(to right, #f6e05e 50%, var(--accent-color) 50%);
+}
+
+.half-left, .half-right {
+  flex: 1;
+  height: 100%;
+  /* ✅ Previne seleção de texto */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== STEP INDICATOR ===== */
 .step-indicator {
   font-size: 0.9rem;
   font-weight: bold;
@@ -234,7 +308,7 @@ button {
   border-radius: 12px;
 }
 
-/* NOVO ESTILO: Campo de exibição para valores desabilitados */
+/* ===== CAMPOS PREFILLED ===== */
 .disabled-field-display {
   display: flex;
   align-items: center;
@@ -249,13 +323,11 @@ button {
   cursor: not-allowed;
 }
 
-/* NOVO ESTILO: Ícone do herói dentro do campo de exibição */
 .disabled-field-display .hero-icon {
   width: 32px;
   height: auto;
   border-radius: 4px;
 }
-
 
 .prefilled-field {
   width: 100%;
@@ -267,7 +339,6 @@ button {
   position: relative;
   transition: all 0.3s ease;
 }
-
 
 .prefilled-field:has(.prefilled-badge:contains("Fixo")) {
   background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
@@ -355,26 +426,6 @@ button {
   }
 }
 
-/* Responsivo */
-@media (max-width: 768px) {
-  .prefilled-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .prefilled-badge {
-    align-self: flex-end;
-  }
-
-  .hero-info {
-    width: 100%;
-  }
-}
-
-
-/* ADICIONE este CSS ao evaluation-form.component.css */
-
 /* ===== CAMPO DE ROLE EDITÁVEL ===== */
 .role-field-group {
   position: relative;
@@ -383,13 +434,27 @@ button {
 .role-select {
   position: relative;
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  border: 2px solid transparent !important;
+  z-index: 10001; /* ✅ Z-index mais alto que o modal para dropdown funcionar */
 }
 
 .role-select:not(:disabled) {
   border-color: var(--primary-color) !important;
   box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2) !important;
-  background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), rgba(6, 255, 165, 0.05));
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), rgba(6, 255, 165, 0.05)) !important;
+}
+
+.role-select:focus {
+  z-index: 10002 !important; /* ✅ Ainda mais alto quando focado */
+  animation: highlight-editable 0.5s ease-in-out;
+  outline: none !important;
+}
+
+/* ✅ Garantir que o dropdown apareça por cima */
+.role-select option {
+  background-color: var(--primary-bg-color);
+  color: var(--text-color);
+  padding: 8px;
 }
 
 .editable-hint {
@@ -424,25 +489,116 @@ button {
 
 /* ===== DESTAQUE PARA CAMPOS EDITÁVEIS ===== */
 .role-field-group label {
-  color: var(--primary-color) !important;
-  font-weight: 600 !important;
+  color: #a0aec0 !important;
+  font-weight: 500 !important;
   transition: color 0.3s ease;
 }
 
-/* ===== ANIMATION PARA DESTACAR ===== */
-@keyframes highlight-editable {
-  0% { background-color: transparent; }
-  50% { background-color: rgba(58, 134, 255, 0.1); }
-  100% { background-color: transparent; }
+/* ===== INDICADORES VISUAIS EXTRAS ===== */
+.form-section {
+  position: relative;
 }
 
-.role-select:focus {
-  animation: highlight-editable 0.5s ease-in-out;
+/* ===== ESTILIZAÇÃO ESPECIAL PARA TAGS E NOTES (com gradiente) ===== */
+#tags,
+#notes,
+textarea[formControlName="notes"] {
+  width: 100% !important;
+  padding: 12px !important;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(6, 255, 165, 0.1)) !important;
+  border: 2px solid var(--primary-color) !important;
+  border-radius: 8px !important;
+  color: var(--text-color) !important;
+  box-sizing: border-box !important;
+  transition: all 0.3s ease !important;
+  font-size: 0.9rem !important;
+  font-family: inherit !important;
+}
+
+#tags:focus,
+#notes:focus,
+textarea[formControlName="notes"]:focus {
   outline: none !important;
+  border-color: #3a86ff !important;
+  box-shadow: 0 0 15px rgba(58, 134, 255, 0.3) !important;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.15), rgba(6, 255, 165, 0.15)) !important;
 }
 
-/* ===== RESPONSIVO ===== */
+#tags::placeholder,
+#notes::placeholder,
+textarea[formControlName="notes"]::placeholder {
+  color: #718096 !important;
+  opacity: 0.8 !important;
+}
+
+/* ===== ESTILIZAÇÃO PADRÃO PARA OUTROS INPUTS ===== */
+.form-control,
+input[type="text"],
+input[formControlName="targetSteamId"],
+input[formControlName="matchId"],
+select[formControlName="hero_id"],
+select[formControlName="role"] {
+  width: 100% !important;
+  padding: 12px !important;
+  background-color: var(--primary-bg-color) !important;
+  border: 1px solid #4a5568 !important;
+  border-radius: 5px !important;
+  color: var(--text-color) !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  font-size: 0.9rem !important;
+  font-family: inherit !important;
+}
+
+.form-control:focus,
+input[type="text"]:focus,
+input[formControlName="targetSteamId"]:focus,
+input[formControlName="matchId"]:focus,
+select[formControlName="hero_id"]:focus,
+select[formControlName="role"]:focus {
+  outline: none !important;
+  border-color: #3a86ff !important;
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.3) !important;
+}
+
+.form-control::placeholder,
+input[type="text"]::placeholder,
+input[formControlName="targetSteamId"]::placeholder,
+input[formControlName="matchId"]::placeholder {
+  color: #718096 !important;
+  opacity: 1 !important;
+}
+
+/* ===== TEXTAREA ESPECÍFICO (para anotações) ===== */
+textarea.form-control,
+textarea[formControlName="notes"],
+#notes {
+  resize: vertical !important;
+  min-height: calc(1.5em * 4 + 24px) !important; /* 4 linhas + padding */
+}
+
+/* ===== RESPONSIVIDADE MOBILE ===== */
 @media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+    padding: 15px 20px 25px;
+    margin: 10px;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
   .prefilled-content {
     flex-direction: column;
     align-items: flex-start;
@@ -456,24 +612,99 @@ button {
   .hero-info {
     width: 100%;
   }
+
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .rating-input-container {
+    justify-content: center;
+  }
+
+  .tag-suggestions {
+    max-height: 100px;
+  }
 }
 
-/* ===== INDICADORES VISUAIS EXTRAS ===== */
-.form-section {
-  position: relative;
+/* ===== SCROLLBAR PERSONALIZADA PARA TAG SUGGESTIONS ===== */
+.tag-suggestions::-webkit-scrollbar {
+  width: 4px;
 }
 
-/* Indicador quando todos os campos estão bloqueados */
-.form-section:has(.prefilled-field) legend::after {
-  content: " 🔒";
-  font-size: 12px;
-  opacity: 0.7;
+.tag-suggestions::-webkit-scrollbar-track {
+  background: var(--accent-color);
+  border-radius: 2px;
 }
 
-/* Indicador especial para seção com campo editável */
-.form-section:has(.role-field-group) legend::after {
-  content: " (✏️ role editável)";
-  font-size: 11px;
-  color: var(--primary-color);
-  font-weight: normal;
+.tag-suggestions::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 2px;
+}
+
+.tag-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #718096;
+}
+
+/* ===== TRANSITIONS E ANIMATIONS EXTRAS ===== */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== ESTADOS DE LOADING (se necessário) ===== */
+.form-group.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ===== MELHORIAS DE ACESSIBILIDADE ===== */
+.close-btn:focus,
+button:focus {
+  outline: 2px solid #3a86ff;
+  outline-offset: 2px;
+}
+
+.rating-input-square:focus-within {
+  outline: 2px solid #3a86ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===== ESTADOS DE VALIDAÇÃO ===== */
+.form-group.invalid input,
+.form-group.invalid textarea,
+.form-group.invalid select {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.3);
+}
+
+.form-group.valid input,
+.form-group.valid textarea,
+.form-group.valid select {
+  border-color: #38a169;
+  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.3);
 }

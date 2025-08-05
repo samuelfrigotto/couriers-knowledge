@@ -1,20 +1,22 @@
-<div class="modal-overlay" (click)="onClose()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<!-- ===== MODAL OVERLAY COM CORREÇÃO DE MOUSE DRAG ===== -->
+<div class="modal-overlay">
+  <div class="modal-content"
+       (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditMode ? "Editar Avaliação" : "Nova Avaliação" }}</h2>
+      <h2>{{ (isEditMode ? 'evaluation.form.edit.title' : 'evaluation.form.new.title') | translate }}</h2>
       <div class="step-indicator" *ngIf="!isEditMode">
-        Passo {{ currentStep }} de 2
+        {{ 'evaluation.form.step.indicator' | translate}}{{currentStep}}{{'evaluation.form.step.indicator2' | translate}}
       </div>
-      <button class="close-btn" (click)="onClose()">&times;</button>
+      <button class="close-btn" (click)="onClose()">{{ 'evaluation.form.close' | translate }}</button>
     </div>
 
     <form [formGroup]="evaluationForm" (ngSubmit)="submitForm()">
       <div *ngIf="currentStep === 1">
         <fieldset class="form-section">
-          <legend>1. Identificação do Jogador</legend>
+          <legend>{{ 'evaluation.form.section1.title' | translate }}</legend>
           <div class="form-row">
             <div class="form-group">
-              <label for="targetSteamId">Steam ID do Jogador</label>
+              <label for="targetSteamId">{{ 'evaluation.form.player.steamid' | translate }}</label>
 
               <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
               <input
@@ -25,7 +27,7 @@
                 type="text"
                 id="targetSteamId"
                 formControlName="targetSteamId"
-                placeholder="Exemplo: 76561198012345678"
+                [placeholder]="'evaluation.form.steamid.placeholder' | translate"
                 maxlength="17"
               />
 
@@ -40,14 +42,14 @@
                 <div class="prefilled-content">
                   <div class="player-info">
                     <strong>{{
-                      prefilledPlayerName || "Jogador da Partida"
+                      prefilledPlayerName || ('evaluation.form.player.match' | translate)
                     }}</strong>
                     <small>{{
                       evaluationForm.get("targetSteamId")?.value
                     }}</small>
                   </div>
                   <span class="prefilled-badge">{{
-                    isEditMode ? "Fixo" : "Da Partida"
+                    (isEditMode ? 'evaluation.form.badge.fixed' : 'evaluation.form.badge.from.match') | translate
                   }}</span>
                 </div>
               </div>
@@ -60,18 +62,20 @@
                 "
                 class="error-message"
               >
-                Deve ser um número de 17 dígitos.
+                {{ 'evaluation.form.steamid.error' | translate }}
               </div>
             </div>
           </div>
         </fieldset>
 
         <fieldset class="form-section">
-          <legend>2. Contexto da Partida (Opcional)</legend>
+          <legend>{{ 'evaluation.form.section2.title' | translate }}</legend>
+
+          <!-- ===== PRIMEIRA LINHA: MATCH ID E HERÓI ===== -->
           <div class="form-row">
             <!-- ===== CAMPO DE MATCH ID ===== -->
             <div class="form-group">
-              <label for="matchId">ID da Partida</label>
+              <label for="matchId">{{ 'evaluation.form.match.id' | translate }}</label>
 
               <!-- ✅ INPUT NORMAL (quando não bloqueado) -->
               <input
@@ -81,7 +85,7 @@
                 type="text"
                 id="matchId"
                 formControlName="matchId"
-                placeholder="Exemplo: 1234567890"
+                [placeholder]="'evaluation.form.matchid.placeholder' | translate"
               />
 
               <!-- ✅ CAMPO VISUAL MATCH (quando bloqueado) -->
@@ -94,10 +98,14 @@
                 <div class="prefilled-content">
                   <div class="match-info">
                     <strong>{{ getMatchDisplayText() }}</strong>
-                    <small>Partida detectada automaticamente</small>
+                    <small>{{
+                        (isEditMode
+                          ? 'evaluation.form.cannot.change'
+                          : 'evaluation.form.auto.detected') | translate
+                      }}</small>
                   </div>
                   <span class="prefilled-badge">{{
-                    isEditMode ? "Fixo" : "Da Partida"
+                    (isEditMode ? 'evaluation.form.badge.fixed' : 'evaluation.form.badge.from.match') | translate
                   }}</span>
                 </div>
               </div>
@@ -105,7 +113,7 @@
 
             <!-- ===== CAMPO DE HERÓI ===== -->
             <div class="form-group">
-              <label for="hero_id">Herói Jogado</label>
+              <label for="hero_id">{{ 'evaluation.form.hero.played' | translate }}</label>
 
               <!-- ✅ SELECT NORMAL (quando não bloqueado) -->
               <select
@@ -115,7 +123,7 @@
                 id="hero_id"
                 formControlName="hero_id"
               >
-                <option [ngValue]="null">Não informar</option>
+                <option [ngValue]="null">{{ 'evaluation.form.do.not.inform' | translate }}</option>
                 <option *ngFor="let hero of heroes$ | async" [value]="hero.id">
                   {{ hero.localized_name }}
                 </option>
@@ -141,44 +149,36 @@
                     />
                     <div class="hero-details">
                       <strong>{{
-                        prefilledHeroName || "Herói da Partida"
+                        prefilledHeroName || ('evaluation.form.hero.match' | translate)
                       }}</strong>
                       <small>{{
-                        isEditMode
-                          ? "Não é possível alterar"
-                          : "Detectado automaticamente"
+                        (isEditMode
+                          ? 'evaluation.form.cannot.change'
+                          : 'evaluation.form.auto.detected') | translate
                       }}</small>
                     </div>
                   </div>
                   <span class="prefilled-badge">{{
-                    isEditMode ? "Fixo" : "Da Partida"
+                    (isEditMode ? 'evaluation.form.badge.fixed' : 'evaluation.form.badge.from.match') | translate
                   }}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- ===== CAMPO DE ROLE (SEMPRE EDITÁVEL) ===== -->
+          <!-- ===== SEGUNDA LINHA: FUNÇÃO (SEMPRE EDITÁVEL) ===== -->
+          <div class="form-row">
             <div class="form-group role-field-group">
               <label for="role">
-                ✏️ Função
-                <span *ngIf="shouldLockFields" class="editable-hint"
-                  >(editável)</span
-                >
+                {{ 'evaluation.form.role' | translate }}
+                <span *ngIf="shouldLockFields" class="editable-hint">{{ 'evaluation.form.role.editable' | translate }}</span>
               </label>
               <select id="role" formControlName="role" class="role-select">
-                <option [ngValue]="null">Não informar</option>
+                <option [ngValue]="null">{{ 'evaluation.form.do.not.inform' | translate }}</option>
                 <option *ngFor="let role of roles" [value]="role">
                   {{ getRoleDisplayName(role) }}
                 </option>
               </select>
-              <small *ngIf="shouldLockFields" class="field-help">
-                💡
-                {{
-                  isEditMode
-                    ? "A função pode ser alterada mesmo durante a edição"
-                    : "Você pode alterar a função mesmo quando outros campos estão bloqueados"
-                }}
-              </small>
             </div>
           </div>
         </fieldset>
@@ -186,9 +186,9 @@
 
       <div *ngIf="currentStep === 2">
         <fieldset class="form-section">
-          <legend>3. Sua Avaliação</legend>
+          <legend>{{ 'evaluation.form.section3.title' | translate }}</legend>
           <div class="form-group rating-group">
-            <label>Nota *</label>
+            <label>{{ 'evaluation.form.rating' | translate }}</label>
             <div class="rating-input-container">
               <div
                 *ngFor="let i of [1, 2, 3, 4, 5]"
@@ -206,6 +206,7 @@
                       (hoverRating || evaluationForm.get('rating')?.value) ===
                       i - 0.5
                   }"
+                  (mousedown)="$event.preventDefault()"
                 >
                   <div
                     class="half-left"
@@ -227,28 +228,31 @@
               "
               class="error-message"
             >
-              A nota é obrigatória.
+              {{ 'evaluation.form.rating.required' | translate }}
             </div>
           </div>
 
           <div class="form-group">
-            <label for="tags">Tags (separadas por vírgula)</label>
+            <label for="tags">{{ 'evaluation.form.tags' | translate }}</label>
             <input
               id="tags"
               type="text"
               formControlName="tags"
-              placeholder="Ex: comunicativo, bom farm, tóxico..."
+              class="form-control"
+              [placeholder]="'evaluation.form.tags.placeholder' | translate"
+              (input)="onTagsInput($event)"
             />
             <div
               class="tag-suggestions"
               *ngIf="suggestedTags$ | async as suggestions"
             >
-              <span *ngIf="suggestions.length > 0">Sugestões:</span>
+              <span *ngIf="suggestions.length > 0">{{ 'evaluation.form.suggestions' | translate }}</span>
               <button
                 type="button"
                 *ngFor="let tag of suggestions"
                 class="tag-suggestion-btn"
                 (click)="addTag(tag)"
+                (mousedown)="$event.preventDefault()"
               >
                 {{ tag }}
               </button>
@@ -257,21 +261,19 @@
               *ngIf="evaluationForm.get('tags')?.errors as errors"
               class="error-message"
             >
-              <span *ngIf="errors['maxTags']">Máximo de 5 tags permitido.</span>
-              <span *ngIf="errors['maxTagLength']"
-                >A tag '{{ errors["maxTagLength"].value }}' é longa demais (máx
-                25 caracteres).</span
-              >
+              <span *ngIf="errors['maxTags']">{{ 'evaluation.form.tags.max.error' | translate }}</span>
+              <span *ngIf="errors['maxTagLength']">{{ 'evaluation.form.tag.too.long.error' | translate:{tag: errors['maxTagLength'].value} }}</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="notes">Anotações</label>
+            <label for="notes">{{ 'evaluation.form.notes' | translate }}</label>
             <textarea
               id="notes"
               rows="4"
               formControlName="notes"
-              placeholder="Descreva o comportamento, pontos fortes e fracos..."
+              class="form-control"
+              [placeholder]="'evaluation.form.notes.placeholder' | translate"
             ></textarea>
             <div
               class="char-counter"
@@ -285,7 +287,7 @@
 
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="onClose()">
-          Cancelar
+          {{ 'evaluation.form.cancel' | translate }}
         </button>
         <button
           type="button"
@@ -293,7 +295,7 @@
           *ngIf="currentStep === 2 && !isEditMode"
           (click)="prevStep()"
         >
-          Voltar
+          {{ 'evaluation.form.back' | translate }}
         </button>
         <button
           type="button"
@@ -305,7 +307,7 @@
             !evaluationForm.get('targetSteamId')?.disabled
           "
         >
-          Próximo
+          {{ 'evaluation.form.next' | translate }}
         </button>
         <button
           type="submit"
@@ -313,7 +315,7 @@
           *ngIf="currentStep === 2"
           [disabled]="evaluationForm.invalid"
         >
-          {{ isEditMode ? "Salvar Alterações" : "Criar Avaliação" }}
+          {{ (isEditMode ? 'evaluation.form.save.changes' : 'evaluation.form.create') | translate }}
         </button>
       </div>
     </form>

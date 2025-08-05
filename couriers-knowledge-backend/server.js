@@ -14,7 +14,6 @@ const authRoutes = require('./src/api/routes/auth.routes');
 const userRoutes = require('./src/api/routes/user.routes');
 const evaluationRoutes = require('./src/api/routes/evaluation.routes');
 const steamRoutes = require('./src/api/routes/steam.routes');
-const gsiRoutes = require('./src/api/routes/gsi.routes');
 const friendsRoutes = require('./src/api/routes/friends.routes');
 const stripeRoutes = require('./src/api/routes/stripe.routes'); 
 const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA ADICIONADA
@@ -62,7 +61,6 @@ app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', evaluationRoutes);
 app.use('/api', steamRoutes);
-app.use('/api', gsiRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/status', statusRoutes); 

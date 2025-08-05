@@ -1,4 +1,3 @@
-// src/app/components/settings/settings.component.ts
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { I18nService, Language } from '../../core/i18n.service';
@@ -331,6 +330,8 @@ interface UserProfile {
     .info-value.status-premium {
       color: #f59e0b;
     }
+
+
 
     .info-value.admin {
       color: #8b5cf6;
