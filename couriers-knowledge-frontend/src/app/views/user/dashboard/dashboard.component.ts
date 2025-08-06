@@ -1,4 +1,4 @@
-// ===== DASHBOARD.COMPONENT.TS - 100% TRADUZIDO =====
+// ===== DASHBOARD.COMPONENT.TS - 100% TRADUZIDO COM FIX DE FOCO =====
 
 import {
   Component,
@@ -138,10 +138,9 @@ export class DashboardComponent implements OnInit {
     this.toastr.clear();
   }
 
-
   public clearAllToasts(): void {
-  this.toastr.clear();
-}
+    this.toastr.clear();
+  }
 
   // ===== MÉTODOS DE CONFIGURAÇÃO =====
 
@@ -214,21 +213,20 @@ export class DashboardComponent implements OnInit {
   // ===== MÉTODOS DE DADOS =====
 
   private loadAllEvaluations(): void {
-  this.isLoading = true;
-  this.evaluationService.getMyEvaluations().subscribe({
-    next: (evaluations) => {
-      this.allEvaluations = evaluations;
-      this.filteredBySearch = evaluations;
-      this.displayedEvaluations = evaluations;
-      this.isLoading = false;
-    },
-    error: (err) => {
-  console.error('Erro ao carregar avaliações:', err);
-
-  this.isLoading = false;
-    },
-  });
-}
+    this.isLoading = true;
+    this.evaluationService.getMyEvaluations().subscribe({
+      next: (evaluations) => {
+        this.allEvaluations = evaluations;
+        this.filteredBySearch = evaluations;
+        this.displayedEvaluations = evaluations;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar avaliações:', err);
+        this.isLoading = false;
+      },
+    });
+  }
 
   private checkEvaluationLimit(): void {
     this.evaluationService.getEvaluationStatus().subscribe({
@@ -251,79 +249,78 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadImportExportStats(): void {
-  this.evaluationService.getImportExportStats().subscribe({
-    next: (stats) => {
-      this.importExportStats = stats;
-      this.updateLimitFlags(stats);
-    },
-    error: (err) => {
-      console.error('❌ [DASHBOARD] Erro ao carregar estatísticas de import/export:', err);
+    this.evaluationService.getImportExportStats().subscribe({
+      next: (stats) => {
+        this.importExportStats = stats;
+        this.updateLimitFlags(stats);
+      },
+      error: (err) => {
+        console.error('❌ [DASHBOARD] Erro ao carregar estatísticas de import/export:', err);
 
-      // ✅ TRATAMENTO ESPECÍFICO POR TIPO DE ERRO
-      if (err.status === 404) {
-        // Não mostrar toast para 404, apenas logs
-      } else if (err.status === 401) {
-        console.warn('🔐 [DASHBOARD] Não autorizado para import/export stats');
-        // Token pode ter expirado
-      } else {
-        console.warn('⚠️ [DASHBOARD] Erro inesperado no import/export:', err.status);
-        // Mostrar toast apenas para erros realmente inesperados
-        this.toastr.warning('Não foi possível verificar limites de import/export. Operações permitidas por segurança.');
-      }
+        // ✅ TRATAMENTO ESPECÍFICO POR TIPO DE ERRO
+        if (err.status === 404) {
+          // Não mostrar toast para 404, apenas logs
+        } else if (err.status === 401) {
+          console.warn('🔐 [DASHBOARD] Não autorizado para import/export stats');
+          // Token pode ter expirado
+        } else {
+          console.warn('⚠️ [DASHBOARD] Erro inesperado no import/export:', err.status);
+          // Mostrar toast apenas para erros realmente inesperados
+          this.toastr.warning('Não foi possível verificar limites de import/export. Operações permitidas por segurança.');
+        }
 
-      // ✅ DEFINIR VALORES PADRÃO SEGUROS (permitir operações)
-      this.importExportStats = null;
-      this.canExportToday = true;
-      this.canImportToday = true;
-      this.canExportThisMonth = true;
-      this.canImportThisMonth = true;
-    },
-  });
-}
+        // ✅ DEFINIR VALORES PADRÃO SEGUROS (permitir operações)
+        this.importExportStats = null;
+        this.canExportToday = true;
+        this.canImportToday = true;
+        this.canExportThisMonth = true;
+        this.canImportThisMonth = true;
+      },
+    });
+  }
 
   private updateLimitFlags(stats: any): void {
+    // ✅ VERIFICAÇÃO DEFENSIVA - estrutura do stats pode variar
+    if (!stats) {
+      this.canExportToday = false;
+      this.canImportToday = false;
+      this.canExportThisMonth = false;
+      this.canImportThisMonth = false;
+      return;
+    }
 
-  // ✅ VERIFICAÇÃO DEFENSIVA - estrutura do stats pode variar
-  if (!stats) {
-    this.canExportToday = false;
-    this.canImportToday = false;
-    this.canExportThisMonth = false;
-    this.canImportThisMonth = false;
-    return;
-  }
+    // ✅ VERIFICAR DIFERENTES ESTRUTURAS POSSÍVEIS
+    // Estrutura 1: stats.exports.today / stats.imports.today
+    if (stats.exports && stats.imports) {
+      this.canExportToday = (stats.exports.today || 0) < (stats.exports.dailyLimit || 999);
+      this.canImportToday = (stats.imports.today || 0) < (stats.imports.dailyLimit || 999);
+      this.canExportThisMonth = (stats.exports.thisMonth || 0) < (stats.exports.monthlyLimit || 999);
+      this.canImportThisMonth = (stats.imports.thisMonth || 0) < (stats.imports.monthlyLimit || 999);
+      return;
+    }
 
-  // ✅ VERIFICAR DIFERENTES ESTRUTURAS POSSÍVEIS
-  // Estrutura 1: stats.exports.today / stats.imports.today
-  if (stats.exports && stats.imports) {
-    this.canExportToday = (stats.exports.today || 0) < (stats.exports.dailyLimit || 999);
-    this.canImportToday = (stats.imports.today || 0) < (stats.imports.dailyLimit || 999);
-    this.canExportThisMonth = (stats.exports.thisMonth || 0) < (stats.exports.monthlyLimit || 999);
-    this.canImportThisMonth = (stats.imports.thisMonth || 0) < (stats.imports.monthlyLimit || 999);
-    return;
-  }
+    // Estrutura 2: stats.usage.export.daily / stats.usage.import.daily
+    if (stats.usage && stats.usage.export && stats.usage.import) {
+      this.canExportToday = stats.canExport?.daily !== false;
+      this.canImportToday = stats.canImport?.daily !== false;
+      this.canExportThisMonth = stats.canExport?.monthly !== false;
+      this.canImportThisMonth = stats.canImport?.monthly !== false;
+      return;
+    }
 
-  // Estrutura 2: stats.usage.export.daily / stats.usage.import.daily
-  if (stats.usage && stats.usage.export && stats.usage.import) {
-    this.canExportToday = stats.canExport?.daily !== false;
-    this.canImportToday = stats.canImport?.daily !== false;
-    this.canExportThisMonth = stats.canExport?.monthly !== false;
-    this.canImportThisMonth = stats.canImport?.monthly !== false;
-    return;
+    // Estrutura 3: stats.canExport / stats.canImport (diretamente)
+    if (stats.canExport !== undefined || stats.canImport !== undefined) {
+      this.canExportToday = stats.canExport?.daily !== false;
+      this.canImportToday = stats.canImport?.daily !== false;
+      this.canExportThisMonth = stats.canExport?.monthly !== false;
+      this.canImportThisMonth = stats.canImport?.monthly !== false;
+      return;
+    }
+    this.canExportToday = true;
+    this.canImportToday = true;
+    this.canExportThisMonth = true;
+    this.canImportThisMonth = true;
   }
-
-  // Estrutura 3: stats.canExport / stats.canImport (diretamente)
-  if (stats.canExport !== undefined || stats.canImport !== undefined) {
-    this.canExportToday = stats.canExport?.daily !== false;
-    this.canImportToday = stats.canImport?.daily !== false;
-    this.canExportThisMonth = stats.canExport?.monthly !== false;
-    this.canImportThisMonth = stats.canImport?.monthly !== false;
-    return;
-  }
-  this.canExportToday = true;
-  this.canImportToday = true;
-  this.canExportThisMonth = true;
-  this.canImportThisMonth = true;
-}
 
   // ===== MÉTODOS DE FILTROS =====
 
@@ -638,10 +635,14 @@ export class DashboardComponent implements OnInit {
         return;
       }
     } catch (error) {
-      // Não é JSON, vamos tentar o formato de texto amigável
-      const textEvaluation = this.parseTextEvaluation(this.pastedText.trim());
+      // Não é JSON, vamos tentar o formato de texto amigável multilíngue
+      console.log('🔍 Tentando fazer parse de texto amigável...');
+
+      const textEvaluation = this.parseMultilingualText(this.pastedText.trim());
 
       if (textEvaluation) {
+        console.log('✅ Parse bem-sucedido:', textEvaluation);
+
         this.pastedPreview = {
           total: 1,
           version: this.i18nService.translate('dashboard.import.preview.textVersion'),
@@ -650,19 +651,32 @@ export class DashboardComponent implements OnInit {
           type: 'text',
           evaluation: textEvaluation,
         };
+      } else {
+        console.log('❌ Parse falhou');
       }
     }
   }
 
-  private parseTextEvaluation(text: string): any | null {
+  private parseMultilingualText(text: string): any | null {
     try {
+      console.log('📝 Texto a ser parseado:', text);
+
+      // Padrões multilíngues mais robustos
       const patterns = {
-        player: /(?:Jogador|Player):\s*(.+?)(?:\s*\(([^)]+)\))?\s*(?:\n|$)/i,
-        hero: /(?:Herói|Hero):\s*(.+?)(?:\n|$)/i,
-        match: /(?:Partida|Match):\s*(\d+)/i,
-        rating: /(?:Nota|Rating):\s*(\d+(?:\.\d+)?)\s*\/\s*5/i,
-        notes: /(?:Anotações|Notes):\s*["](.+?)["](?:\n|$)/i,
-        tags: /(?:Tags):\s*(.+?)(?:\n|Anote|$)/i,
+        // Captura jogador e Steam ID
+        player: /-\s*(?:Jogador|Player|Jugador):\s*([^(]+?)(?:\s*\(([^)]+)\))?\s*$/mi,
+        // Captura herói
+        hero: /-\s*(?:Herói|Hero|Héroe):\s*(.+?)$/mi,
+        // ✅ CAPTURA ROLE (NOVO!)
+        role: /-\s*(?:Função|Role|Rol):\s*(.+?)$/mi,
+        // Captura ID da partida
+        match: /-\s*(?:Partida|Match):\s*(\d+)/mi,
+        // Captura nota/calificação
+        rating: /-\s*(?:Nota|Rating|Calificación):\s*(\d+(?:\.\d+)?)\s*\/\s*5/mi,
+        // Captura anotações/notas
+        notes: /-\s*(?:Anotações|Notes|Notas):\s*["""'](.+?)["""']/mi,
+        // Captura tags/etiquetas
+        tags: /-\s*(?:Tags|Etiquetas):\s*(.+?)(?=\n|$)/mi,
       };
 
       const evaluation: any = {};
@@ -670,6 +684,7 @@ export class DashboardComponent implements OnInit {
 
       // Extrair jogador e Steam ID
       const playerMatch = text.match(patterns.player);
+      console.log('🎮 Player match:', playerMatch);
       if (playerMatch) {
         evaluation.target_player_name = playerMatch[1].trim();
         if (playerMatch[2]) {
@@ -680,6 +695,135 @@ export class DashboardComponent implements OnInit {
 
       // Extrair herói
       const heroMatch = text.match(patterns.hero);
+      console.log('🦸 Hero match:', heroMatch);
+      if (heroMatch) {
+        evaluation.hero_name = heroMatch[1].trim();
+        hasValidData = true;
+      }
+
+      // ✅ EXTRAIR ROLE (NOVO!)
+      const roleMatch = text.match(patterns.role);
+      console.log('🎭 Role match:', roleMatch);
+      if (roleMatch) {
+        evaluation.role = roleMatch[1].trim();
+        hasValidData = true;
+      }
+
+      // Extrair ID da partida
+      const matchMatch = text.match(patterns.match);
+      console.log('🎯 Match match:', matchMatch);
+      if (matchMatch) {
+        evaluation.match_id = matchMatch[1];
+        hasValidData = true;
+      }
+
+      // Extrair nota/calificação
+      const ratingMatch = text.match(patterns.rating);
+      console.log('⭐ Rating match:', ratingMatch);
+      if (ratingMatch) {
+        evaluation.rating = parseFloat(ratingMatch[1]);
+        hasValidData = true;
+      }
+
+      // Extrair anotações/notas
+      const notesMatch = text.match(patterns.notes);
+      console.log('📝 Notes match:', notesMatch);
+      if (notesMatch) {
+        evaluation.notes = notesMatch[1].trim();
+        hasValidData = true;
+      }
+
+      // ✅ EXTRAIR TAGS/ETIQUETAS - COM SUPORTE A #
+      const tagsMatch = text.match(patterns.tags);
+      console.log('🏷️ Tags match:', tagsMatch);
+      if (tagsMatch) {
+        const tagsText = tagsMatch[1].trim();
+        console.log('🏷️ Tags text extraído:', tagsText);
+
+        // Verificar se não é "nenhuma/ninguna/none"
+        const noneValues = ['nenhuma', 'nenhuma.', 'ninguna', 'ninguna.', 'none', 'none.'];
+        if (!noneValues.includes(tagsText.toLowerCase())) {
+
+          // ✅ PROCESSAMENTO CORRETO DAS TAGS
+          let cleanTags;
+
+          // Remover formatação markdown (** ou __) se existir
+          const cleanedText = tagsText.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1');
+          console.log('🏷️ Texto limpo de markdown:', cleanedText);
+
+          // Verificar se contém múltiplas tags separadas por #
+          if (cleanedText.includes('#')) {
+            // Dividir por # e processar cada parte
+            const parts = cleanedText.split('#');
+            cleanTags = [];
+
+            // A primeira parte pode não ter # (texto antes do primeiro #)
+            if (parts[0] && parts[0].trim()) {
+              cleanTags.push(parts[0].trim());
+            }
+
+            // Processar o resto das parts (que vieram depois de #)
+            for (let i = 1; i < parts.length; i++) {
+              const tag = parts[i].trim();
+              if (tag) {
+                cleanTags.push(tag);
+              }
+            }
+          } else if (cleanedText.includes(',')) {
+            // Se não tem #, mas tem vírgulas, dividir por vírgulas
+            cleanTags = cleanedText.split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag.length > 0);
+          } else {
+            // Tag única
+            cleanTags = [cleanedText];
+          }
+
+          // Filtrar tags vazias e muito curtas
+          cleanTags = cleanTags.filter(tag => tag && tag.length > 0);
+
+          if (cleanTags.length > 0) {
+            evaluation.tags = cleanTags;
+            console.log('✅ Tags processadas:', cleanTags);
+            hasValidData = true;
+          }
+        }
+      }
+
+      // Adicionar campos obrigatórios para importação
+      if (hasValidData) {
+        evaluation.created_at = new Date().toISOString();
+        console.log('✅ Avaliação parseada com role:', evaluation);
+        return evaluation;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('❌ Erro ao fazer parse da avaliação:', error);
+      return null;
+    }
+  }
+
+  private parseTextEvaluation(text: string): any | null {
+    try {
+      // Usar padrões multilíngues do I18nService
+      const multilingualPatterns = this.createMultilingualPatterns();
+
+      const evaluation: any = {};
+      let hasValidData = false;
+
+      // Extrair jogador e Steam ID
+      const playerMatch = text.match(multilingualPatterns.player);
+      if (playerMatch) {
+        evaluation.target_player_name = playerMatch[1].trim();
+        if (playerMatch[2]) {
+          evaluation.target_steam_id = playerMatch[2].trim();
+        }
+        hasValidData = true;
+      }
+
+      // Extrair herói
+      const heroMatch = text.match(multilingualPatterns.hero);
       if (heroMatch) {
         const heroName = heroMatch[1].trim();
         evaluation.hero_name = heroName;
@@ -687,55 +831,56 @@ export class DashboardComponent implements OnInit {
       }
 
       // Extrair ID da partida
-      const matchMatch = text.match(patterns.match);
+      const matchMatch = text.match(multilingualPatterns.match);
       if (matchMatch) {
         evaluation.match_id = matchMatch[1];
         hasValidData = true;
       }
 
-      // Extrair nota
-      const ratingMatch = text.match(patterns.rating);
+      // Extrair nota/calificação
+      const ratingMatch = text.match(multilingualPatterns.rating);
       if (ratingMatch) {
         evaluation.rating = parseFloat(ratingMatch[1]);
         hasValidData = true;
       }
 
-      // Extrair anotações
-      const notesMatch = text.match(patterns.notes);
+      // Extrair anotações/notas
+      const notesMatch = text.match(multilingualPatterns.notes);
       if (notesMatch) {
         evaluation.notes = notesMatch[1].trim();
         hasValidData = true;
       }
 
-      // Extrair tags
-      const tagsMatch = text.match(patterns.tags);
+      // Extrair tags/etiquetas
+      const tagsMatch = text.match(multilingualPatterns.tags);
       if (tagsMatch) {
         const tagsText = tagsMatch[1].trim();
-        if (tagsText.toLowerCase() !== 'nenhuma.') {
-          evaluation.tags = tagsText
-            .replace(/#/g, '')
-            .split(/[,\s]+/)
-            .map((tag) => tag.trim())
-            .filter((tag) => tag.length > 0);
-        } else {
-          evaluation.tags = [];
+
+        // Verificar se não é "nenhuma/ninguna/none"
+        const noneValues = ['nenhuma', 'nenhuma.', 'ninguna', 'ninguna.', 'none', 'none.'];
+        if (!noneValues.includes(tagsText.toLowerCase())) {
+          evaluation.tags = tagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+          hasValidData = true;
         }
-        hasValidData = true;
       }
 
-      if (hasValidData) {
-        evaluation.role = evaluation.role || '';
-        evaluation.created_at = new Date().toISOString();
-        evaluation.tags = evaluation.tags || [];
-        evaluation.notes = evaluation.notes || '';
-        return evaluation;
-      }
-
-      return null;
+      return hasValidData ? evaluation : null;
     } catch (error) {
-      console.error('Erro ao fazer parse do texto de avaliação:', error);
+      console.error('Erro ao fazer parse da avaliação:', error);
       return null;
     }
+  }
+
+  private createMultilingualPatterns() {
+    // Padrões que cobrem todas as três linguagens: português, inglês e espanhol
+    return {
+      player: /(?:Jogador|Player|Jugador):\s*(.+?)(?:\s*\(([^)]+)\))?\s*(?:\n|$)/i,
+      hero: /(?:Herói|Hero|Héroe):\s*(.+?)(?:\n|$)/i,
+      match: /(?:Partida|Match):\s*(\d+)/i,
+      rating: /(?:Nota|Rating|Calificación):\s*(\d+(?:\.\d+)?)\s*[\/★]\s*5/i,
+      notes: /(?:Anotações|Notes|Notas):\s*["""'](.+?)["""'](?:\n|$)/i,
+      tags: /(?:Tags|Etiquetas):\s*(.+?)(?:\n|Anote|$)/i,
+    };
   }
 
   // ===== MÉTODOS DE PROCESSAMENTO DE IMPORTAÇÃO =====
@@ -775,26 +920,39 @@ export class DashboardComponent implements OnInit {
         });
     } else if (this.importTab === 'file' && this.selectedFile) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+
+      reader.onload = () => {
         try {
-          const data = JSON.parse(e.target?.result as string);
-          this.processImportData(data);
-        } catch (parseError) {
-          this.handleImportError(parseError, this.i18nService.translate('dashboard.errors.invalidJson'));
+          const jsonData = JSON.parse(reader.result as string);
+          this.evaluationService.importEvaluations(jsonData, this.importMode).subscribe({
+            next: (response) => this.handleImportSuccess(response),
+            error: (error) => this.handleImportError(error, this.i18nService.translate('dashboard.errors.importData')),
+          });
+        } catch (error) {
+          this.handleImportError(error, this.i18nService.translate('dashboard.errors.invalidJson'));
         }
       };
+
       reader.readAsText(this.selectedFile);
-    } else if (this.importTab === 'paste' && this.pastedText.trim()) {
-      if (this.pastedPreview.type === 'json') {
-        try {
-          const data = JSON.parse(this.pastedText.trim());
-          this.processImportData(data);
-        } catch (parseError) {
-          this.handleImportError(parseError, this.i18nService.translate('dashboard.errors.invalidPastedJson'));
-        }
-      } else if (this.pastedPreview.type === 'text') {
-        this.processTextImport(this.pastedPreview.evaluation);
-      }
+    } else if (this.importTab === 'paste' && this.pastedPreview && this.pastedPreview.evaluation) {
+      // Para importação de texto, criar estrutura JSON
+      const importData = {
+        version: "1.0",
+        exported_at: new Date().toISOString(),
+        exported_by: "Text Import",
+        total_evaluations: 1,
+        evaluations: [this.pastedPreview.evaluation]
+      };
+
+      console.log('📤 Dados sendo enviados para importação:', importData);
+
+      this.evaluationService.importEvaluations(importData, this.importMode).subscribe({
+        next: (response) => this.handleImportSuccess(response),
+        error: (error) => {
+          console.error('❌ Erro na importação:', error);
+          this.handleImportError(error, this.i18nService.translate('dashboard.errors.importText'));
+        },
+      });
     }
   }
 
@@ -829,30 +987,65 @@ export class DashboardComponent implements OnInit {
       });
   }
 
+  // ===== FIX DE FOCO SEM RELOAD =====
+
   private handleImportSuccess(response: any): void {
-    let message = this.i18nService.translate('dashboard.success.importCompleted', {
-      imported: response.imported
+    console.log('✅ Importação bem-sucedida:', response);
+
+    this.isImporting = false;
+
+    // Construir mensagem de sucesso
+    let successMessage = this.i18nService.translate('dashboard.success.importCompleted', {
+      imported: response.imported.toString()
     });
 
     if (response.skipped > 0) {
-      message += this.i18nService.translate('dashboard.success.importSkipped', {
-        skipped: response.skipped
+      successMessage += this.i18nService.translate('dashboard.success.importSkipped', {
+        skipped: response.skipped.toString()
       });
     }
 
     if (response.errors && response.errors.length > 0) {
-      message += this.i18nService.translate('dashboard.success.importErrors', {
-        errors: response.errors.length
+      successMessage += this.i18nService.translate('dashboard.success.importErrors', {
+        errors: response.errors.length.toString()
       });
-      console.warn('Erros na importação:', response.errors);
+
+      console.log('Erros na importação:', response.errors);
     }
 
-    this.toastr.success(message);
+    // Mostrar toast de sucesso
+    this.toastr.success(successMessage);
 
+    // ✅ RECARREGAR DADOS SEM RECARREGAR PÁGINA
     this.loadAllEvaluations();
     this.checkEvaluationLimit();
     this.loadImportExportStats();
+
+    // Limpar modal de importação
+    this.clearImportData();
+
+    // Fechar modal se estiver aberto
     this.closeImportModal();
+
+    console.log('🔄 Dados recarregados sem refresh da página');
+  }
+
+  private clearImportData(): void {
+    // Limpar preview
+    this.pastedPreview = null;
+    this.importPreview = null;
+
+    // Limpar campos
+    this.pastedText = '';
+    this.shareCode = '';
+
+    // Limpar arquivo selecionado
+    this.selectedFile = null;
+
+    // Resetar tab ativa
+    this.importTab = 'paste';
+
+    console.log('🧹 Dados de importação limpos');
   }
 
   private handleImportError(error: any, fallbackMessage: string): void {
@@ -936,15 +1129,21 @@ export class DashboardComponent implements OnInit {
     this.activeActionMenu = null;
   }
 
+  // ===== MÉTODOS DE COMPARTILHAMENTO COM FIX DE FOCO =====
+
   public async shareEvaluation(evaluation: any): Promise<void> {
     try {
-      this.activeActionMenu = null;
-
-      // Obter nome do herói
+      // Formatação do herói
       const heroName = evaluation.hero_id
         ? this.gameDataService.getHeroById(evaluation.hero_id)?.localized_name ||
           this.i18nService.translate('dashboard.hero.notInformed')
         : this.i18nService.translate('dashboard.hero.notInformed');
+
+      // ✅ FORMATAÇÃO DO ROLE
+      let roleText = '';
+      if (evaluation.role && evaluation.role.trim()) {
+        roleText = evaluation.role;
+      }
 
       // Formatação da nota
       const rating = Number(evaluation.rating);
@@ -968,6 +1167,11 @@ export class DashboardComponent implements OnInit {
 
       shareText += `- ${this.i18nService.translate('dashboard.share.hero')}: ${heroName}\n`;
 
+      // ✅ ADICIONAR ROLE
+      if (roleText) {
+        shareText += `- ${this.i18nService.translate('dashboard.share.role')}: ${roleText}\n`;
+      }
+
       if (evaluation.match_id) {
         shareText += `- ${this.i18nService.translate('dashboard.share.match')}: ${evaluation.match_id}\n`;
       }
@@ -984,13 +1188,170 @@ export class DashboardComponent implements OnInit {
 
       shareText += this.i18nService.translate('dashboard.share.footer');
 
-      // Copiar para clipboard
+      console.log('📤 Texto de compartilhamento gerado:', shareText);
+
+      // ✅ GARANTIR QUE DOCUMENTO ESTÁ FOCADO ANTES DE COPIAR
+      await this.ensureDocumentFocus();
+
+      // Tentar clipboard
       await navigator.clipboard.writeText(shareText);
       this.toastr.success(this.i18nService.translate('dashboard.success.evaluationShared'));
+
     } catch (err) {
       console.error('Erro ao compartilhar avaliação:', err);
-      this.toastr.error(this.i18nService.translate('dashboard.errors.shareEvaluation'));
+
+      // Se falhar, tentar fallback
+      if ((err instanceof Error && err.name === 'NotAllowedError') || (err instanceof Error && err.message.includes('not focused'))) {
+        console.warn('🔄 Tentando fallback devido a problema de foco...');
+        const shareText = this.getShareTextFromEvaluation(evaluation);
+        this.tryClipboardFallback(shareText);
+      } else {
+        this.toastr.error(this.i18nService.translate('dashboard.errors.shareEvaluation'));
+      }
     }
+  }
+
+  // ===== MÉTODO PARA GARANTIR FOCO =====
+
+  private async ensureDocumentFocus(): Promise<void> {
+    return new Promise((resolve) => {
+      // Se documento já está focado, resolver imediatamente
+      if (document.hasFocus()) {
+        resolve();
+        return;
+      }
+
+      console.log('📋 Documento não está focado, tentando recuperar foco...');
+
+      // Tentar focar na janela
+      window.focus();
+
+      // Criar elemento invisível para focar
+      const focusElement = document.createElement('button');
+      focusElement.style.position = 'fixed';
+      focusElement.style.left = '-9999px';
+      focusElement.style.top = '-9999px';
+      focusElement.style.opacity = '0';
+      focusElement.style.pointerEvents = 'none';
+
+      document.body.appendChild(focusElement);
+
+      // Focar no elemento
+      focusElement.focus();
+
+      // Remover elemento após pequeno delay
+      setTimeout(() => {
+        document.body.removeChild(focusElement);
+        resolve();
+      }, 100);
+    });
+  }
+
+  // ===== FALLBACK PARA CLIPBOARD =====
+
+  private tryClipboardFallback(text: string): void {
+    try {
+      // Método antigo com execCommand
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '-9999px';
+
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        this.toastr.success(this.i18nService.translate('dashboard.success.evaluationShared'));
+        console.log('✅ Clipboard fallback bem-sucedido');
+      } else {
+        throw new Error('execCommand falhou');
+      }
+
+    } catch (fallbackError) {
+      console.error('❌ Fallback falhou:', fallbackError);
+
+      // Mostrar modal com instrução manual
+      this.showManualCopyInstruction(text);
+    }
+  }
+
+  // ===== INSTRUÇÃO MANUAL DE CÓPIA =====
+
+  private showManualCopyInstruction(text: string): void {
+    // Criar notificação especial
+    this.toastr.warning(
+      'Não foi possível copiar automaticamente. Clique OK para ver o texto e copiar manualmente.',
+      'Cópia Manual Necessária',
+      {
+        timeOut: 0, // Não fechar automaticamente
+        closeButton: true,
+        tapToDismiss: true
+      }
+    );
+
+    // Mostrar o texto em um prompt
+    setTimeout(() => {
+      prompt('Copie este texto (Ctrl+A + Ctrl+C):', text);
+    }, 500);
+  }
+
+  // ===== MÉTODO AUXILIAR PARA GERAR TEXTO DE COMPARTILHAMENTO =====
+
+  private getShareTextFromEvaluation(evaluation: any): string {
+    const heroName = evaluation.hero_id
+      ? this.gameDataService.getHeroById(evaluation.hero_id)?.localized_name ||
+        this.i18nService.translate('dashboard.hero.notInformed')
+      : this.i18nService.translate('dashboard.hero.notInformed');
+
+    let roleText = '';
+    if (evaluation.role && evaluation.role.trim()) {
+      roleText = evaluation.role;
+    }
+
+    const rating = Number(evaluation.rating);
+    const formattedRating = rating % 1 === 0 ? rating.toFixed(0) : rating.toFixed(1);
+    const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+
+    let shareText = `[Courier's Knowledge] ${this.i18nService.translate('dashboard.share.playerEvaluation')}:\n`;
+
+    const playerName = evaluation.target_player_name ||
+      evaluation.targetPlayerName ||
+      this.i18nService.translate('dashboard.player.unknown');
+    const steamId = evaluation.target_steam_id || evaluation.targetSteamId;
+
+    shareText += `- ${this.i18nService.translate('dashboard.share.player')}: ${playerName}`;
+    if (steamId) {
+      shareText += ` (${steamId})`;
+    }
+    shareText += `\n`;
+
+    shareText += `- ${this.i18nService.translate('dashboard.share.hero')}: ${heroName}\n`;
+
+    if (roleText) {
+      shareText += `- ${this.i18nService.translate('dashboard.share.role')}: ${roleText}\n`;
+    }
+
+    if (evaluation.match_id) {
+      shareText += `- ${this.i18nService.translate('dashboard.share.match')}: ${evaluation.match_id}\n`;
+    }
+
+    shareText += `- ${this.i18nService.translate('dashboard.share.rating')}: ${formattedRating}/5 (${ratingStars})\n`;
+    shareText += `- ${this.i18nService.translate('dashboard.share.notes')}: "${evaluation.notes || this.i18nService.translate('dashboard.share.noNotes')}"\n`;
+
+    if (evaluation.tags && evaluation.tags.length > 0) {
+      shareText += `- ${this.i18nService.translate('dashboard.share.tags')}: #${evaluation.tags.join(' #')}\n`;
+    } else {
+      shareText += `- ${this.i18nService.translate('dashboard.share.tags')}: ${this.i18nService.translate('dashboard.share.noTags')}\n`;
+    }
+
+    shareText += this.i18nService.translate('dashboard.share.footer');
+
+    return shareText;
   }
 
   // ===== MÉTODOS DE UTILITÁRIOS =====

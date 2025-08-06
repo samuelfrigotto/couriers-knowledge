@@ -1,9 +1,19 @@
+<!-- profile.component.html - COM BOLINHAS FLUTUANTES -->
+
+<!-- ✨ Bolinhas flutuantes no background -->
+<div class="floating-elements">
+  <div class="floating-circle circle-1"></div>
+  <div class="floating-circle circle-2"></div>
+  <div class="floating-circle circle-3"></div>
+  <div class="floating-circle circle-4"></div>
+</div>
+
 <div class="profile-container" *ngIf="!isLoading && stats">
   <div class="profile-header">
     <img [src]="stats.avatarUrl" [alt]="'profile.header.avatarAlt' | translate" class="profile-avatar">
     <div class="profile-info">
       <h1>{{ stats.steamUsername }}</h1>
-      <p>{{ 'profile.header.memberSince' | translate }} {{ stats.accountCreatedAt | date:'longDate' }}</p>
+      <p>{{ 'profile.header.memberSince' | translate }} {{ stats.created_at | date:'longDate' }}</p>
       <span class="status-badge" [class.premium]="stats.accountStatus === 'Premium'">{{ getAccountStatusTranslated(stats.accountStatus) }}</span>
     </div>
   </div>
@@ -26,18 +36,18 @@
     <ng-container *ngIf="stats.accountStatus === 'Premium'">
       <div class="stat-card premium-feature">
         <h3>{{ 'profile.premium.evaluationsReceived' | translate }}</h3>
-        <p class="stat-value">{{ stats.totalReceivedEvaluations }}</p>
+        <p class="stat-value">{{ stats.receivedEvaluationsCount }}</p>
         <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
       </div>
       <div class="stat-card premium-feature">
         <h3>{{ 'profile.premium.averageReceivedRating' | translate }}</h3>
-        <p class="stat-value" *ngIf="stats.receivedAverageRating > 0; else noReceivedRating">{{ stats.receivedAverageRating | number:'1.1-1' }}/5</p>
+        <p class="stat-value" *ngIf="stats.averageReceivedRating > 0; else noReceivedRating">{{ stats.averageReceivedRating | number:'1.1-1' }}/5</p>
         <ng-template #noReceivedRating><p class="stat-value">{{ 'profile.data.noData' | translate }}</p></ng-template>
         <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
       </div>
       <div class="stat-card premium-feature">
         <h3>{{ 'profile.premium.tiltWinRate' | translate }}</h3>
-        <p class="stat-value" *ngIf="stats.tiltWinRate !== null; else noTiltData">{{ stats.tiltWinRate }}%</p>
+        <p class="stat-value" *ngIf="stats.tiltAnalysis?.tiltWinRate !== null; else noTiltData">{{ stats.tiltAnalysis?.tiltWinRate }}%</p>
         <ng-template #noTiltData><p class="stat-value">{{ 'profile.data.noData' | translate }}</p></ng-template>
         <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
       </div>
@@ -47,33 +57,40 @@
       <div class="stat-card premium-feature">
           <h3>{{ 'profile.premium.evaluationsReceived' | translate }}</h3>
           <div class="upgrade-prompt">
-            <button class="upgrade-button">{{ 'profile.upgrade.button' | translate }}</button>
+            <button class="upgrade-button" (click)="goToPremium()">{{ 'profile.upgrade.button' | translate }}</button>
           </div>
           <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
       </div>
-            <div class="stat-card premium-feature">
+      <div class="stat-card premium-feature">
         <h3>{{ 'profile.premium.averageReceivedRating' | translate }}</h3>
         <div class="upgrade-prompt">
-            <button class="upgrade-button">{{ 'profile.upgrade.button' | translate }}</button>
+            <button class="upgrade-button" (click)="goToPremium()">{{ 'profile.upgrade.button' | translate }}</button>
           </div>
           <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
-        <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
-      </div>
+        </div>
       <div class="stat-card premium-feature">
         <h3>{{ 'profile.upgrade.tiltWinRateTitle' | translate }}</h3>
         <div class="upgrade-prompt">
-            <button class="upgrade-button">{{ 'profile.upgrade.button' | translate }}</button>
+            <button class="upgrade-button" (click)="goToPremium()">{{ 'profile.upgrade.button' | translate }}</button>
           </div>
           <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
-        <span class="premium-badge">{{ 'profile.premium.badge' | translate }}</span>
-      </div>
+        </div>
     </ng-container>
+  </div>
+
+  <div class="section-divider">
+    <h2>{{ 'profile.matches.mostUsedTags' | translate }}</h2>
+  </div>
+
+  <div class="stats-grid">
     <div class="stat-card full-width">
       <h3>{{ 'profile.matches.mostUsedTags' | translate }}</h3>
-      <div class="tags-container">
-        <span *ngFor="let tag of stats.mostUsedTags" class="tag-badge">{{ tag }}</span>
-        <span *ngIf="!stats.mostUsedTags || stats.mostUsedTags.length === 0">{{ 'profile.data.noData' | translate }}</span>
+      <div class="tags-container" *ngIf="stats.mostUsedTags && stats.mostUsedTags.length > 0; else noTags">
+        <span class="tag-badge" *ngFor="let tag of stats.mostUsedTags">{{ tag }}</span>
       </div>
+      <ng-template #noTags>
+        <p class="stat-value">{{ 'profile.data.noData' | translate }}</p>
+      </ng-template>
     </div>
   </div>
 
@@ -81,23 +98,24 @@
     <h2>{{ 'profile.matches.last20Matches' | translate }}</h2>
   </div>
 
-  <div class="stats-grid recent-matches-stats">
-    <div class="stat-card full-width">
-      <h3>{{ 'profile.matches.playersEvaluated' | translate }}</h3>
-      <div class="progress-bar-container">
-        <div class="progress-bar" [style.width.%]="stats.evaluationPercentage">
-          <span>{{ stats.evaluationPercentage }}%</span>
-        </div>
-      </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>{{ 'profile.matches.playersEvaluated' | translate }}(%)</h3>
+      <p class="stat-value">{{ stats.evaluationPercentage }}%</p>
     </div>
+
     <div class="stat-card">
       <h3>{{ 'profile.matches.wins' | translate }}</h3>
-      <p class="stat-value">{{ stats.winsLast20 }}</p>
+      <p class="stat-value">{{ stats.winsLast20 }}/20</p>
+      <ng-template #noWinData><p class="stat-value">{{ 'profile.data.noData' | translate }}</p></ng-template>
     </div>
+
     <div class="stat-card">
       <h3>{{ 'profile.matches.averageMatchTime' | translate }}</h3>
-      <p class="stat-value">{{ stats.averageMatchTime | secondsToTime }}</p>
+      <p class="stat-value" *ngIf="stats.averageMatchTime; else noTimeData">{{ stats.averageMatchTime | secondsToTime }}</p>
+      <ng-template #noTimeData><p class="stat-value">{{ 'profile.data.noData' | translate }}</p></ng-template>
     </div>
+
     <div class="stat-card">
     <h3>{{ 'profile.matches.averageKda' | translate }}</h3>
       <div *ngIf="stats.averageKda; else noKda" class="kda-display">

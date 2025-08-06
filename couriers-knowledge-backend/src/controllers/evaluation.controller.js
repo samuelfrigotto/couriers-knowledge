@@ -3,6 +3,7 @@ const db = require('../config/database');
 const steamService = require('../services/steam.service');
 const { logOperation } = require('../middlewares/importExportLimiter.middleware');
 const { getUserUsageStats, LIMITS } = require('../middlewares/importExportLimiter.middleware');
+const heroMappingService = require('../services/heroMapping.service');
 
 exports.createEvaluation = async (req, res) => {
     const authorId = req.user.id;
@@ -446,7 +447,6 @@ exports.exportEvaluations = async (req, res) => {
   }
 };
 
-
 exports.importEvaluations = async (req, res) => {
   const authorId = req.user.id;
   const { importData, shareCode, mode = 'add' } = req.body;
@@ -514,10 +514,19 @@ exports.importEvaluations = async (req, res) => {
       const errors = [];
 
       for (let i = 0; i < dataToImport.evaluations.length; i++) {
-        const evaluation = dataToImport.evaluations[i];
+        let evaluation = dataToImport.evaluations[i];
         
         try {
-          // Verificar se o jogador já existe
+          console.log(`📝 Processando avaliação ${i + 1}:`, evaluation);
+          
+          // ✅ PROCESSAR CONVERSÃO DE HERÓI (NOVO!)
+          evaluation = heroMappingService.processEvaluationHero(evaluation);
+          console.log(`🦸 Após processamento do herói:`, { 
+            hero_name: evaluation.hero_name, 
+            hero_id: evaluation.hero_id 
+          });
+          
+          // ✅ VERIFICAR SE O JOGADOR JÁ EXISTE
           let playerId;
           
           if (evaluation.target_steam_id) {
@@ -567,7 +576,7 @@ exports.importEvaluations = async (req, res) => {
             }
           }
 
-          // Verificar se já existe avaliação duplicada
+          // ✅ VERIFICAR SE JÁ EXISTE AVALIAÇÃO DUPLICADA
           if (mode !== 'replace') {
             const duplicateQuery = `
               SELECT id FROM evaluations 
@@ -603,7 +612,7 @@ exports.importEvaluations = async (req, res) => {
             }
           }
 
-          // Inserir nova avaliação
+          // ✅ INSERIR NOVA AVALIAÇÃO - COM hero_id CORRETO
           const insertQuery = `
             INSERT INTO evaluations (
               author_id, player_id, rating, notes, tags, role, 
@@ -611,26 +620,30 @@ exports.importEvaluations = async (req, res) => {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
           `;
           
+          console.log(`💾 Salvando avaliação com hero_id: ${evaluation.hero_id}`);
+          
           await client.query(insertQuery, [
-            authorId,
-            playerId,
-            evaluation.rating,
-            evaluation.notes,
-            evaluation.tags,
-            evaluation.role,
-            evaluation.hero_id,
-            evaluation.match_id
+            authorId,                          // $1 - author_id
+            playerId,                          // $2 - player_id
+            evaluation.rating,                 // $3 - rating
+            evaluation.notes || null,          // $4 - notes
+            evaluation.tags || null,           // $5 - tags
+            evaluation.role || null,           // $6 - role
+            evaluation.hero_id || null,        // $7 - hero_id (AGORA CORRETO!)
+            evaluation.match_id || null        // $8 - match_id
           ]);
           
           importedCount++;
+          console.log(`✅ Avaliação ${i + 1} importada com sucesso - Hero ID: ${evaluation.hero_id}`);
           
         } catch (evalError) {
-          console.error(`Erro ao processar avaliação ${i + 1}:`, evalError);
+          console.error(`❌ Erro ao processar avaliação ${i + 1}:`, evalError);
           errors.push(`Avaliação ${i + 1}: ${evalError.message}`);
         }
       }
 
       await client.query('COMMIT');
+      console.log(`🎉 Importação concluída: ${importedCount} importadas, ${skippedCount} ignoradas, ${errors.length} erros`);
 
       // Registrar a operação de importação
       await logOperation(authorId, 'import', {
@@ -658,9 +671,10 @@ exports.importEvaluations = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Erro ao importar avaliações:', error);
+    console.error('❌ Erro ao importar avaliações:', error);
     res.status(500).json({ 
-      message: 'Erro interno do servidor.'
+      message: 'Erro interno do servidor.',
+      error: error.message
     });
   }
 };

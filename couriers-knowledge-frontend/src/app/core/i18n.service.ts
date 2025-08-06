@@ -26,6 +26,9 @@ export class I18nService {
   public currentLanguage$: Observable<string> =
     this.currentLanguageSubject.asObservable();
 
+
+
+
   // ===== PADRÕES DE COMPARTILHAMENTO MULTILÍNGUE =====
   private readonly SHARING_PATTERNS = {
     player: {
@@ -37,6 +40,11 @@ export class I18nService {
       'en': ['Hero'],
       'pt': ['Herói'],
       'es-PE': ['Héroe']
+    },
+    role: {
+    'en': ['Role'],
+    'pt': ['Função'],
+    'es-PE': ['Rol']
     },
     match: {
       'en': ['Match'],
@@ -66,9 +74,112 @@ export class I18nService {
     'es-PE': ['ninguna', 'ninguna.']
   };
 
+
+  public getMultilingualParsingPatterns() {
+  // Combinar todos os termos de todas as linguagens
+  const getAllTerms = (field: keyof typeof this.SHARING_PATTERNS): string[] => {
+    const terms: string[] = [];
+    const fieldPatterns = this.SHARING_PATTERNS[field];
+
+    Object.keys(fieldPatterns).forEach(lang => {
+      const langKey = lang as keyof typeof fieldPatterns;
+      terms.push(...fieldPatterns[langKey]);
+    });
+    return terms;
+  };
+
+  return {
+    player: new RegExp(`(?:${getAllTerms('player').join('|')}):\\s*(.+?)(?:\\s*\\(([^)]+)\\))?\\s*(?:\\n|$)`, 'i'),
+    hero: new RegExp(`(?:${getAllTerms('hero').join('|')}):\\s*(.+?)(?:\\n|$)`, 'i'),
+    match: new RegExp(`(?:${getAllTerms('match').join('|')}):\\s*(\\d+)`, 'i'),
+    rating: new RegExp(`(?:${getAllTerms('rating').join('|')}):\\s*(\\d+(?:\\.\\d+)?)\\s*[/★]\\s*5`, 'i'),
+    notes: new RegExp(`(?:${getAllTerms('notes').join('|')}):\\s*["""'](.+?)["""'](?:\\n|$)`, 'i'),
+    tags: new RegExp(`(?:${getAllTerms('tags').join('|')}):\\s*(.+?)(?:\\n|Anote|$)`, 'i'),
+  };
+}
+
+
+
+/**
+ * Verifica se um texto representa "nenhuma/ninguna/none" em qualquer idioma
+ */
+public isNoneValue(text: string): boolean {
+  const trimmedText = text.toLowerCase().trim();
+
+  return Object.values(this.NONE_VALUES)
+    .flat()
+    .some(noneValue => noneValue === trimmedText);
+}
+
+/**
+ * Parse de texto de avaliação com suporte multilíngue
+ */
+public parseTextEvaluation(text: string): any | null {
+  try {
+    const patterns = this.getMultilingualParsingPatterns();
+    const evaluation: any = {};
+    let hasValidData = false;
+
+    // Extrair jogador e Steam ID
+    const playerMatch = text.match(patterns.player);
+    if (playerMatch) {
+      evaluation.target_player_name = playerMatch[1].trim();
+      if (playerMatch[2]) {
+        evaluation.target_steam_id = playerMatch[2].trim();
+      }
+      hasValidData = true;
+    }
+
+    // Extrair herói
+    const heroMatch = text.match(patterns.hero);
+    if (heroMatch) {
+      evaluation.hero_name = heroMatch[1].trim();
+      hasValidData = true;
+    }
+
+    // Extrair ID da partida
+    const matchMatch = text.match(patterns.match);
+    if (matchMatch) {
+      evaluation.match_id = matchMatch[1];
+      hasValidData = true;
+    }
+
+    // Extrair nota/calificação
+    const ratingMatch = text.match(patterns.rating);
+    if (ratingMatch) {
+      evaluation.rating = parseFloat(ratingMatch[1]);
+      hasValidData = true;
+    }
+
+    // Extrair anotações/notas
+    const notesMatch = text.match(patterns.notes);
+    if (notesMatch) {
+      evaluation.notes = notesMatch[1].trim();
+      hasValidData = true;
+    }
+
+    // Extrair tags/etiquetas
+    const tagsMatch = text.match(patterns.tags);
+    if (tagsMatch) {
+      const tagsText = tagsMatch[1].trim();
+
+      if (!this.isNoneValue(tagsText)) {
+        evaluation.tags = tagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+        hasValidData = true;
+      }
+    }
+
+    return hasValidData ? evaluation : null;
+  } catch (error) {
+    console.error('Erro ao fazer parse da avaliação:', error);
+    return null;
+  }
+}
+
 private readonly translations: { [key: string]: { [key: string]: string } } =
     {
       en: {
+        'dashboard.share.role': 'Role',
         'dashboard.title': 'My Evaluations',
         'dashboard.buttons.import': 'Import',
         'dashboard.buttons.export': 'Export',
@@ -609,6 +720,7 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'evaluation.form.error.save': 'Error saving evaluation. Please try again.'
       },
       pt: {
+        'dashboard.share.role': 'Função',
         'settings.title': 'Configurações',
         'settings.language': 'Idioma',
         'settings.language.description': 'Selecione seu idioma preferido',
@@ -1114,6 +1226,7 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'evaluation.form.error.save': 'Erro ao salvar avaliação. Tente novamente.'
       },
       'es-PE': {
+        'dashboard.share.role': 'Rol',
         'dashboard.title': 'Mis Evaluaciones',
         'dashboard.buttons.import': 'Importar',
         'dashboard.buttons.export': 'Exportar',

@@ -16,6 +16,18 @@ async function rateLimiter(req, res, next) {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // ✅ VERIFICAÇÃO DE ADMIN - BYPASS COMPLETO
+    const isAdmin = userId === 1; // Admin tem ID = 1
+    
+    if (isAdmin) {
+      console.log('🛡️ [RATE LIMITER] Admin detectado - bypass completo dos limites');
+      // Admin não tem limites, passa direto
+      req.user.api_calls_today = user.api_calls_today || 0;
+      req.user.api_limit = 999999; // Valor alto para compatibilidade
+      req.user.account_status = 'Admin';
+      return next();
+    }
+
     const today = new Date().toISOString().slice(0, 10); // Formato YYYY-MM-DD
     const userCreationDate = new Date(user.created_at);
     const threeDaysAgo = new Date();
@@ -30,25 +42,29 @@ async function rateLimiter(req, res, next) {
       user.api_calls_today = 0;
     }
 
-    // ✅ NOVA LÓGICA: Define o Limite baseado no status da conta
+    // ✅ LÓGICA: Define o Limite baseado no status da conta (apenas para não-admins)
     const accountStatus = user.account_status || 'Free';
     const isNewUser = userCreationDate > threeDaysAgo;
     
     let limit;
     
     if (accountStatus === 'Premium') {
-      // ✅ USUÁRIOS PREMIUM: 30 chamadas por dia
+      // ✅ USUÁRIOS PREMIUM: 120 chamadas por dia (30 usos × 4 chamadas)
       limit = 120;
+      console.log('💎 [RATE LIMITER] Usuário Premium - 120 chamadas/dia');
     } else if (isNewUser) {
-      // Usuários gratuitos novos (primeiros 3 dias): 12 chamadas
+      // Usuários gratuitos novos (primeiros 3 dias): 12 chamadas (3 usos × 4)
       limit = 12;
+      console.log('🆕 [RATE LIMITER] Usuário novo - 12 chamadas/dia');
     } else {
-      // Usuários gratuitos normais: 5 chamadas
-      limit = 20; // ✅ Reduzido de 20 para 5 para usuários gratuitos
+      // Usuários gratuitos normais: 20 chamadas (5 usos × 4)
+      limit = 20;
+      console.log('🆓 [RATE LIMITER] Usuário free - 20 chamadas/dia');
     }
 
     // --- Verifica o Limite ---
     if (user.api_calls_today >= limit) {
+      console.log(`🚫 [RATE LIMITER] Limite atingido - User ${userId}: ${user.api_calls_today}/${limit} chamadas`);
       return res.status(429).json({
         error: "Daily API call limit reached. Please try again tomorrow.",
         details: {
@@ -57,16 +73,17 @@ async function rateLimiter(req, res, next) {
           accountStatus: accountStatus,
           isNewUser: isNewUser,
           upgradeMessage: accountStatus === 'Free' ? 
-            "Upgrade para Premium e tenha 30 chamadas por dia!" : null
+            "Upgrade para Premium e tenha 30 usos por dia!" : null
         }
       });
     }
 
     // Se passar, anexa o contador atual ao request para uso posterior
     req.user.api_calls_today = user.api_calls_today;
-    req.user.api_limit = limit; // ✅ Também anexa o limite atual
-    req.user.account_status = accountStatus; // ✅ Anexa o status da conta
+    req.user.api_limit = limit;
+    req.user.account_status = accountStatus;
     
+    console.log(`✅ [RATE LIMITER] Chamada autorizada - User ${userId}: ${user.api_calls_today}/${limit} chamadas`);
     next();
   } catch (error) {
     console.error("Rate limiter error:", error);

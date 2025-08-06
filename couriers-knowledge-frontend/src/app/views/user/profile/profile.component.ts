@@ -1,7 +1,8 @@
-// ARQUIVO: src/app/views/user/pages/profile/profile.component.ts
+// profile.component.ts - COM NAVEGAÇÃO AO PREMIUM
 
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Router } from '@angular/router'; // ✨ Adicionado para navegação
 import { UserService } from '../../../core/user.service';
 import { GameDataService } from '../../../core/game-data.service';
 import { I18nService } from '../../../core/i18n.service';
@@ -18,6 +19,7 @@ import { TranslatePipe } from '../../../pipes/translate.pipe';
 export class ProfileComponent implements OnInit {
   private userService = inject(UserService);
   private i18nService = inject(I18nService);
+  private router = inject(Router); // ✨ Injeção do Router
   public gameDataService = inject(GameDataService);
 
   public isLoading = true;
@@ -28,11 +30,21 @@ export class ProfileComponent implements OnInit {
       next: (data) => {
         this.stats = data;
         this.isLoading = false;
+
+        // ✨ Debug para verificar campos importantes
+        console.log('📊 [Profile] Dados recebidos:', {
+          accountStatus: data.accountStatus,
+          receivedEvals: data.receivedEvaluationsCount,
+          avgReceived: data.averageReceivedRating,
+          tiltWinRate: data.tiltAnalysis?.tiltWinRate,
+          wins: data.winsLast20,
+          totalMatches: data.totalMatches,
+          evalPercentage: data.evaluationPercentage
+        });
       },
       error: (err) => {
-        console.error('Erro ao buscar estatísticas', err);
+        console.error('❌ [Profile] Erro ao buscar estatísticas:', err);
         this.isLoading = false;
-        // Futuramente, podemos mostrar uma mensagem de erro na tela
       }
     });
   }
@@ -45,5 +57,12 @@ export class ProfileComponent implements OnInit {
       return this.i18nService.translate('profile.status.premium');
     }
     return this.i18nService.translate('profile.status.free');
+  }
+
+  /**
+   * ✨ Navega para a página Premium
+   */
+  goToPremium(): void {
+    this.router.navigate(['/app/premium']);
   }
 }

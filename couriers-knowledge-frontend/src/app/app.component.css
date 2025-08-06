@@ -1,0 +1,69 @@
+/* Estilos para imagens que falharam ao carregar */
+.image-error {
+  background: var(--secondary-bg-color, #2d3748);
+  border: 2px dashed var(--accent-color, #4a90e2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  opacity: 0.7;
+}
+
+/* Ícone de placeholder para imagens que falharam */
+.image-error::before {
+  content: "❌";
+  font-size: 16px;
+  color: var(--text-color, #ffffff);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Para ícones pequenos de heróis */
+.hero-icon-small.image-error::before {
+  font-size: 10px;
+}
+
+/* Para ícones médios de heróis */
+.hero-icon-medium.image-error::before {
+  font-size: 14px;
+}
+
+/* Para retratos grandes de heróis */
+.hero-portrait-detail.image-error::before {
+  font-size: 20px;
+}
+
+/* Para ícones de itens */
+.item-icon.image-error::before {
+  content: "📦";
+  font-size: 12px;
+}
+
+/* Animação sutil para indicar que houve um erro */
+.image-error {
+  animation: fadeInError 0.3s ease-in-out;
+}
+
+@keyframes fadeInError {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+/* Loading state enquanto tenta os fallbacks */
+img[appImageFallback] {
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Quando a imagem está carregando um fallback */
+img[appImageFallback].loading-fallback {
+  opacity: 0.5;
+  background: var(--secondary-bg-color, #2d3748);
+}

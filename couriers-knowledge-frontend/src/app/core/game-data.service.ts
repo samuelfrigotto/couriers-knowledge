@@ -27,6 +27,16 @@ export class GameDataService {
   private itemsSubject = new BehaviorSubject<{ [key: number]: Item }>({});
   public items$ = this.itemsSubject.asObservable();
 
+  // ✅ URLS DE FALLBACK PARA IMAGENS DOS HERÓIS
+  private readonly HERO_IMAGE_URLS = [
+    // URL primária (Steamcommunity - mais confiável)
+    'https://steamcdn-a.akamaihd.net/apps/dota2/images/dota_react/heroes/',
+    // URL secundária (OpenDota CDN)
+    'https://api.opendota.com/apps/dota2/images/heroes/',
+    // URL terciária (Steam CDN oficial)
+    'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/'
+  ];
+
   public load(): Observable<any> {
     const heroes$ = this.http.get<{ [key: number]: Hero }>('/assets/data/heroes.json');
     // Agora esperamos que o JSON dos itens tenha a propriedade 'img'
@@ -67,13 +77,50 @@ export class GameDataService {
   }
 
   /**
-   * Gera a URL da imagem do herói baseada no nome
-   * As imagens estão nos assets locais
+   * ✅ GERA A URL DA IMAGEM DO HERÓI COM FALLBACKS
+   * Retorna uma URL confiável ou uma imagem padrão em caso de erro
    */
   getHeroImageUrl(heroId: number): string {
     const hero = this.getHeroById(heroId);
-    const heroNameForUrl = hero ? hero.name.replace(/^npc_dota_hero_/, '') : 'default';
-    return `https://cdn.dota2.com/apps/dota2/images/dota_react/heroes/${heroNameForUrl}.png`;
+
+    if (!hero) {
+      console.warn(`Herói com ID ${heroId} não encontrado`);
+      return this.getDefaultHeroImage();
+    }
+
+    const heroNameForUrl = hero.name.replace(/^npc_dota_hero_/, '');
+
+    // ✅ USAR URL STEAMCDN (MAIS CONFIÁVEL QUE VALVE CDN)
+    return `${this.HERO_IMAGE_URLS[0]}${heroNameForUrl}.png`;
+  }
+
+  /**
+   * ✅ GERA URL COM FALLBACK ESPECÍFICO PARA CASOS PROBLEMÁTICOS
+   * Esta função pode ser usada em um pipe ou directive que detecta erro de carregamento
+   */
+  getHeroImageUrlWithFallback(heroId: number, fallbackIndex: number = 0): string {
+    const hero = this.getHeroById(heroId);
+
+    if (!hero) {
+      return this.getDefaultHeroImage();
+    }
+
+    const heroNameForUrl = hero.name.replace(/^npc_dota_hero_/, '');
+
+    // Se o índice de fallback exceder as opções disponíveis, usa imagem padrão
+    if (fallbackIndex >= this.HERO_IMAGE_URLS.length) {
+      return this.getDefaultHeroImage();
+    }
+
+    return `${this.HERO_IMAGE_URLS[fallbackIndex]}${heroNameForUrl}.png`;
+  }
+
+  /**
+   * ✅ RETORNA IMAGEM PADRÃO EM CASO DE ERRO
+   */
+  private getDefaultHeroImage(): string {
+    // Imagem transparente 1x1 pixel como fallback final
+    return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   }
 
   // --- Métodos dos Itens (ATUALIZADOS) ---
@@ -89,10 +136,11 @@ export class GameDataService {
 
     // Se não encontrarmos o item ou for uma receita, usamos a imagem de receita genérica.
     if (!item || item.name.includes('recipe')) {
-      return 'https://cdn.dota2.com/apps/dota2/images/dota_react/items/recipe.png';
+      return 'https://steamcdn-a.akamaihd.net/apps/dota2/images/dota_react/items/recipe.png';
     }
 
     // CORREÇÃO: Agora montamos a URL usando a propriedade 'img' do nosso JSON.
-    return `https://cdn.dota2.com${item.img}`;
+    // ✅ MUDANÇA PARA CDN MAIS CONFIÁVEL
+    return `https://steamcdn-a.akamaihd.net${item.img}`;
   }
 }

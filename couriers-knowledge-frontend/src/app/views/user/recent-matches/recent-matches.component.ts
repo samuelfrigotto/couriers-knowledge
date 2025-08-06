@@ -4,7 +4,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-
+import { ImageFallbackDirective } from '../../../core/directives/image-fallback.directive';
 // Serviços
 import { SteamService } from '../../../core/steam.service';
 import { GameDataService } from '../../../core/game-data.service';
@@ -28,7 +28,8 @@ import { TranslatePipe } from '../../../pipes/translate.pipe'; // ← ADICIONAR
     DatePipe,
     FilterByPropertyPipe,
     EmptyStateComponent,
-    TranslatePipe // ← ADICIONAR
+    TranslatePipe,
+    ImageFallbackDirective  
   ],
   templateUrl: './recent-matches.component.html',
   styleUrls: ['./recent-matches.component.css']
@@ -161,23 +162,46 @@ export class RecentMatchesComponent {
    * Callback executado quando uma avaliação é salva com sucesso
    */
   onEvaluationSaved(): void {
-    // ✅ TRADUZIDO
-    this.toastr.success(this.i18nService.translate('matches.success.evaluationSaved'));
-    this.closeForm();
 
-    // Atualizar o status do jogador como avaliado
-    if (this.selectedMatch && this.evaluationInitialData) {
-      const player = this.selectedMatch.players.find((p: any) =>
-        p.steam_id_64 === this.evaluationInitialData.steamId
-      );
-      if (player) {
-        player.is_already_evaluated = true;
-      }
+  // ✅ TOAST TRADUZIDO (único toast)
+  this.toastr.success(this.i18nService.translate('matches.success.evaluationSaved'));
+  this.closeForm();
+
+      setTimeout(() => {
+      window.location.reload();
+    }, 1500); // Aguarda 1.5s para o usuário ver o toast de sucesso
+
+  // ✅ ATUALIZAR O STATUS DO JOGADOR COMO AVALIADO
+  if (this.selectedMatch && this.evaluationInitialData) {
+    console.log('🔍 Procurando jogador para atualizar...');
+
+    // Pegar o Steam ID correto
+    const targetSteamId = this.evaluationInitialData.targetSteamId ||
+                         this.evaluationInitialData.target_player_steam_id;
+
+    console.log('🆔 Steam ID procurado:', targetSteamId);
+
+    const player = this.selectedMatch.players.find((p: any) => {
+      console.log(`👤 Comparando: ${p.steam_id_64} === ${targetSteamId}`);
+      return p.steam_id_64 === targetSteamId;
+    });
+
+    if (player) {
+      console.log('✅ Jogador encontrado, marcando como avaliado:', player.personaname);
+      player.is_already_evaluated = true;
+    } else {
+      console.warn('❌ Jogador não encontrado para marcar como avaliado');
+      console.log('📋 Jogadores disponíveis:', this.selectedMatch.players.map((p: any) => ({
+        name: p.personaname,
+        steam_id: p.steam_id_64
+      })));
     }
 
-    // Recarregar status de limite
-    this.checkEvaluationLimit();
   }
+
+  // Recarregar status de limite
+  this.checkEvaluationLimit();
+}
 
   /**
    * Callback executado quando ocorre erro ao salvar avaliação

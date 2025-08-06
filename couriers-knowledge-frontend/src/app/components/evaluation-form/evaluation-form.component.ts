@@ -484,11 +484,7 @@ export class EvaluationFormComponent implements OnInit, OnDestroy {
     apiCall$.subscribe({
       next: (response) => {
         console.log('✅ Sucesso:', response);
-        this.toastr.success(
-          this.isEditMode
-            ? 'Avaliação atualizada com sucesso!'
-            : 'Avaliação criada com sucesso!'
-        );
+        
         this.formSubmitted.emit();
       },
       error: (err) => {

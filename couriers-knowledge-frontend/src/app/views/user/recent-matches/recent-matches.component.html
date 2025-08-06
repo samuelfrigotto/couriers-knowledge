@@ -29,6 +29,8 @@
 
         <div *ngFor="let player of selectedMatch.players | filter:true:'is_radiant'" class="player-detail-card">
           <img [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+               appImageFallback
+               [heroId]="player.hero_id"
                class="hero-portrait-detail"
                [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
 
@@ -51,6 +53,8 @@
             <div class="items-grid">
               <img *ngFor="let itemId of player.items"
                    [src]="gameDataService.getItemImageUrl(itemId)"
+                   appImageFallback
+                   [itemId]="itemId"
                    class="item-icon"
                    [class.empty-slot]="itemId === 0"
                    [alt]="gameDataService.getItemById(itemId)?.localized_name">
@@ -60,6 +64,8 @@
             <div class="backpack-grid">
               <img *ngFor="let itemId of player.backpack"
                    [src]="gameDataService.getItemImageUrl(itemId)"
+                   appImageFallback
+                   [itemId]="itemId"
                    class="item-icon"
                    [class.empty-slot]="itemId === 0"
                    [alt]="gameDataService.getItemById(itemId)?.localized_name">
@@ -74,14 +80,17 @@
         </div>
       </div>
 
-      <!-- Time Temido (Dire) -->
+      <!-- Time Temido (Dire) - ✅ CORRIGIDO -->
       <div class="team-column">
         <div class="team-header">
           <h3 class="team-title">{{ 'matches.teams.direFull' | translate }}</h3>
         </div>
 
         <div *ngFor="let player of selectedMatch.players | filter:false:'is_radiant'" class="player-detail-card">
+          <!-- ✅ CORREÇÃO: Imagem do herói (estava faltando!) -->
           <img [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+               appImageFallback
+               [heroId]="player.hero_id"
                class="hero-portrait-detail"
                [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
 
@@ -104,6 +113,8 @@
             <div class="items-grid">
               <img *ngFor="let itemId of player.items"
                    [src]="gameDataService.getItemImageUrl(itemId)"
+                   appImageFallback
+                   [itemId]="itemId"
                    class="item-icon"
                    [class.empty-slot]="itemId === 0"
                    [alt]="gameDataService.getItemById(itemId)?.localized_name">
@@ -113,6 +124,8 @@
             <div class="backpack-grid">
               <img *ngFor="let itemId of player.backpack"
                    [src]="gameDataService.getItemImageUrl(itemId)"
+                   appImageFallback
+                   [itemId]="itemId"
                    class="item-icon"
                    [class.empty-slot]="itemId === 0"
                    [alt]="gameDataService.getItemById(itemId)?.localized_name">
@@ -149,41 +162,41 @@
 
   </div>
 
-  <!-- Lista de partidas (mantida igual) -->
+  <!-- Lista de partidas -->
   <ng-template #matchList>
     <h1>{{ 'matches.title' | translate }}</h1>
     <!-- Estado de carregamento -->
-  <div *ngIf="isLoading$ | async">
-    <app-empty-state
-      [config]="{
-        type: 'matches',
-        title: ('matches.loading.title' | translate),
-        subtitle: ('matches.loading.subtitle' | translate),
-        showAction: false
-      }">
-    </app-empty-state>
-  </div>
+    <div *ngIf="isLoading$ | async">
+      <app-empty-state
+        [config]="{
+          type: 'matches',
+          title: ('matches.loading.title' | translate),
+          subtitle: ('matches.loading.subtitle' | translate),
+          showAction: false
+        }">
+      </app-empty-state>
+    </div>
 
-  <!-- Estado vazio quando não há partidas -->
-  <div *ngIf="(matches$ | async)?.length === 0 && !(isLoading$ | async)">
-    <app-empty-state
-      [config]="{
-        type: 'matches',
-        title: ('matches.empty.title' | translate),
-        subtitle: ('matches.empty.subtitle' | translate),
-        actionText: ('matches.empty.action' | translate),
-        showAction: false
-      }"
-      (emptyStateAction)="onEmptyStateAction($event)">
-    </app-empty-state>
-  </div>
+    <!-- Estado vazio quando não há partidas -->
+    <div *ngIf="(matches$ | async)?.length === 0 && !(isLoading$ | async)">
+      <app-empty-state
+        [config]="{
+          type: 'matches',
+          title: ('matches.empty.title' | translate),
+          subtitle: ('matches.empty.subtitle' | translate),
+          actionText: ('matches.empty.action' | translate),
+          showAction: false
+        }"
+        (emptyStateAction)="onEmptyStateAction($event)">
+      </app-empty-state>
+    </div>
 
     <div class="match-list-container" *ngIf="matches$ | async as matches">
       <div *ngIf="matches.length > 0" class="match-row-header">
-          <div class="header-player">{{ 'matches.table.yourHero' | translate }}</div>
-          <div class="header-result">{{ 'matches.table.result' | translate }}</div>
-          <div class="header-heroes">{{ 'matches.table.heroes' | translate }}</div>
-          <div class="header-info">{{ 'matches.table.duration' | translate }}</div>
+        <div class="header-player">{{ 'matches.table.yourHero' | translate }}</div>
+        <div class="header-result">{{ 'matches.table.result' | translate }}</div>
+        <div class="header-heroes">{{ 'matches.table.heroes' | translate }}</div>
+        <div class="header-info">{{ 'matches.table.duration' | translate }}</div>
       </div>
       <div *ngFor="let match of matches"
            class="match-row"
@@ -191,6 +204,8 @@
            (click)="viewMatchDetails(match.match_id)">
         <div class="match-player-col">
           <img [src]="gameDataService.getHeroImageUrl(match.user_hero_id)"
+               appImageFallback
+               [heroId]="match.user_hero_id"
                class="hero-icon-medium"
                [alt]="gameDataService.getHeroById(match.user_hero_id)?.localized_name">
           <span class="hero-name">{{ gameDataService.getHeroById(match.user_hero_id)?.localized_name }}</span>
@@ -202,6 +217,8 @@
           <div class="team-heroes radiant">
             <img *ngFor="let player of match.players | filter:true:'is_radiant'"
                  [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+                 appImageFallback
+                 [heroId]="player.hero_id"
                  class="hero-icon-small"
                  [class.user-hero]="player.hero_id === match.user_hero_id"
                  [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">
@@ -212,8 +229,11 @@
             <span class="dire-score">{{ match.dire_score }}</span>
           </div>
           <div class="team-heroes dire">
+            <!-- ✅ CORREÇÃO: Adicionado [heroId]="player.hero_id" que estava faltando -->
             <img *ngFor="let player of match.players | filter:false:'is_radiant'"
                  [src]="gameDataService.getHeroImageUrl(player.hero_id)"
+                 appImageFallback
+                 [heroId]="player.hero_id"
                  class="hero-icon-small"
                  [class.user-hero]="player.hero_id === match.user_hero_id"
                  [alt]="gameDataService.getHeroById(player.hero_id)?.localized_name">

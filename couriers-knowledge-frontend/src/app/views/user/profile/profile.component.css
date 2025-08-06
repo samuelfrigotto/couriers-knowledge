@@ -1,67 +1,311 @@
-/* ARQUIVO: src/app/views/user/pages/profile/profile.component.css */
+/* ===== PROFILE.COMPONENT.CSS - RETOQUES SUTIS ===== */
 
 :host {
   color: var(--text-color);
+  display: block;
+  /* ✨ Background mais moderno */
+  background: linear-gradient(135deg, #121212 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
+
+/* ✨ BOLINHAS FLUTUANTES NO BACKGROUND */
+:host::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -2;
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(58, 134, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(6, 255, 165, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(212, 165, 116, 0.05) 0%, transparent 50%);
+}
+
+/* Container das bolinhas animadas */
+.floating-elements {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.floating-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.08), rgba(6, 255, 165, 0.04));
+  animation: floatCircle 8s ease-in-out infinite;
+  backdrop-filter: blur(1px);
+  /* ✨ Otimização de performance */
+  will-change: transform, opacity;
+}
+
+.circle-1 {
+  width: 180px;
+  height: 180px;
+  top: 15%;
+  left: 8%;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 120px;
+  height: 120px;
+  top: 65%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+.circle-3 {
+  width: 90px;
+  height: 90px;
+  top: 35%;
+  right: 35%;
+  animation-delay: 6s;
+}
+
+.circle-4 {
+  width: 60px;
+  height: 60px;
+  top: 80%;
+  left: 25%;
+  animation-delay: 1.5s;
+}
+
+@keyframes floatCircle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* ✨ Container principal com z-index para ficar sobre as bolinhas mas abaixo do sidebar */
+.profile-container {
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(0.5px);
+}
+
+/* ===== HEADER MELHORADO ===== */
 .profile-header {
   display: flex;
   align-items: center;
   gap: 30px;
-  padding: 20px;
-  background-color: var(--secondary-bg-color);
-  border-radius: 8px;
+  padding: 25px;
+  /* ✨ Background melhorado */
+  background: rgba(45, 55, 72, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
   margin-bottom: 30px;
+  /* ✨ Borda sutil */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* ✨ Sombra moderna */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+/* ✨ Efeito hover sutil no header */
+.profile-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ✨ Borda superior gradiente */
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3a86ff, #06ffa5);
+  border-radius: 12px 12px 0 0;
+}
+
 .profile-avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
+  /* ✨ Borda gradiente simples */
   border: 4px solid #3a86ff;
+  transition: all 0.3s ease;
+  object-fit: cover;
+  /* ✨ Box shadow para efeito gradiente */
+  box-shadow: 0 0 0 2px #06ffa5;
 }
-.profile-info h1 { margin: 0 0 10px; font-size: 2.5rem; }
-.profile-info p { margin: 0; color: #a0aec0; }
+
+/* ✨ Efeito hover no avatar */
+.profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(58, 134, 255, 0.4);
+}
+
+.profile-info h1 {
+  margin: 0 0 10px;
+  font-size: 2.5rem;
+  color: #ffffff;
+}
+
+/* ✨ Gradiente aplicado apenas quando há suporte */
+@supports (-webkit-background-clip: text) {
+  .profile-info h1 {
+    background: linear-gradient(135deg, #ffffff, #e0e0e0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.profile-info p {
+  margin: 0 0 16px 0;
+  color: #a0aec0;
+  font-size: 1rem;
+  display: block;
+  visibility: visible;
+}
+
 .status-badge {
   display: inline-block;
   margin-top: 15px;
-  padding: 5px 15px;
+  padding: 8px 16px;
   background-color: #4a5568;
-  border-radius: 15px;
+  border-radius: 20px;
   font-weight: bold;
+  /* ✨ Transição suave */
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .status-badge.premium {
-  background-color: #f6e05e;
+  background: linear-gradient(135deg, #f6e05e, #ffd700);
   color: #121212;
+  /* ✨ Animação sutil */
+  animation: premiumGlow 3s ease-in-out infinite;
+  box-shadow: 0 4px 15px rgba(246, 224, 94, 0.3);
 }
+
+@keyframes premiumGlow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(246, 224, 94, 0.3); }
+  50% { box-shadow: 0 6px 25px rgba(246, 224, 94, 0.5); }
+}
+
+/* ===== GRID MAIS DINÂMICO ===== */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  /* ✨ 3 cards por linha */
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+  /* ✨ Auto-rows para melhor distribuição */
+  grid-auto-rows: minmax(140px, auto);
 }
+
+/* ===== CARDS MODERNIZADOS ===== */
 .stat-card {
-  background-color: var(--secondary-bg-color);
+  /* ✨ Background com transparência */
+  background: rgba(45, 55, 72, 0.9);
+  backdrop-filter: blur(20px);
   padding: 25px;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* ✨ Borda sutil */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* ✨ Transições suaves */
+  transition: all 0.3s ease;
+  /* ✨ Altura mínima para uniformidade */
+  min-height: 140px;
+  /* ✨ Otimização de performance */
+  will-change: transform, box-shadow;
 }
+
+/* ✨ Efeito hover nos cards */
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(58, 134, 255, 0.3);
+  background: rgba(58, 134, 255, 0.05);
+}
+
+/* ✨ Shimmer effect nos cards */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: none;
+}
+
+.stat-card:hover::after {
+  animation: shimmer 0.8s ease-out;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
 .stat-card.full-width {
   grid-column: 1 / -1;
+  /* ✨ Altura especial para cards full-width */
+  min-height: 120px;
 }
+
 .stat-card h3 {
   margin: 0 0 15px;
   color: #a0aec0;
   font-size: 1rem;
   text-transform: uppercase;
+  /* ✨ Espaçamento das letras */
+  letter-spacing: 0.5px;
+  position: relative;
 }
+
+/* ✨ Indicador colorido nos títulos */
+.stat-card h3::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: linear-gradient(90deg, #3a86ff, #06ffa5);
+  border-radius: 1px;
+}
+
 .stat-value {
   font-size: 2.5rem;
   font-weight: bold;
   margin: 0;
+  /* ✨ Gradiente nos valores */
+  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
+/* ===== HERO STATS MELHORADOS ===== */
 .hero-stat {
   display: flex;
   align-items: center;
@@ -70,128 +314,295 @@
   font-size: 1.5rem;
   font-weight: bold;
 }
+
 .hero-icon {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 34px;
   border-radius: 8px;
+  /* ✨ Borda moderna */
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  /* ✨ Mostrar o centro da imagem sem comprimir */
+  object-fit: cover;
+  object-position: center;
 }
+
+/* ✨ Efeito hover nos ícones de herói */
+.hero-icon:hover {
+  transform: scale(1.1);
+  border-color: #3a86ff;
+  box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+}
+
+/* ===== TAGS MELHORADAS ===== */
 .tags-container {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
 }
+
 .tag-badge {
-  background-color: #4a5568;
-  padding: 5px 12px;
-  border-radius: 5px;
+  /* ✨ Background modernizado */
+  background: rgba(74, 85, 104, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 1rem;
+  /* ✨ Borda sutil */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* ✨ Transição suave */
+  transition: all 0.3s ease;
 }
+
+/* ✨ Efeito hover nas tags */
+.tag-badge:hover {
+  background: rgba(58, 134, 255, 0.2);
+  border-color: #3a86ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+}
+
+/* ===== PREMIUM FEATURES MELHORADAS ===== */
 .premium-badge {
   position: absolute;
-  top: 10px;
-  right: -30px;
-  background-color: #f6e05e;
+  top: 15px;
+  right: -25px;
+  background: linear-gradient(135deg, #f6e05e, #ffd700);
   color: #121212;
-  padding: 2px 30px;
+  padding: 4px 35px;
   transform: rotate(45deg);
   font-size: 0.7rem;
   font-weight: bold;
+  /* ✨ Sombra moderna */
+  box-shadow: 0 2px 10px rgba(246, 224, 94, 0.4);
+  z-index: 2;
 }
+
 .premium-feature {
-  border: 1px solid #f6e05e;
+  /* ✨ Borda dourada */
+  border: 1px solid rgba(246, 224, 94, 0.4);
+  /* ✨ Animação sutil */
+  animation: premiumPulse 4s ease-in-out infinite;
 }
-.upgrade-prompt { margin-top: 5px; }
+
+@keyframes premiumPulse {
+  0%, 100% {
+    border-color: rgba(246, 224, 94, 0.4);
+    box-shadow: 0 0 0 rgba(246, 224, 94, 0);
+  }
+  50% {
+    border-color: rgba(246, 224, 94, 0.6);
+    box-shadow: 0 0 20px rgba(246, 224, 94, 0.2);
+  }
+}
+
+.upgrade-prompt {
+  margin-top: 10px;
+}
+
 .upgrade-button {
-  background-color: #f6e05e;
+  background: linear-gradient(135deg, #f6e05e, #ffd700);
   color: #121212;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
+  /* ✨ Posição relativa para efeito */
+  position: relative;
+  overflow: hidden;
 }
+
+/* ✨ Efeito shimmer no botão */
+.upgrade-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.upgrade-button:hover::before {
+  left: 100%;
+}
+
 .upgrade-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(246, 224, 94, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(246, 224, 94, 0.4);
 }
 
-
+/* ===== SEÇÃO DIVISÓRIA CORRIGIDA ===== */
 .section-divider {
   position: relative;
   margin: 40px 0 30px 0;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
+/* ✨ Linha gradiente que para antes do texto */
 .section-divider::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 0;
+  right: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #3a86ff, #06ffa5);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+/* ✨ Linha gradiente do lado direito */
+.section-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 60%;
   right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    var(--accent-color) 0%,
-    var(--accent-color) 25%,
-    transparent 40%,
-    transparent 60%,
-    var(--accent-color) 75%,
-    var(--accent-color) 100%
-  );
+  height: 2px;
+  background: linear-gradient(90deg, #06ffa5, #3a86ff, transparent);
+  transform: translateY(-50%);
+  z-index: 0;
 }
 
 .section-divider h2 {
-  display: inline-block;
-  background: transparent;
-  padding: 0 40px; /* Aumentado de 30px para 40px */
-  margin: 0;
-  color: #a0aec0;
-  font-size: 1.5rem;
+  padding: 0 20px;
   position: relative;
   z-index: 2;
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  /* ✨ Background transparente */
+  background: transparent;
 }
 
-
-
-.progress-bar-container {
-  width: 100%;
-  height: 30px;
-  background-color: var(--accent-color);
-  border-radius: 15px;
-  overflow: hidden;
-}
-.progress-bar {
-  height: 100%;
-  background-color: #48bb78;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  transition: width 0.5s ease-in-out;
-}
-.loading-message {
-  text-align: center;
-  padding: 50px;
-  font-size: 1.2rem;
-  color: #a0aec0;
+/* ✨ Gradiente aplicado apenas quando há suporte */
+@supports (-webkit-background-clip: text) {
+  .section-divider h2 {
+    background: linear-gradient(135deg, #ffffff, #a0aec0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
-
+/* ===== KDA DISPLAY MELHORADO ===== */
 .kda-display {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 2.5rem;
-  font-weight: bold;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-.kda-display .divider {
+/* ✨ Cores semânticas para KDA */
+.kda-display span:nth-child(1) { color: #06ffa5; } /* Kills - Verde */
+.kda-display span:nth-child(3) { color: #ff6b6b; } /* Deaths - Vermelho */
+.kda-display span:nth-child(5) { color: #3a86ff; } /* Assists - Azul */
+.divider { color: #718096; }
+
+/* ===== LOADING MELHORADO ===== */
+.loading-message {
+  text-align: center;
+  padding: 60px 20px;
+  /* ✨ Background modernizado */
+  background: rgba(45, 55, 72, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.loading-message p {
+  font-size: 1.2rem;
   color: #a0aec0;
-  font-weight: normal;
+  margin: 0;
+}
+
+/* ===== RESPONSIVIDADE MELHORADA ===== */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stat-card {
+    min-height: 120px;
+  }
+
+  /* ✨ Ajustar bolinhas para mobile */
+  .floating-circle {
+    opacity: 0.3;
+    animation-duration: 12s;
+  }
+
+  .circle-1 {
+    width: 100px;
+    height: 100px;
+    top: 10%;
+    left: 5%;
+  }
+  .circle-2 {
+    width: 60px;
+    height: 60px;
+    top: 70%;
+    right: 10%;
+  }
+  .circle-3 {
+    width: 40px;
+    height: 40px;
+    top: 40%;
+    right: 30%;
+  }
+  .circle-4 {
+    width: 30px;
+    height: 30px;
+    top: 85%;
+    left: 20%;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 15px;
+  }
+
+  .profile-header {
+    padding: 15px;
+  }
+
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-info h1 {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
