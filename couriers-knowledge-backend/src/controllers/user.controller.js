@@ -454,6 +454,9 @@ exports.getUserStats = async (req, res) => {
             averageKda: averageKda,
             mostUsedHeroId: mostUsedHeroId,
             mostFacedHeroId: mostFacedHeroId,
+
+            //is admin
+            isAdmin: isAdmin,
                 
             // Porcentagem de avaliação
             evaluationPercentage: evaluationPercentage,

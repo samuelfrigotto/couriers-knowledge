@@ -183,58 +183,52 @@ export class LayoutComponent implements OnInit {
    * ✅ Retorna texto do contador de atualizações COM CACHE PARA PERFORMANCE
    */
   getUpdatesCounterText(): string {
-    if (!this.userProfile) {
-      return '';
-    }
-
-    // ✅ GERAR HASH DO PERFIL PARA DETECTAR MUDANÇAS
-    const profileHash = JSON.stringify({
-      id: this.userProfile.id,
-      isAdmin: this.userProfile.isAdmin,
-      isImmortal: this.userProfile.isImmortal,
-      usesRemaining: this.userProfile.usesRemaining,
-      usesAllowed: this.userProfile.usesAllowed,
-      apiCallsToday: this.userProfile.apiCallsToday,
-      apiLimit: this.userProfile.apiLimit
-    });
-
-    // ✅ SE PERFIL NÃO MUDOU, RETORNAR CACHE
-    if (this._lastUserProfileHash === profileHash && this._updatesCounterCache !== null) {
-      return this._updatesCounterCache;
-    }
-
-    // ✅ CALCULAR NOVO VALOR
-    let result = '';
-
-    // ADMIN NÃO MOSTRA CONTADOR (TEM USOS ILIMITADOS)
-    if (this.userProfile.isAdmin) {
-      result = '∞ Ilimitado';
-    }
-    // IMMORTAL TAMBÉM NÃO MOSTRA CONTADOR (NÃO USA API)
-    else if (this.userProfile.isImmortal) {
-      result = 'N/A Immortal';
-    }
-    // PRIORIZAR OS NOVOS CAMPOS DE USOS
-    else if (this.userProfile.usesRemaining !== undefined && this.userProfile.usesAllowed !== undefined) {
-      const remaining = this.userProfile.usesRemaining;
-      const total = this.userProfile.usesAllowed;
-      result = `${remaining}/${total}`;
-    }
-    // FALLBACK PARA OS CAMPOS ANTIGOS (caso não venham os novos)
-    else {
-      const used = this.userProfile.apiCallsToday || 0;
-      const limit = this.userProfile.apiLimit || 0;
-      const remaining = Math.max(0, Math.floor((limit - used) / 4)); // Dividir por 4 para obter usos
-      const totalUses = Math.floor(limit / 4);
-      result = `${remaining}/${totalUses}`;
-    }
-
-    // ✅ CACHEAR RESULTADO
-    this._updatesCounterCache = result;
-    this._lastUserProfileHash = profileHash;
-
-    return result;
+  if (!this.userProfile) {
+    return '';
   }
+
+  const profileHash = JSON.stringify({
+    id: this.userProfile.id,
+    isAdmin: this.userProfile.isAdmin,
+    isImmortal: this.userProfile.isImmortal,
+    usesRemaining: this.userProfile.usesRemaining,
+    usesAllowed: this.userProfile.usesAllowed,
+    usesConsumed: this.userProfile.usesConsumed,
+    apiCallsToday: this.userProfile.apiCallsToday
+  });
+
+  if (this._lastUserProfileHash === profileHash && this._updatesCounterCache !== null) {
+    return this._updatesCounterCache;
+  }
+
+  let result = '';
+
+  // ✅ ADMIN MOSTRA QUANTAS CHAMADAS FORAM FEITAS / INFINITO
+  if (this.userProfile.isAdmin) {
+    const usedToday = this.userProfile.usesConsumed || 0;
+    result = `${usedToday}/∞`;
+  }
+  else if (this.userProfile.isImmortal) {
+    result = 'N/A Immortal';
+  }
+  else if (this.userProfile.usesRemaining !== undefined && this.userProfile.usesAllowed !== undefined) {
+    const remaining = this.userProfile.usesRemaining;
+    const total = this.userProfile.usesAllowed;
+    result = `${remaining}/${total}`;
+  }
+  else {
+    const used = this.userProfile.apiCallsToday || 0;
+    const limit = this.userProfile.apiLimit || 0;
+    const remaining = Math.max(0, Math.floor((limit - used) / 4));
+    const totalUses = Math.floor(limit / 4);
+    result = `${remaining}/${totalUses}`;
+  }
+
+  this._updatesCounterCache = result;
+  this._lastUserProfileHash = profileHash;
+
+  return result;
+}
 
   /**
    * Retorna tooltip das limitações de update
@@ -245,7 +239,8 @@ export class LayoutComponent implements OnInit {
     }
 
     if (this.userProfile?.isAdmin) {
-      return 'Como administrador, você tem usos ilimitados para manter e gerenciar o sistema.';
+      const usedToday = this.userProfile.usesConsumed || 0;
+      return `Como administrador, você tem usos ilimitados para manter e gerenciar o sistema. Hoje você já fez ${usedToday} chamada${usedToday !== 1 ? 's' : ''}.`;
     }
 
     return 'Cada atualização consulta dados de fontes externas para buscar seu histórico mais recente. Para garantir a estabilidade do serviço para todos, o plano gratuito possui um limite diário de usos. Assinantes Premium apoiam o projeto e desfrutam de muito mais usos por dia!';

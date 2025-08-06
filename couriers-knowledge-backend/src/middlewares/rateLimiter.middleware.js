@@ -3,6 +3,14 @@ const db = require("../config/database");
 
 async function rateLimiter(req, res, next) {
   const userId = req.user.id; // Obtido do middleware de autenticação
+  // ✅ ADMIN BYPASS - SE USER ID = 1, PULAR RATE LIMITING
+  if (userId === 1 || userId === '1') {
+    console.log('🛡️ [RATE LIMITER] Admin detectado - pulando rate limit');
+    req.user.api_calls_today = 0;
+    req.user.api_limit = 999999;
+    req.user.account_status = 'Admin';
+    return next();
+  }
 
   try {
     // ✅ BUSCAR TAMBÉM O account_status do usuário
@@ -14,18 +22,6 @@ async function rateLimiter(req, res, next) {
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
-    }
-
-    // ✅ VERIFICAÇÃO DE ADMIN - BYPASS COMPLETO
-    const isAdmin = userId === 1; // Admin tem ID = 1
-    
-    if (isAdmin) {
-      console.log('🛡️ [RATE LIMITER] Admin detectado - bypass completo dos limites');
-      // Admin não tem limites, passa direto
-      req.user.api_calls_today = user.api_calls_today || 0;
-      req.user.api_limit = 999999; // Valor alto para compatibilidade
-      req.user.account_status = 'Admin';
-      return next();
     }
 
     const today = new Date().toISOString().slice(0, 10); // Formato YYYY-MM-DD
