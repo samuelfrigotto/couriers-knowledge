@@ -5,11 +5,12 @@ import { GetPremiumService, Plan } from '../../../core/get-premium.service';
 import { I18nService } from '../../../core/i18n.service';
 import { CurrencyService } from '../../../core/currency.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-get-premium',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, RouterLink],
   templateUrl: './get-premium.component.html',
   styleUrls: ['./get-premium.component.css']
 })
@@ -24,8 +25,11 @@ export class GetPremiumComponent implements OnInit {
   currentLanguage = 'en';
   currentCurrency = 'BRL';
 
-  // ✅ ADICIONAR ESTADO DE PROCESSAMENTO
+  // Estado de processamento
   processingPlanId: string | null = null;
+
+  // Controle do modal Pro
+  showProModal = false;
 
   ngOnInit(): void {
     // Subscribe to language changes
@@ -66,47 +70,74 @@ export class GetPremiumComponent implements OnInit {
     });
   }
 
-  private transformPlanData(apiPlan: any): Plan {
-    const currentLang = this.i18nService.getCurrentLanguage();
-
-    let planName = '';
-    switch (apiPlan.id) {
-      case 'monthly':
-        planName = this.i18nService.translate('premium.monthly');
-        break;
-      case 'semiannual':
-        planName = this.i18nService.translate('premium.semiannual');
-        break;
-      case 'annual':
-        planName = this.i18nService.translate('premium.annual');
-        break;
-      case 'tryhard':
-        planName = this.i18nService.translate('premium.tryhard');
-        break;
-      default:
-        planName = apiPlan.name;
+  onSelectPlan(plan: Plan): void {
+    if (plan.comingSoon || this.isProcessing(plan.id)) {
+      return;
     }
 
-    // Use static pricing based on currency
+    this.processingPlanId = plan.id;
+
+    this.premiumService.createCheckoutSession(plan.price_id).subscribe({
+      next: (response) => {
+        if (response.success && response.checkout_url) {
+          window.location.href = response.checkout_url;
+        } else {
+          console.error('Erro na criação da sessão:', response);
+          alert('Erro ao processar pagamento. Tente novamente.');
+        }
+        this.processingPlanId = null;
+      },
+      error: (err) => {
+        console.error('Erro ao criar checkout:', err);
+        alert('Erro ao processar pagamento. Tente novamente.');
+        this.processingPlanId = null;
+      }
+    });
+  }
+
+  isProcessing(planId: string): boolean {
+    return this.processingPlanId === planId;
+  }
+
+  // Controles do modal Pro
+  openProModal(): void {
+    this.showProModal = true;
+  }
+
+  closeProModal(): void {
+    this.showProModal = false;
+  }
+
+  // Função para navegação personalizada
+  handleProContact(): void {
+    // Implementar redirecionamento para suporte
+    console.log('Redirecionando para suporte especializado...');
+    // Aqui você pode implementar a navegação para suporte ou email
+  }
+
+  private transformPlanData(apiPlan: any): Plan {
     const pricing = this.currencyService.getPricing();
+    let price = null;
     let period = '';
     let total = '';
     let monthlyEquivalent = '';
-    let price = 0;
+
+    const currentLang = this.currentLanguage;
+    const planName = this.i18nService.translate(`premium.${apiPlan.id}`);
 
     if (apiPlan.id === 'monthly') {
-      period = this.i18nService.translate('premium.perMonth');
       price = pricing.monthly;
-      total = this.currencyService.formatPrice(price);
+      period = this.i18nService.translate('premium.perMonth');
+      total = this.currencyService.formatPrice(pricing.monthly);
     } else if (apiPlan.id === 'semiannual') {
+      price = pricing.semiannual * 6;
       period = this.i18nService.translate('premium.perMonthSix');
-      price = pricing.semiannual;
-      total = this.currencyService.formatPrice(pricing.semiannual * 6) + ' (6 ' + (currentLang === 'en' ? 'months' : 'meses') + ')';
+      total = this.currencyService.formatPrice(pricing.semiannual * 6) + ' (' + (currentLang === 'en' ? '6 months' : '6 meses') + ')';
       monthlyEquivalent = this.currencyService.formatPrice(pricing.semiannual) + (currentLang === 'en' ? '/month' : '/mês');
     } else if (apiPlan.id === 'annual') {
+      price = pricing.annual * 12;
       period = this.i18nService.translate('premium.perMonthTwelve');
-      price = pricing.annual;
-      total = this.currencyService.formatPrice(pricing.annual * 12) + ' (12 ' + (currentLang === 'en' ? 'months' : 'meses') + ')';
+      total = this.currencyService.formatPrice(pricing.annual * 12) + ' (' + (currentLang === 'en' ? '12 months' : '12 meses') + ')';
       monthlyEquivalent = this.currencyService.formatPrice(pricing.annual) + (currentLang === 'en' ? '/month' : '/mês');
     } else if (apiPlan.id === 'tryhard') {
       period = this.i18nService.translate('premium.noLimitations');
@@ -191,8 +222,8 @@ export class GetPremiumComponent implements OnInit {
     switch (planId) {
       case 'tryhard':
         return this.i18nService.translate('premium.notifyMe');
-      case 'annual':
-        return this.i18nService.translate('premium.bestValue');
+      case 'semiannual':
+        return this.i18nService.translate('premium.choosePlan');
       default:
         return this.i18nService.translate('premium.choosePlan');
     }
@@ -216,7 +247,7 @@ export class GetPremiumComponent implements OnInit {
       {
         id: 'monthly',
         name: this.i18nService.translate('premium.monthly'),
-        price_id: 'price_1Rmf6sQOyUltBOQEO37eF8hb', // ✅ ADICIONAR PRICE_ID REAL
+        price_id: 'price_1Rmf6sQOyUltBOQEO37eF8hb',
         amount: Math.round(pricing.monthly * 100),
         display_amount: this.currencyService.formatPrice(pricing.monthly),
         currency: this.currentCurrency.toLowerCase(),
@@ -234,7 +265,7 @@ export class GetPremiumComponent implements OnInit {
       {
         id: 'semiannual',
         name: this.i18nService.translate('premium.semiannual'),
-        price_id: 'price_1Rmf8VQOyUltBOQEYvAqrkpX', // ✅ ADICIONAR PRICE_ID REAL
+        price_id: 'price_1Rmf8VQOyUltBOQEYvAqrkpX',
         amount: Math.round(pricing.semiannual * 6 * 100),
         display_amount: this.currencyService.formatPrice(pricing.semiannual * 6),
         monthly_equivalent: this.currentLanguage === 'en' ?
@@ -243,9 +274,9 @@ export class GetPremiumComponent implements OnInit {
         currency: this.currentCurrency.toLowerCase(),
         interval: 'semiannual',
         description: 'Cobrado semestralmente',
-        price: pricing.semiannual,
+        price: pricing.semiannual * 6,
         period: this.i18nService.translate('premium.perMonthSix'),
-        total: this.currencyService.formatPrice(pricing.semiannual * 6) + ' (6 ' + (this.currentLanguage === 'en' ? 'months' : 'meses') + ')',
+        total: this.currencyService.formatPrice(pricing.semiannual * 6) + ' (' + (this.currentLanguage === 'en' ? '6 months' : '6 meses') + ')',
         popular: true,
         comingSoon: false,
         features: this.getPlanFeatures('semiannual'),
@@ -255,18 +286,18 @@ export class GetPremiumComponent implements OnInit {
       {
         id: 'annual',
         name: this.i18nService.translate('premium.annual'),
-        price_id: 'price_1RmfAuQOyUltBOQEDJCSda9N', // ✅ ADICIONAR PRICE_ID REAL
+        price_id: 'price_1Rmf9LQOyUltBOQECmXKJZBc',
         amount: Math.round(pricing.annual * 12 * 100),
         display_amount: this.currencyService.formatPrice(pricing.annual * 12),
         monthly_equivalent: this.currentLanguage === 'en' ?
           this.currencyService.formatPrice(pricing.annual) + '/month' :
           this.currencyService.formatPrice(pricing.annual) + '/mês',
         currency: this.currentCurrency.toLowerCase(),
-        interval: 'yearly',
+        interval: 'annual',
         description: 'Cobrado anualmente',
-        price: pricing.annual,
+        price: pricing.annual * 12,
         period: this.i18nService.translate('premium.perMonthTwelve'),
-        total: this.currencyService.formatPrice(pricing.annual * 12) + ' (12 ' + (this.currentLanguage === 'en' ? 'months' : 'meses') + ')',
+        total: this.currencyService.formatPrice(pricing.annual * 12) + ' (' + (this.currentLanguage === 'en' ? '12 months' : '12 meses') + ')',
         popular: false,
         comingSoon: false,
         features: this.getPlanFeatures('annual'),
@@ -276,12 +307,12 @@ export class GetPremiumComponent implements OnInit {
       {
         id: 'tryhard',
         name: this.i18nService.translate('premium.tryhard'),
-        price_id: 'price_tryhard_fallback',
+        price_id: '',
         amount: 0,
-        display_amount: this.i18nService.translate('premium.inDevelopment'),
+        display_amount: '',
         currency: this.currentCurrency.toLowerCase(),
-        interval: 'custom',
-        description: 'Plano personalizado',
+        interval: 'lifetime',
+        description: 'Para jogadores elite',
         price: null,
         period: this.i18nService.translate('premium.noLimitations'),
         total: this.i18nService.translate('premium.inDevelopment'),
@@ -292,49 +323,5 @@ export class GetPremiumComponent implements OnInit {
         buttonClass: this.getButtonClass('tryhard')
       }
     ];
-  }
-
-  // ✅ MÉTODO CORRIGIDO PARA CRIAR CHECKOUT
-  onSelectPlan(plan: Plan): void {
-    if (plan.comingSoon) {
-      console.log('Plano em breve:', plan.name);
-      // TODO: Implementar notificação "me avise quando estiver pronto"
-      return;
-    }
-
-    if (!plan.price_id) {
-      console.error('Price ID não encontrado para o plano:', plan.id);
-      return;
-    }
-
-    // Mostrar loading no botão específico
-    this.processingPlanId = plan.id;
-
-    console.log('Iniciando checkout para plano:', plan.name, 'Price ID:', plan.price_id);
-
-    // Criar sessão de checkout no Stripe
-    this.premiumService.createCheckoutSession(plan.price_id).subscribe({
-      next: (response) => {
-        if (response.success && response.checkout_url) {
-          console.log('Checkout session criada:', response.session_id);
-          // Redirecionar para o Stripe Checkout
-          window.location.href = response.checkout_url;
-        } else {
-          console.error('Erro na resposta do checkout:', response);
-          this.processingPlanId = null;
-          // TODO: Mostrar toast de erro
-        }
-      },
-      error: (error) => {
-        console.error('Erro ao criar checkout session:', error);
-        this.processingPlanId = null;
-        // TODO: Mostrar toast de erro
-      }
-    });
-  }
-
-  // ✅ MÉTODO PARA VERIFICAR SE ESTÁ PROCESSANDO
-  isProcessing(planId: string): boolean {
-    return this.processingPlanId === planId;
   }
 }

@@ -253,14 +253,7 @@ export class LayoutComponent implements OnInit {
     this.authService.logout();
   }
 
-  // ===== PROPRIEDADES PARA IMMORTAL =====
 
-  /**
-   * Verifica se deve mostrar menu Immortal
-   */
-  get shouldShowImmortalMenu(): boolean {
-    return this.userProfile?.isImmortal === true;
-  }
 
   /**
    * Verifica se deve mostrar aviso sobre limitações

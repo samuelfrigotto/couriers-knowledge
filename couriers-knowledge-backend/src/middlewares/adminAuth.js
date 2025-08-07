@@ -20,9 +20,9 @@ const requireAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Buscar usuário no banco
-    const { rows } = await db.query(
+        const { rows } = await db.query(
       'SELECT id, steam_id, steam_username FROM users WHERE id = $1',
-      [decoded.userId]
+      [decoded.id] 
     );
 
     if (rows.length === 0) {
@@ -35,7 +35,7 @@ const requireAdmin = async (req, res, next) => {
     const user = rows[0];
 
     // Verificar se é admin (ID = 1)
-    if (user.id !== 1) {
+    if (user.id != 1) {
       return res.status(403).json({
         success: false,
         message: 'Acesso negado. Apenas administradores podem acessar esta funcionalidade.',

@@ -44,6 +44,22 @@ export class FriendsComponent implements OnInit, OnDestroy {
   private i18nService = inject(I18nService);
   private destroy$ = new Subject<void>();
 
+  //novos
+  loadingDot = 0;
+  currentLoadingStatus = 'friends.loading.connecting';
+  particles: any[] = [];
+  private loadingInterval?: any;
+
+  // Status de loading multilíngues específicos para amigos
+  private loadingStatuses = [
+    'friends.loading.connecting',
+    'friends.loading.fetching',
+    'friends.loading.processing',
+    'friends.loading.finalizing'
+  ];
+
+
+
   // Propriedades para pesquisa
   searchTerm = '';
   private searchSubject = new BehaviorSubject<string>('');
@@ -98,6 +114,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
       })
     );
 
+
     // Observable para a lista de amigos convidados
     this.invitedFriends$ = this.friendsData$.pipe(
       map((data) =>
@@ -133,6 +150,19 @@ export class FriendsComponent implements OnInit, OnDestroy {
     ]).pipe(
       map(([friends, searchTerm]) => this.filterFriends(friends, searchTerm))
     );
+
+    // ✅ MONITORAR ESTADO DE LOADING PARA ANIMAÇÕES
+    this.friendsService.isLoading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isLoading => {
+        if (isLoading) {
+          this.startLoadingAnimation();
+          this.generateParticles();
+        } else {
+          this.stopLoadingAnimation();
+        }
+      });
+
   }
 
   ngOnInit(): void {
@@ -146,6 +176,7 @@ export class FriendsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.stopLoadingAnimation(); // ✅ Cleanup
   }
 
   // Métodos para pesquisa
@@ -161,19 +192,19 @@ export class FriendsComponent implements OnInit, OnDestroy {
     );
   }
 
-  onSearchChange(searchTerm: string): void {
-    this.searchTerm = searchTerm;
-    this.searchSubject.next(searchTerm);
-  }
+  onSearchChange(value: string): void {
+  this.searchTerm = value; // Atualiza a propriedade local
+  this.searchSubject.next(value); // Emite o valor para os observables
+}
 
   clearSearch(): void {
-    this.searchTerm = '';
-    this.searchSubject.next('');
-  }
+  this.searchTerm = '';
+  this.searchSubject.next('');
+}
 
-  hasActiveSearch(): boolean {
-    return this.searchTerm.trim().length > 0;
-  }
+ hasActiveSearch(): boolean {
+  return this.searchTerm.trim().length > 0;
+}
 
   /**
    * Carrega dados dos amigos
@@ -532,4 +563,52 @@ Dá uma olhada: https://couriers-knowledge.com
   trackByFriend(index: number, friend: FriendStatus): string {
     return friend.steam_id;
   }
+
+  // ✅ MÉTODOS PARA LOADING ANIMADO
+  private generateParticles() {
+    this.particles = [];
+    if (typeof window !== 'undefined') {
+      for (let i = 0; i < 10; i++) {
+        this.particles.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          delay: Math.random() * 2000
+        });
+      }
+    }
+  }
+
+  private startLoadingAnimation() {
+    let progress = 0;
+    this.loadingDot = 0;
+    this.currentLoadingStatus = this.loadingStatuses[0];
+
+    this.loadingInterval = setInterval(() => {
+      progress += Math.random() * 0.3 + 0.1;
+
+      // Atualiza dots progressivamente
+      if (progress > 1 && this.loadingDot < 1) {
+        this.loadingDot = 1;
+        this.currentLoadingStatus = this.loadingStatuses[1];
+      }
+      if (progress > 2 && this.loadingDot < 2) {
+        this.loadingDot = 2;
+        this.currentLoadingStatus = this.loadingStatuses[2];
+      }
+      if (progress > 3 && this.loadingDot < 3) {
+        this.loadingDot = 3;
+        this.currentLoadingStatus = this.loadingStatuses[3];
+      }
+    }, 600);
+  }
+
+  private stopLoadingAnimation() {
+    if (this.loadingInterval) {
+      clearInterval(this.loadingInterval);
+      this.loadingInterval = null;
+    }
+    this.loadingDot = 0;
+    this.particles = [];
+  }
+
 }

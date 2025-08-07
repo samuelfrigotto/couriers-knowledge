@@ -1,9 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { I18nService, Language } from '../../core/i18n.service';
 import { CurrencyService, Currency } from '../../core/currency.service';
 import { AuthService } from '../../core/auth.service';
 import { UserService } from '../../core/user.service';
+import { VersionService } from '../../core/version.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { MmrVerificationComponent } from '../mmr-verification/mmr-verification.component';
 
@@ -20,7 +22,7 @@ interface UserProfile {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, MmrVerificationComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, MmrVerificationComponent],
   template: `
     <div class="settings-container">
       <div class="settings-header">
@@ -84,44 +86,35 @@ interface UserProfile {
           </div>
         </div>
 
-        <!-- Seção de Verificação MMR (apenas para usuários não-admin e não-immortal) -->
-        <div class="setting-section mmr-section" *ngIf="shouldShowMmrVerification">
-          <div class="setting-label">
-            <h3>Verificação de MMR</h3>
-            <p class="setting-description">
-              Comprove seu MMR para desbloquear recursos Premium automaticamente
-            </p>
-          </div>
-          <div class="setting-control full-width">
-            <app-mmr-verification></app-mmr-verification>
-          </div>
-        </div>
-
         <!-- Informações da Conta -->
-        <div class="setting-section" *ngIf="userProfile">
+        <div class="setting-section">
           <div class="setting-label">
-            <h3>Informações da Conta</h3>
-            <p class="setting-description">Detalhes do seu perfil</p>
+            <h3>{{ 'settings.account.info.title' | translate }}</h3>
+            <p class="setting-description">{{ 'settings.account.info.description' | translate }}</p>
           </div>
           <div class="setting-control">
-            <div class="account-info">
+            <div class="account-info" *ngIf="userProfile">
               <div class="info-row">
-                <span class="info-label">Usuário:</span>
+                <span class="info-label">{{ 'account.info.steamUsername' | translate }}:</span>
                 <span class="info-value">{{ userProfile.steamUsername }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="info-value" [ngClass]="'status-' + userProfile.accountStatus.toLowerCase()">
-                  {{ userProfile.accountStatus }}
+                <span class="info-label">{{ 'account.info.accountStatus' | translate }}:</span>
+                <span class="info-value" [class.premium]="userProfile.accountStatus === 'Premium'">
+                  {{ userProfile.accountStatus === 'Premium' ? ('account.status.premium' | translate) : ('account.status.free' | translate) }}
                 </span>
               </div>
+              <div class="info-row" *ngIf="userProfile.mmr">
+                <span class="info-label">{{ 'account.info.mmr' | translate }}:</span>
+                <span class="info-value">{{ userProfile.mmr }}</span>
+              </div>
               <div class="info-row" *ngIf="userProfile.isAdmin">
-                <span class="info-label">Privilégio:</span>
-                <span class="info-value admin">▲ Administrador</span>
+                <span class="info-label">{{ 'account.info.rank' | translate }}:</span>
+                <span class="info-value admin">{{ 'account.rank.admin' | translate }}</span>
               </div>
               <div class="info-row" *ngIf="userProfile.isImmortal">
-                <span class="info-label">Rank:</span>
-                <span class="info-value immortal">★ Immortal Player</span>
+                <span class="info-label">{{ 'account.info.rank' | translate }}:</span>
+                <span class="info-value immortal">{{ 'account.rank.immortal' | translate }}</span>
               </div>
             </div>
           </div>
@@ -130,18 +123,51 @@ interface UserProfile {
         <!-- Informações do Sistema -->
         <div class="setting-section">
           <div class="setting-label">
-            <h3>Informações do Sistema</h3>
-            <p class="setting-description">Detalhes técnicos e suporte</p>
+            <h3>{{ 'settings.system.info.title' | translate }}</h3>
+            <p class="setting-description">{{ 'settings.system.info.description' | translate }}</p>
           </div>
           <div class="setting-control">
             <div class="system-info">
               <div class="info-row">
-                <span class="info-label">Versão:</span>
-                <span class="info-value">v1.0.0 Beta</span>
+                <span class="info-label">{{ 'system.info.version' | translate }}:</span>
+                <span class="info-value">{{ currentVersion }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Servidor:</span>
-                <span class="info-value">Online</span>
+                <span class="info-label">{{ 'system.info.server' | translate }}:</span>
+                <span class="info-value">{{ 'system.status.online' | translate }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ SEÇÃO ADMIN - APENAS PARA ADMINISTRADORES -->
+        <div class="setting-section admin-section" *ngIf="userProfile?.isAdmin">
+          <div class="setting-label">
+            <h3>{{ 'settings.admin.title' | translate }}</h3>
+            <p class="setting-description">{{ 'settings.admin.description' | translate }}</p>
+          </div>
+          <div class="setting-control">
+            <div class="admin-controls">
+              <div class="version-update">
+                <label>{{ 'admin.version.update' | translate }}</label>
+                <div class="version-input-group">
+                  <input
+                    type="text"
+                    [(ngModel)]="newVersionInput"
+                    placeholder="v0.0.31"
+                    class="version-input"
+                    [disabled]="isUpdatingVersion"
+                  >
+                  <button
+                    class="update-version-btn"
+                    (click)="updateSystemVersion()"
+                    [disabled]="isUpdatingVersion || !newVersionInput"
+                  >
+                    <span *ngIf="!isUpdatingVersion">{{ 'admin.version.update.button' | translate }}</span>
+                    <span *ngIf="isUpdatingVersion">{{ 'admin.version.updating' | translate }}...</span>
+                  </button>
+                </div>
+                <small class="version-help">{{ 'admin.version.help' | translate }}</small>
               </div>
             </div>
           </div>
@@ -160,6 +186,13 @@ interface UserProfile {
               </svg>
               {{ 'settings.logout.button' | translate }}
             </button>
+          </div>
+        </div>
+
+        <!-- MMR Verification Component (se necessário) -->
+        <div *ngIf="shouldShowMmrVerification" class="setting-section mmr-section">
+          <div class="setting-control full-width">
+            <app-mmr-verification></app-mmr-verification>
           </div>
         </div>
       </div>
@@ -292,11 +325,13 @@ interface UserProfile {
       color: rgba(255, 255, 255, 0.5);
     }
 
+    /* ===== ACCOUNT & SYSTEM INFO STYLES ===== */
     .account-info,
     .system-info {
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
       padding: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       min-width: 200px;
     }
 
@@ -304,90 +339,131 @@ interface UserProfile {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .info-row:last-child {
-      margin-bottom: 0;
+      border-bottom: none;
     }
 
     .info-label {
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      font-weight: 400;
     }
 
     .info-value {
       color: white;
+      font-size: 13px;
       font-weight: 500;
-      font-size: 14px;
+      text-align: right;
     }
 
-    .info-value.status-free {
-      color: #94a3b8;
+    .info-value.premium {
+      color: #10b981;
+      font-weight: 600;
     }
-
-    .info-value.status-premium {
-      color: #f59e0b;
-    }
-
-
 
     .info-value.admin {
-      color: #8b5cf6;
+      color: #f59e0b;
+      font-weight: 600;
     }
 
     .info-value.immortal {
-      color: #f59e0b;
+      color: #ef4444;
+      font-weight: 600;
     }
 
-    /* ✅ ESTILO DO BOTÃO LOGOUT */
+    /* ===== ADMIN SECTION STYLES ===== */
+    .admin-section {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+    }
+
+    .admin-controls {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 16px;
+      border-radius: 8px;
+      min-width: 300px;
+    }
+
+    .version-update label {
+      display: block;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .version-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .version-input {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .version-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .update-version-btn {
+      padding: 8px 16px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .update-version-btn:hover:not(:disabled) {
+      background: #2563eb;
+    }
+
+    .update-version-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .version-help {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+    }
     .logout-button {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-      border: 2px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      border-radius: 12px;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      color: #ef4444;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.3s ease;
-      font-size: 15px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      min-width: 160px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .logout-button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
-      transition: left 0.5s ease;
-    }
-
-    .logout-button:hover::before {
-      left: 100%;
+      min-width: 200px;
+      justify-content: center;
     }
 
     .logout-button:hover {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+      background: rgba(239, 68, 68, 0.2);
       border-color: rgba(239, 68, 68, 0.5);
-      color: #fca5a5;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-    }
-
-    .logout-button:active {
-      transform: translateY(0);
       box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
     }
 
@@ -444,11 +520,17 @@ export class SettingsComponent implements OnInit {
   currentCurrencyInfo: Currency;
   availableCurrencies: Currency[];
 
+  // Version properties
+  currentVersion: string = 'v0.0.30';
+  newVersionInput: string = '';
+  isUpdatingVersion: boolean = false;
+
   userProfile: UserProfile | null = null;
 
   constructor(
     private i18nService: I18nService,
-    private currencyService: CurrencyService
+    private currencyService: CurrencyService,
+    private versionService: VersionService
   ) {
     // Initialize language
     this.availableLanguages = this.i18nService.availableLanguages;
@@ -470,6 +552,11 @@ export class SettingsComponent implements OnInit {
     this.currencyService.currentCurrency$.subscribe(currency => {
       this.currentCurrency = currency;
       this.currentCurrencyInfo = this.currencyService.getCurrentCurrencyInfo();
+    });
+
+    // Subscribe to version changes
+    this.versionService.currentVersion$.subscribe(version => {
+      this.currentVersion = version;
     });
   }
 
@@ -557,5 +644,45 @@ export class SettingsComponent implements OnInit {
    */
   logout(): void {
     this.authService.logout();
+  }
+
+  /**
+   * ✅ MÉTODO PARA ATUALIZAR VERSÃO (APENAS ADMIN)
+   */
+  updateSystemVersion(): void {
+    if (!this.newVersionInput || !this.userProfile?.isAdmin) {
+      return;
+    }
+
+    // Validar formato da versão
+    const versionPattern = /^v\d+\.\d+\.\d+$/;
+    if (!versionPattern.test(this.newVersionInput)) {
+      alert('Formato inválido! Use o formato: v0.0.30');
+      return;
+    }
+
+    this.isUpdatingVersion = true;
+
+    this.versionService.updateVersion(this.newVersionInput).subscribe({
+      next: (response) => {
+        if (response.success) {
+          alert(`Versão atualizada para ${response.version}!`);
+          this.currentVersion = response.version;
+          this.newVersionInput = '';
+
+          // Recarregar versão para todos
+          this.versionService.loadCurrentVersion();
+        } else {
+          alert('Erro ao atualizar versão: ' + response.message);
+        }
+      },
+      error: (error) => {
+        console.error('Erro ao atualizar versão:', error);
+        alert('Erro ao atualizar versão. Verifique o console.');
+      },
+      complete: () => {
+        this.isUpdatingVersion = false;
+      }
+    });
   }
 }

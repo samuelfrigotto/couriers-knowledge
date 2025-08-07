@@ -20,8 +20,10 @@ const statusRoutes = require('./src/api/routes/status.routes'); // ← NOVA ROTA
 const immortalRoutes = require('./src/api/routes/immortal.routes'); // ✅ CAMINHO CORRIGIDO
 const dotaScraperRoute = require('./dotaLeaderboardScrapper');
 const knownPlayersRoutes = require('./src/api/routes/known.players.routes');
-
 const mmrVerificationRoutes = require('./src/api/routes/mmr.verification.routes');
+const systemRoutes = require('./src/api/routes/system');
+
+
 // 2. Inicializar o aplicativo Express
 const app = express();
 
@@ -68,6 +70,7 @@ app.use('/api/immortal', immortalRoutes); // ✅ REGISTRAR ROTAS IMMORTAL
 app.use('/api', dotaScraperRoute);
 app.use('/api/mmr-verification', mmrVerificationRoutes);
 app.use('/api/known-players', knownPlayersRoutes);
+app.use('/api/system', systemRoutes);
  // Rotas existentes... 
 
 

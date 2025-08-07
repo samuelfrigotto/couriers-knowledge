@@ -15,12 +15,56 @@
     </div>
   </div>
 
-  <div *ngIf="(friendsService.isLoading$ | async) && !(friendsData$ | async)" class="loading-container">
-    <div class="spinner"></div>
-    <p>{{ 'friends.loadingFriends' | translate }}</p>
+   <!-- ✅ NOVO LOADING PADRONIZADO (SUBSTITUIR O ANTIGO) -->
+  <div *ngIf="(friendsService.isLoading$ | async) && !(friendsData$ | async)" class="friends-loading-container">
+    <div class="loading-content">
+      <!-- Logo com animação -->
+      <div class="logo-container">
+        <div class="steam-icon">👥</div>
+        <div class="logo-glow"></div>
+      </div>
+
+      <!-- Texto principal -->
+      <h3 class="loading-title">{{ 'friends.loadingFriends' | translate }}</h3>
+
+      <!-- Barra de progresso -->
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <div class="progress-dots">
+          <span class="dot" [class.active]="loadingDot >= 1"></span>
+          <span class="dot" [class.active]="loadingDot >= 2"></span>
+          <span class="dot" [class.active]="loadingDot >= 3"></span>
+        </div>
+      </div>
+
+      <!-- Status dinâmico -->
+      <p class="loading-status">{{ currentLoadingStatus | translate }}</p>
+    </div>
+
+    <!-- Particles background effect -->
+    <div class="particles">
+      <div class="particle"
+           *ngFor="let particle of particles"
+           [style.left.px]="particle.x"
+           [style.top.px]="particle.y"
+           [style.animation-delay.ms]="particle.delay">
+      </div>
+    </div>
   </div>
 
+  <!-- Error container permanece igual -->
   <div *ngIf="!(friendsService.isLoading$ | async) && !(friendsData$ | async)" class="error-container">
+    <div class="error-content">
+      <h3>{{ 'friends.errorTitle' | translate }}</h3>
+      <p>{{ 'friends.errorMessage' | translate }}</p>
+      <button class="retry-btn" (click)="refreshFriends()">{{ 'friends.retry' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Conteúdo dos amigos permanece igual -->
+  <div *ngIf="friendsData$ | async as friends" class="friends-content">
     <div class="error-content">
       <h3>{{ 'friends.errorTitle' | translate }}</h3>
       <p>{{ 'friends.errorMessage' | translate }}</p>

@@ -10,6 +10,7 @@ import { PaymentSuccessComponent } from './payment-success/payment-success.compo
 import { SettingsComponent } from '../../components/settings/settings.component';
 import { ImmortalLiveMatchComponent } from './immortal-live-match/immortal-live-match.component';
 import { ImmortalRecentMatchesComponent } from './immortal-recent-matches/immortal-recent-matches.component';
+import { ProComponent } from './pro/pro.component';
 
 export const USER_ROUTES: Routes = [
   {
@@ -28,7 +29,7 @@ export const USER_ROUTES: Routes = [
       // Rotas para Immortals
       { path: 'immortal-live', component: ImmortalLiveMatchComponent },
       { path: 'immortal-matches', component: ImmortalRecentMatchesComponent },
-
+      { path: 'pro', component: ProComponent},
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

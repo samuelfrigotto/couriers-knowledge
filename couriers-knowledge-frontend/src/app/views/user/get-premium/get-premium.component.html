@@ -25,6 +25,8 @@
       <p>{{ 'premium.subtitle' | translate }}</p>
     </div>
 
+
+
     <div class="plans-grid">
       <div
         *ngFor="let plan of plans"
@@ -34,9 +36,9 @@
       >
         <h3 class="plan-name">{{ plan.name }}</h3>
 
-        <!-- Preço Principal - CORRIGIDO -->
+        <!-- Preço Principal -->
         <div class="plan-price" *ngIf="plan.price !== null && !plan.comingSoon; else comingSoonPrice">
-          {{ plan.display_amount }}
+          {{ plan.monthly_equivalent }}
         </div>
         <ng-template #comingSoonPrice>
           <div class="plan-price">{{ 'premium.comingSoon' | translate }}</div>
@@ -77,18 +79,55 @@
           <span *ngIf="isProcessing(plan.id)">Processando...</span>
         </button>
 
-
         <div class="popular-badge" *ngIf="plan.popular">
-          {{ 'premium.mostPopular' | translate }}
+          {{ 'premium.bestValue' | translate }}
         </div>
-        <!-- ✅ BADGE EM PRODUÇÃO TRADUZIDA -->
         <div class="coming-soon-badge" *ngIf="plan.comingSoon">
-          {{ 'premium.inProduction' | translate }}
+          {{ 'premium.inDevelopment' | translate }}
         </div>
       </div>
     </div>
 
-    <!-- FAQ Section -->
+    <!-- Lista de Recursos Premium -->
+    <div class="premium-features-section">
+      <h2 class="features-section-title">{{ 'premium.features.title' | translate }}</h2>
+      <p class="features-section-subtitle">{{ 'premium.features.subtitle' | translate }}</p>
+
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <h4>{{ 'premium.features.unlimitedEvaluations' | translate }}</h4>
+          <p>{{ 'premium.features.unlimitedDesc' | translate }}</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔄</div>
+          <h4>{{ 'premium.features.moreUpdates' | translate }}</h4>
+          <p>{{ 'premium.features.moreUpdatesDesc' | translate }}</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📤</div>
+          <h4>{{ 'premium.features.advancedExport' | translate }}</h4>
+          <p>{{ 'premium.features.advancedExportDesc' | translate }}</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎯</div>
+          <h4>{{ 'premium.features.advancedReports' | translate }}</h4>
+          <p>{{ 'premium.features.advancedReportsDesc' | translate }}</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🚀</div>
+          <h4>{{ 'premium.features.betaFeatures' | translate }}</h4>
+          <p>{{ 'premium.features.betaFeaturesDesc' | translate }}</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🛡️</div>
+          <h4>{{ 'premium.features.prioritySupport' | translate }}</h4>
+          <p>{{ 'premium.features.prioritySupportDesc' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section Expandido -->
     <div class="faq-section">
       <h2 class="faq-title">{{ 'premium.faq.title' | translate }}</h2>
 
@@ -109,126 +148,86 @@
         </div>
 
         <div class="faq-item">
-          <h4>{{ 'premium.faq.features.title' | translate }}</h4>
-          <p>{{ 'premium.faq.features.content' | translate }}</p>
+          <h4>{{ 'premium.faq.mmr8k.title' | translate }}</h4>
+          <p>{{ 'premium.faq.mmr8k.content' | translate }} <a routerLink="/app/pro" class="pro-link">{{ 'premium.faq.mmr8k.link' | translate }}</a> {{ 'premium.faq.mmr8k.content2' | translate }}</p>
+        </div>
+
+        <div class="faq-item">
+          <h4>{{ 'premium.faq.updates.title' | translate }}</h4>
+          <p>{{ 'premium.faq.updates.content' | translate }}</p>
+        </div>
+
+        <div class="faq-item">
+          <h4>{{ 'premium.faq.resources.title' | translate }}</h4>
+          <p>{{ 'premium.faq.resources.content' | translate }}</p>
         </div>
       </div>
+    </div>
+
+       <!-- Seção Prós e Contras -->
+    <div class="pros-cons-section">
+      <h2 class="pros-cons-title">{{ 'premium.proscons.title' | translate }}</h2>
+      <div class="comparison-grid">
+        <div class="plan-benefits">
+          <h3 class="benefits-title">{{ 'premium.proscons.pros' | translate }}</h3>
+          <ul class="benefits-list">
+            <li>{{ 'premium.proscons.unlimited' | translate }}</li>
+            <li>{{ 'premium.proscons.updates' | translate }}</li>
+            <li>{{ 'premium.proscons.exports' | translate }}</li>
+            <li>{{ 'premium.proscons.imports' | translate }}</li>
+            <li>{{ 'premium.proscons.support' | translate }}</li>
+            <li>{{ 'premium.proscons.beta' | translate }}</li>
+            <li>{{ 'premium.proscons.reports' | translate }}</li>
+            <li>{{ 'premium.proscons.noads' | translate }}</li>
+            <li>{{ 'premium.proscons.dataexport' | translate }}</li>
+            <li>{{ 'premium.proscons.analysis' | translate }}</li>
+          </ul>
+        </div>
+        <div class="plan-limits">
+          <h3 class="limits-title">{{ 'premium.proscons.considerations' | translate }}</h3>
+          <ul class="limits-list">
+            <li>{{ 'premium.proscons.investment' | translate }}</li>
+            <li>{{ 'premium.proscons.development' | translate }}</li>
+            <li>{{ 'premium.proscons.verification' | translate }}</li>
+            <li>{{ 'premium.proscons.refund' | translate }}</li>
+            <li>{{ 'premium.proscons.prices' | translate }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final CTA -->
+    <div class="final-cta">
+      <h2>{{ 'premium.finalCta.title' | translate }}</h2>
+      <p>{{ 'premium.finalCta.subtitle' | translate }}</p>
     </div>
   </div>
 </div>
 
-<style>
-.loading-container, .error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-  text-align: center;
-}
+<!-- Modal Pro -->
+<div class="pro-modal" *ngIf="showProModal" (click)="closeProModal()">
+  <div class="pro-modal-content" (click)="$event.stopPropagation()">
+    <button class="pro-modal-close" (click)="closeProModal()">&times;</button>
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(102, 126, 234, 0.3);
-  border-top: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
+    <h3>{{ 'premium.pro.title' | translate }}</h3>
+    <p>{{ 'premium.pro.description' | translate }}</p>
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+    <div class="pro-steps">
+      <h4>{{ 'premium.pro.howto' | translate }}</h4>
+      <ul>
+        <li>{{ 'premium.pro.step1' | translate }}</li>
+        <li>{{ 'premium.pro.step2' | translate }}</li>
+        <li>{{ 'premium.pro.step3' | translate }}</li>
+      </ul>
+    </div>
 
-.retry-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: transform 0.2s;
-}
+    <div class="pro-warning">
+      <p><strong>{{ 'premium.pro.important' | translate }}</strong> {{ 'premium.pro.costs' | translate }}</p>
+      <p><em>{{ 'premium.pro.beta' | translate }}</em></p>
+    </div>
 
-.retry-btn:hover {
-  transform: translateY(-2px);
-}
-
-.monthly-equivalent {
-  font-size: 0.9rem;
-  color: #34c759;
-  margin-top: 5px;
-  font-weight: 600;
-}
-
-.faq-section {
-  margin-top: 80px;
-  padding: 60px 40px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.faq-title {
-  text-align: center;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 40px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.faq-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-}
-
-.faq-item {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.faq-item h4 {
-  margin-bottom: 12px;
-  color: #667eea;
-  font-size: 1.1rem;
-}
-
-.faq-item p {
-  color: #a8a8b3;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.final-cta {
-  text-align: center;
-  margin-top: 80px;
-  padding: 60px 20px;
-}
-
-.final-cta h2 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-@media (max-width: 768px) {
-  .faq-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .final-cta h2 {
-    font-size: 2rem;
-  }
-}
-</style>
+    <div class="pro-modal-actions">
+      <button class="plan-button primary" (click)="handleProContact()">{{ 'premium.pro.contact' | translate }}</button>
+    </div>
+  </div>
+</div>

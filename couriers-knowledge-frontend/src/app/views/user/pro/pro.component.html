@@ -1,0 +1,298 @@
+<!-- src/app/views/user/pro/pro.component.html -->
+<div class="floating-elements">
+  <div class="floating-circle circle-1"></div>
+  <div class="floating-circle circle-2"></div>
+  <div class="floating-circle circle-3"></div>
+</div>
+
+<div class="pro-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando informações...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="content">
+    <!-- Header -->
+    <div class="pro-header">
+      <div class="header-content">
+        <h1>Funcionalidades Pro</h1>
+        <p class="header-subtitle">Recursos especializados para jogadores de alto nível (8.5K+ MMR)</p>
+      </div>
+
+      <!-- User Status Info -->
+      <div class="user-status-card" *ngIf="userProfile">
+        <div class="status-info">
+          <h3>Seu Status Atual</h3>
+          <div class="status-details">
+            <div class="status-item">
+              <span class="label">MMR:</span>
+              <span class="value">{{ getCurrentUserMMR() }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">Elegibilidade:</span>
+              <span class="value" [class]="isEligibleUser() ? 'eligible' : 'not-eligible'">
+                {{ isEligibleUser() ? 'Elegível para Pro' : 'Requer 8500+ MMR' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Introduction Section -->
+    <div class="intro-section">
+      <h2>O que são as Funcionalidades Pro?</h2>
+      <div class="intro-content">
+        <p>
+          As funcionalidades Pro do Courier's Knowledge foram desenvolvidas especificamente para atender às necessidades
+          de jogadores de Dota 2 que competem em alto nível. Devido à complexidade técnica e aos custos de manutenção
+          desses recursos, eles são disponibilizados apenas para jogadores com MMR superior a 8500 pontos ou que estão
+          no leaderboard oficial.
+        </p>
+        <p>
+          Estas ferramentas utilizam APIs especializadas, algoritmos avançados e bases de dados extensas para fornecer
+          insights que são relevantes apenas no contexto de partidas de alto MMR, onde o meta-game e as estratégias
+          são significativamente diferentes.
+        </p>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+      <h2>Recursos Disponíveis</h2>
+      <p class="section-subtitle">Conjunto completo de ferramentas especializadas para análise de partidas de alto nível</p>
+
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feature of proFeatures">
+          <div class="feature-header">
+            <h3>{{ feature.title }}</h3>
+            <span class="feature-status" [class]="getStatusClass(feature.status)">
+              {{ getStatusText(feature.status) }}
+            </span>
+          </div>
+          <p class="feature-description">{{ feature.description }}</p>
+          <div class="technical-details">
+            <h4>Detalhes Técnicos:</h4>
+            <p>{{ feature.technicalDetails }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Process Section -->
+    <div class="process-section">
+      <h2>Como Solicitar Acesso e Requisitos</h2>
+      <p class="section-subtitle">Processo completo e requisitos necessários para ativar as funcionalidades Pro</p>
+
+      <!-- Process Steps -->
+      <div class="process-steps">
+        <div class="step-card" *ngFor="let step of processSteps">
+          <div class="step-header">
+            <div class="step-number">{{ step.number }}</div>
+            <div class="step-info">
+              <h3>{{ step.title }}</h3>
+              <span class="step-timeframe">{{ step.timeframe }}</span>
+            </div>
+          </div>
+          <p class="step-description">{{ step.description }}</p>
+          <div class="step-details">
+            <h4>Detalhes:</h4>
+            <ul>
+              <li *ngFor="let detail of step.details">{{ detail }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requirements Cards -->
+      <div class="requirements-grid">
+        <div class="requirement-card">
+          <h3>Elegibilidade</h3>
+          <ul>
+            <li>MMR mínimo de 8500 pontos ou posição no leaderboard</li>
+            <li>Perfil Steam público para verificação</li>
+            <li>Conta ativa no Courier's Knowledge</li>
+          </ul>
+        </div>
+
+        <div class="requirement-card">
+          <h3>Período de Teste</h3>
+          <ul>
+            <li>14 dias de acesso gratuito após aprovação</li>
+            <li>Todas as funcionalidades Pro liberadas</li>
+            <li>Suporte técnico prioritário</li>
+          </ul>
+        </div>
+
+        <div class="requirement-card">
+          <h3>Após o Teste</h3>
+          <ul>
+            <li>Plano Premium necessário para continuar</li>
+            <li>Mesmo preço do Premium regular</li>
+            <li>Funcionalidades Pro incluídas automaticamente</li>
+          </ul>
+        </div>
+
+        <div class="requirement-card">
+          <h3>Limitações</h3>
+          <ul>
+            <li>Recursos manuais podem ser trabalhosos</li>
+            <li>Base de dados depende da comunidade</li>
+            <li>Disponibilidade sujeita à demanda do servidor</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+      <h2>Perguntas Frequentes</h2>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Por que as funcionalidades Pro são restritas?</h3>
+          <p>
+            As funcionalidades Pro utilizam recursos computacionais significativos e têm custos
+            elevados de manutenção. Além disso, elas foram desenvolvidas especificamente para o contexto de
+            partidas de alto MMR, onde fazem mais sentido e agregam valor real.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Como funciona o cross-reference com leaderboard?</h3>
+          <p>
+            Nossa base de dados é alimentada manualmente pelos próprios jogadores da comunidade.
+            Quanto mais pessoas usarem o aplicativo, melhor ficará o sistema de cross-reference
+            para identificar jogadores de alto nível.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>O que acontece se meu MMR diminuir?</h3>
+          <p>
+            Uma vez aprovado para as funcionalidades Pro, você mantém o acesso durante todo o período do seu
+            plano Premium. Não fazemos re-verificações periódicas de MMR, pois entendemos que flutuações
+            são naturais no jogo.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Por que algumas funcionalidades são manuais?</h3>
+          <p>
+            Devido às limitações das APIs disponíveis e à complexidade técnica, algumas funcionalidades
+            requerem input manual do jogador. Isso garante maior precisão e permite personalização
+            das análises conforme sua necessidade.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cta-section">
+      <div class="cta-content" *ngIf="isEligibleUser()">
+        <h2>Pronto para começar?</h2>
+        <p>
+          Você atende aos requisitos para acessar as funcionalidades Pro. Clique no botão abaixo para
+          iniciar o processo de solicitação.
+        </p>
+        <button class="action-button primary large" (click)="openContactForm()">
+          Solicitar Acesso Pro
+        </button>
+      </div>
+
+      <div class="cta-content" *ngIf="!isEligibleUser()">
+        <h2>Ainda não elegível?</h2>
+        <p>
+          Continue aprimorando suas habilidades no Dota 2. Quando atingir 8500+ MMR, você pode
+          informar seu novo MMR nas configurações da conta.
+        </p>
+        <div class="cta-buttons">
+          <button class="action-button secondary large" (click)="goToPremium()">
+            Ver Planos Premium
+          </button>
+          <button class="action-button primary large" (click)="goToSettings()">
+            Ir para Configurações
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Form Modal -->
+  <div class="modal-overlay" *ngIf="showContactForm" (click)="closeContactForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Solicitação de Acesso Pro</h3>
+        <button class="close-button" (click)="closeContactForm()">&times;</button>
+      </div>
+
+      <form class="contact-form" (ngSubmit)="submitProRequest()">
+        <div class="form-section">
+          <h4>Comprovação de MMR</h4>
+          <div class="form-group">
+            <label for="mmrScreenshot">Screenshot do MMR *</label>
+            <input
+              type="file"
+              id="mmrScreenshot"
+              accept="image/*"
+              (change)="onFileSelected($event)"
+              required>
+            <small>Envie uma captura de tela clara da tela de MMR no jogo</small>
+          </div>
+
+          <div class="form-group">
+            <label for="currentMMR">MMR Atual *</label>
+            <input
+              type="number"
+              id="currentMMR"
+              [(ngModel)]="contactForm.currentMMR"
+              name="currentMMR"
+              min="8500"
+              placeholder="Ex: 9500"
+              required>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Informações do Perfil</h4>
+          <div class="form-group">
+            <label for="steamProfile">Link do Perfil Steam *</label>
+            <input
+              type="url"
+              id="steamProfile"
+              [(ngModel)]="contactForm.steamProfile"
+              name="steamProfile"
+              placeholder="https://steamcommunity.com/profiles/..."
+              required>
+            <small>Certifique-se de que seu perfil está público</small>
+          </div>
+
+          <div class="form-group">
+            <label for="message">Informações Adicionais</label>
+            <textarea
+              id="message"
+              [(ngModel)]="contactForm.message"
+              name="message"
+              rows="4"
+              placeholder="Conte-nos sobre sua experiência no Dota 2, região de jogo, etc. (opcional)"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="action-button secondary" (click)="closeContactForm()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="action-button primary"
+            [disabled]="isSubmittingRequest">
+            <span *ngIf="!isSubmittingRequest">Enviar Solicitação</span>
+            <span *ngIf="isSubmittingRequest">Enviando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
