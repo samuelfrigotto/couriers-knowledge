@@ -1,0 +1,46 @@
+<!-- confirmation-modal.component.html -->
+<div *ngIf="isVisible" class="modal-overlay" (click)="handleOverlayClick($event)">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header do Modal -->
+    <div class="modal-header">
+      <div class="modal-icon" [class]="confirmButtonType">
+        {{ icon }}
+      </div>
+      <button class="close-btn" (click)="close()" [disabled]="isLoading">
+        ×
+      </button>
+    </div>
+
+    <!-- Conteúdo do Modal -->
+    <div class="modal-body">
+      <h3 class="modal-title">{{ title }}</h3>
+      <p class="modal-message">{{ message }}</p>
+    </div>
+
+    <!-- Footer com botões -->
+    <div class="modal-footer">
+      <button
+        class="btn btn-cancel"
+        (click)="cancel()"
+        [disabled]="isLoading"
+      >
+        {{ cancelText }}
+      </button>
+
+      <button
+        class="btn btn-confirm"
+        [class]="'btn-' + confirmButtonType"
+        (click)="confirm()"
+        [disabled]="isLoading"
+      >
+        <span *ngIf="!isLoading">{{ confirmText }}</span>
+        <span *ngIf="isLoading" class="loading-spinner">
+          <div class="spinner"></div>
+          {{ 'common.loading' | translate }}
+        </span>
+      </button>
+    </div>
+
+  </div>
+</div>

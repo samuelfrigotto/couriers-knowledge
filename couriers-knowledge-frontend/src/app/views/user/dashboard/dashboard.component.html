@@ -809,3 +809,19 @@
   (formClosed)="onFormClosed()"
   (evaluationError)="onEvaluationError($event)"
 ></app-evaluation-form>
+
+
+<app-confirmation-modal
+  [isVisible]="showConfirmationModal"
+  [title]="confirmationConfig.title"
+  [message]="confirmationConfig.message"
+  [confirmText]="confirmationConfig.confirmText"
+  [cancelText]="confirmationConfig.cancelText"
+  [confirmButtonType]="'danger'"
+  [icon]="'🗑️'"
+  [isLoading]="confirmationConfig.isLoading"
+  (onConfirm)="onConfirmDelete()"
+  (onCancel)="onCancelDelete()"
+  (onClose)="onCancelDelete()"
+>
+</app-confirmation-modal>

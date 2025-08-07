@@ -10,6 +10,7 @@ import { ImmortalService } from '../../../core/immortal.service';
 import { RatingDisplayComponent } from '../../../components/rating-display/rating-display.component';
 import { ToastrService } from 'ngx-toastr';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
+import { I18nService } from '../../../core/i18n.service';
 
 interface EnhancedStatusPlayer extends StatusPlayer {
   leaderboardData?: {
@@ -41,6 +42,7 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   protected immortalService = inject(ImmortalService);
   public gameDataService = inject(GameDataService);
   private toastr = inject(ToastrService);
+  private i18nService = inject(I18nService);
 
   // ===== COMPONENT STATE =====
   statusInput = '';
@@ -139,8 +141,8 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
 
   private playReminderNotification(): void {
     this.toastr.info(
-      'Lembre-se de usar o comando status se estiver em uma partida!',
-      'Lembrete Immortal',
+      this.i18nService.translate('immortal.reminder.statusCommand'),
+      this.i18nService.translate('immortal.reminder.title'),
       { timeOut: 5000 }
     );
   }
@@ -148,7 +150,9 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   // ===== MAIN FUNCTIONALITY =====
   analyzeStatus(): void {
     if (!this.statusInput.trim()) {
-      this.toastr.warning('Por favor, cole o resultado do comando status');
+      // ❌ ANTES: this.toastr.warning('Por favor, cole o resultado do comando status');
+      // ✅ DEPOIS:
+      this.toastr.warning(this.i18nService.translate('immortal.status.enterCommand'));
       return;
     }
 
@@ -160,19 +164,29 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
       next: (response: StatusParseResponse) => {
         if (response.success) {
           this.matchData = response;
-          this.toastr.success('Status analisado com sucesso!');
+          // ❌ ANTES: this.toastr.success('Status analisado com sucesso!');
+          // ✅ DEPOIS:
+          this.toastr.success(this.i18nService.translate('immortal.status.analyzed'));
 
           // Enhanced processing for Immortals
           this.enhanceWithLeaderboardData();
         } else {
-          this.error = response.error || 'Erro ao processar status';
-          this.toastr.error(this.error, 'Erro no Parse');
+          this.error = response.error || this.i18nService.translate('immortal.status.processError');
+          // ❌ ANTES: this.toastr.error(this.error, 'Erro no Parse');
+          // ✅ DEPOIS:
+          this.toastr.error(this.error, this.i18nService.translate('immortal.status.parseError'));
         }
         this.isProcessing = false;
       },
       error: (error: any) => {
-        this.error = 'Erro de conexão com o servidor';
-        this.toastr.error(this.error, 'Erro de Rede');
+        // ❌ ANTES: this.error = 'Erro de conexão com o servidor';
+        // ✅ DEPOIS:
+        this.error = this.i18nService.translate('immortal.status.connectionError');
+
+        // ❌ ANTES: this.toastr.error(this.error, 'Erro de Rede');
+        // ✅ DEPOIS:
+        this.toastr.error(this.error, this.i18nService.translate('immortal.status.networkError'));
+
         this.isProcessing = false;
         console.error('Erro ao analisar status:', error);
       }
@@ -388,25 +402,46 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
   refreshLeaderboard(): void {
     const region = this.userInfo?.immortalRegion || 'americas';
 
-    this.toastr.info(`Atualizando leaderboard ${region}...`, 'Atualizando', { timeOut: 3000 });
+    // ❌ ANTES: this.toastr.info(`Atualizando leaderboard ${region}...`, 'Atualizando', { timeOut: 3000 });
+    // ✅ DEPOIS:
+    this.toastr.info(
+      this.i18nService.translate('immortal.leaderboard.updating', { region }),
+      this.i18nService.translate('common.updating'),
+      { timeOut: 3000 }
+    );
 
     this.immortalService.refreshLeaderboard(region).subscribe({
       next: (response) => {
         if (response.success) {
           this.leaderboardData = response;
-          this.toastr.success(`Leaderboard ${region} atualizado!`, 'Atualizado');
+          // ❌ ANTES: this.toastr.success(`Leaderboard ${region} atualizado!`, 'Atualizado');
+          // ✅ DEPOIS:
+          this.toastr.success(
+            this.i18nService.translate('immortal.leaderboard.updated', { region }),
+            this.i18nService.translate('common.updated')
+          );
 
           // Re-fazer cross-reference se há uma partida analisada
           if (this.matchData) {
             this.enhanceWithLeaderboardData();
           }
         } else {
-          this.toastr.error('Falha ao atualizar leaderboard', 'Erro');
+          // ❌ ANTES: this.toastr.error('Falha ao atualizar leaderboard', 'Erro');
+          // ✅ DEPOIS:
+          this.toastr.error(
+            this.i18nService.translate('immortal.leaderboard.updateFailed'),
+            this.i18nService.translate('common.error')
+          );
         }
       },
       error: (error) => {
         console.error('❌ Erro ao atualizar leaderboard:', error);
-        this.toastr.error('Erro ao atualizar leaderboard', 'Erro');
+        // ❌ ANTES: this.toastr.error('Erro ao atualizar leaderboard', 'Erro');
+        // ✅ DEPOIS:
+        this.toastr.error(
+          this.i18nService.translate('immortal.leaderboard.error'),
+          this.i18nService.translate('common.error')
+        );
       }
     });
   }
@@ -430,10 +465,15 @@ export class ImmortalLiveMatchComponent implements OnInit, OnDestroy {
     return this.unassignedPlayers.length === 0 && this.enhancedPlayers.length > 0;
   }
 
-  finalizeTeamSelection(): void {
+    finalizeTeamSelection(): void {
     if (this.isTeamSelectionComplete()) {
       this.showTeamSelection = false;
-      this.toastr.success('Times configurados com sucesso!', 'Configuração Completa');
+      // ❌ ANTES: this.toastr.success('Times configurados com sucesso!', 'Configuração Completa');
+      // ✅ DEPOIS:
+      this.toastr.success(
+        this.i18nService.translate('immortal.teams.configured'),
+        this.i18nService.translate('immortal.teams.configurationComplete')
+      );
     }
   }
 }

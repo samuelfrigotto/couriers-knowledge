@@ -32,6 +32,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { I18nService } from '../../../core/i18n.service'; // ← ADICIONAR
 import { TranslatePipe } from '../../../pipes/translate.pipe'; // ← ADICIONAR
+import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -44,7 +45,8 @@ import { TranslatePipe } from '../../../pipes/translate.pipe'; // ← ADICIONAR
     RatingDisplayComponent,
     EmptyStateComponent,
     FormsModule,
-    TranslatePipe, // ← ADICIONAR
+    TranslatePipe,
+    ConfirmationModalComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -116,6 +118,16 @@ export class DashboardComponent implements OnInit {
   public canImportToday: boolean = true;
   public canExportThisMonth: boolean = true;
   public canImportThisMonth: boolean = true;
+  public showConfirmationModal: boolean = false;
+  public confirmationConfig = {
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: '',
+    isLoading: false
+  };
+  private pendingDeleteEvaluationId: number | null = null;
+
 
   constructor() {
     this.filterForm = this.fb.group({
@@ -1112,21 +1124,50 @@ export class DashboardComponent implements OnInit {
   }
 
   public deleteEvaluation(evaluationId: number): void {
-    const confirmMessage = this.i18nService.translate('dashboard.confirm.deleteEvaluation');
-    if (confirm(confirmMessage)) {
-      this.evaluationService.deleteEvaluation(evaluationId.toString()).subscribe({
-        next: () => {
-          this.toastr.success(this.i18nService.translate('dashboard.success.evaluationDeleted'));
-          this.loadAllEvaluations();
-          this.checkEvaluationLimit();
-        },
-        error: (error) => {
-          console.error('Erro ao deletar avaliação:', error);
-          this.toastr.error(this.i18nService.translate('dashboard.errors.deleteEvaluation'));
-        }
-      });
-    }
+    // Configurar o modal de confirmação
+    this.confirmationConfig = {
+      title: this.i18nService.translate('modal.confirmation.title.delete'),
+      message: this.i18nService.translate('modal.confirmation.message.deleteEvaluation'),
+      confirmText: this.i18nService.translate('modal.confirmation.confirm.delete'),
+      cancelText: this.i18nService.translate('modal.confirmation.cancel'),
+      isLoading: false
+    };
+
+    this.pendingDeleteEvaluationId = evaluationId;
+    this.showConfirmationModal = true;
     this.activeActionMenu = null;
+  }
+
+  public onConfirmDelete(): void {
+    if (!this.pendingDeleteEvaluationId) return;
+
+    this.confirmationConfig.isLoading = true;
+
+    this.evaluationService.deleteEvaluation(this.pendingDeleteEvaluationId.toString()).subscribe({
+      next: () => {
+        this.toastr.success(this.i18nService.translate('dashboard.success.evaluationDeleted'));
+        this.loadAllEvaluations();
+        this.checkEvaluationLimit();
+        this.closeConfirmationModal();
+      },
+      error: (error) => {
+        console.error('Erro ao excluir avaliação:', error);
+        this.toastr.error(this.i18nService.translate('dashboard.errors.deleteEvaluation'));
+        this.confirmationConfig.isLoading = false;
+      }
+    });
+  }
+
+  // ✅ NOVO MÉTODO PARA CANCELAR EXCLUSÃO
+  public onCancelDelete(): void {
+    this.closeConfirmationModal();
+  }
+
+  // ✅ NOVO MÉTODO PARA FECHAR MODAL DE CONFIRMAÇÃO
+  public closeConfirmationModal(): void {
+    this.showConfirmationModal = false;
+    this.pendingDeleteEvaluationId = null;
+    this.confirmationConfig.isLoading = false;
   }
 
   // ===== MÉTODOS DE COMPARTILHAMENTO COM FIX DE FOCO =====

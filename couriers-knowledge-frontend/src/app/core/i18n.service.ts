@@ -717,7 +717,43 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'evaluation.form.success.updated': 'Evaluation updated successfully!',
         'evaluation.form.error.limit': 'Evaluation limit reached!',
         'evaluation.form.error.upgrade': 'Upgrade Required',
-        'evaluation.form.error.save': 'Error saving evaluation. Please try again.'
+        'evaluation.form.error.save': 'Error saving evaluation. Please try again.',
+        'modal.confirmation.title.delete': 'Confirm Deletion',
+        'modal.confirmation.message.deleteEvaluation': 'This action cannot be undone. The evaluation will be permanently removed.',
+        'modal.confirmation.confirm.delete': 'Delete',
+        'modal.confirmation.cancel': 'Cancel',
+        'modal.confirmation.loading': 'Deleting...',
+        'common.loading': 'Loading...',
+         // === IMMORTAL LIVE MATCH TOASTS ===
+  'immortal.status.enterCommand': 'Please paste the status command result',
+  'immortal.status.analyzed': 'Status analyzed successfully!',
+  'immortal.status.processError': 'Error processing status',
+  'immortal.status.parseError': 'Parse Error',
+  'immortal.status.connectionError': 'Server connection error',
+  'immortal.status.networkError': 'Network Error',
+  'immortal.leaderboard.updating': 'Updating {{region}} leaderboard...',
+  'immortal.leaderboard.updated': '{{region}} leaderboard updated!',
+  'immortal.leaderboard.updateFailed': 'Failed to update leaderboard',
+  'immortal.leaderboard.error': 'Error updating leaderboard',
+  'immortal.teams.configured': 'Teams configured successfully!',
+  'immortal.teams.configurationComplete': 'Configuration Complete',
+  'immortal.reminder.title': 'Immortal Reminder',
+  'immortal.reminder.message': 'You have {{count}} immortal player(s) in your match! Consider saving your evaluations after the game.',
+
+  // === FRIENDS COMPONENT TOASTS ===
+  'friends.invite.generated': 'Invite generated!',
+  'friends.invite.error': 'Invite Error',
+
+  // === DASHBOARD COMPONENT TOASTS ===
+  'dashboard.clipboard.manualCopy': 'Could not copy automatically. Click OK to see the text and copy manually.',
+  'dashboard.clipboard.manualRequired': 'Manual Copy Required',
+
+  // === COMMON MESSAGES ===
+  'common.updating': 'Updating',
+  'common.updated': 'Updated',
+  'common.error': 'Error',
+  'immortal.reminder.statusCommand': 'Remember to use the status command if you are in a match!',
+
       },
       pt: {
         'dashboard.share.role': 'Função',
@@ -871,6 +907,7 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'profile.header.memberSince': 'Membro desde:',
         'profile.status.premium': 'Premium',
         'profile.status.free': 'Gratuito',
+        'dashboard.confirm.deleteEvaluation': 'Tem certeza de que deseja excluir esta avaliação?',
         'profile.stats.evaluationsMade': 'Avaliações Feitas',
         'profile.stats.averageRating': 'Média das Avaliações Feitas',
         'profile.stats.selfEvaluation': 'Autoavaliação',
@@ -968,7 +1005,7 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'dashboard.notes.label': 'Nota:',
         'dashboard.actions.edit': 'Editar',
         'dashboard.actions.share': 'Compartilhar',
-        'dashboard.actions.delete': 'Deletar',
+        'dashboard.actions.delete': 'Excluir',
         'dashboard.status.premium': 'Premium',
         'dashboard.status.free': 'Grátis',
         'dashboard.tooltips.import': 'Importar avaliações',
@@ -1030,13 +1067,13 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'dashboard.success.importErrors': '. {{errors}} erro(s) encontrado(s)',
         'dashboard.success.evaluationShared': 'Avaliação compartilhada! Texto copiado para área de transferência.',
         'dashboard.success.codeCopied': 'Código copiado para área de transferência!',
-        'dashboard.success.evaluationDeleted': 'Avaliação deletada com sucesso!',
+        'dashboard.success.evaluationDeleted': 'Avaliação excluída com sucesso!',
         'dashboard.success.evaluationUpdated': 'Avaliação atualizada com sucesso!',
         'dashboard.errors.importData': 'Erro ao importar dados.',
         'dashboard.errors.importLimit': 'Limite de importações atingido.',
         'dashboard.errors.shareEvaluation': 'Não foi possível compartilhar a avaliação.',
         'dashboard.errors.copyCode': 'Erro ao copiar código.',
-        'dashboard.errors.deleteEvaluation': 'Erro ao deletar avaliação.',
+        'dashboard.errors.deleteEvaluation': 'Erro ao excluir avaliação.',
         'dashboard.errors.loadEvaluations': 'Erro ao carregar avaliações.',
         'dashboard.errors.invalidFile': 'Arquivo inválido.',
         'dashboard.errors.evaluationLimit': 'Você atingiu o limite de {{limit}} avaliações do plano gratuito.',
@@ -1223,7 +1260,43 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'evaluation.form.success.updated': 'Avaliação atualizada com sucesso!',
         'evaluation.form.error.limit': 'Limite de avaliações atingido!',
         'evaluation.form.error.upgrade': 'Upgrade Necessário',
-        'evaluation.form.error.save': 'Erro ao salvar avaliação. Tente novamente.'
+        'evaluation.form.error.save': 'Erro ao salvar avaliação. Tente novamente.',
+        'modal.confirmation.title.delete': 'Confirmar Exclusão',
+        'modal.confirmation.message.deleteEvaluation': 'Esta ação não pode ser desfeita. A avaliação será permanentemente removida.',
+        'modal.confirmation.confirm.delete': 'Excluir',
+        'modal.confirmation.cancel': 'Cancelar',
+        'modal.confirmation.loading': 'Excluindo...',
+        'common.loading': 'Carregando...',
+        'dashboard.success.namesUpdated':'Nomes dos jogadores atualizados!',
+        'dashboard.errors.updateNames': 'Falha ao atualizar nomes.',
+        'immortal.status.enterCommand': 'Por favor, cole o resultado do comando status',
+        'immortal.status.analyzed': 'Status analisado com sucesso!',
+        'immortal.status.processError': 'Erro ao processar status',
+        'immortal.status.parseError': 'Erro no Parse',
+        'immortal.status.connectionError': 'Erro de conexão com o servidor',
+        'immortal.status.networkError': 'Erro de Rede',
+        'immortal.leaderboard.updating': 'Atualizando leaderboard {{region}}...',
+        'immortal.leaderboard.updated': 'Leaderboard {{region}} atualizado!',
+        'immortal.leaderboard.updateFailed': 'Falha ao atualizar leaderboard',
+        'immortal.leaderboard.error': 'Erro ao atualizar leaderboard',
+        'immortal.teams.configured': 'Times configurados com sucesso!',
+        'immortal.teams.configurationComplete': 'Configuração Completa',
+        'immortal.reminder.title': 'Lembrete Immortal',
+        'immortal.reminder.message': 'Você tem {{count}} jogador(es) immortal na sua partida! Considere salvar suas avaliações após o jogo.',
+            // === FRIENDS COMPONENT TOASTS ===
+        'friends.invite.generated': 'Convite gerado!',
+        'friends.invite.error': 'Erro no Convite',
+
+        // === DASHBOARD COMPONENT TOASTS ===
+        'dashboard.clipboard.manualCopy': 'Não foi possível copiar automaticamente. Clique OK para ver o texto e copiar manualmente.',
+        'dashboard.clipboard.manualRequired': 'Cópia Manual Necessária',
+
+        // === COMMON MESSAGES ===
+        'common.updating': 'Atualizando',
+        'common.updated': 'Atualizado',
+        'common.error': 'Erro',
+        'immortal.reminder.statusCommand': 'Lembre-se de usar o comando status se estiver em uma partida!',
+  
       },
       'es-PE': {
         'dashboard.share.role': 'Rol',
@@ -1764,7 +1837,42 @@ private readonly translations: { [key: string]: { [key: string]: string } } =
         'evaluation.form.success.updated': '¡Evaluación actualizada con éxito!',
         'evaluation.form.error.limit': '¡Límite de evaluaciones alcanzado!',
         'evaluation.form.error.upgrade': 'Se requiere actualizar',
-        'evaluation.form.error.save': 'Error al guardar la evaluación. Por favor, inténtalo de nuevo.'
+        'evaluation.form.error.save': 'Error al guardar la evaluación. Por favor, inténtalo de nuevo.',
+        'modal.confirmation.title.delete': 'Confirmar Eliminación',
+        'modal.confirmation.message.deleteEvaluation': 'Esta acción no se puede deshacer. La evaluación será eliminada permanentemente.',
+        'modal.confirmation.confirm.delete': 'Eliminar',
+        'modal.confirmation.cancel': 'Cancelar',
+        'modal.confirmation.loading': 'Eliminando...',
+        'common.loading': 'Cargando...',
+         // === IMMORTAL LIVE MATCH TOASTS ===
+  'immortal.status.enterCommand': 'Por favor, pegue el resultado del comando status',
+  'immortal.status.analyzed': '¡Status analizado con éxito!',
+  'immortal.status.processError': 'Error al procesar status',
+  'immortal.status.parseError': 'Error de Análisis',
+  'immortal.status.connectionError': 'Error de conexión con el servidor',
+  'immortal.status.networkError': 'Error de Red',
+  'immortal.leaderboard.updating': 'Actualizando leaderboard {{region}}...',
+  'immortal.leaderboard.updated': '¡Leaderboard {{region}} actualizado!',
+  'immortal.leaderboard.updateFailed': 'Error al actualizar leaderboard',
+  'immortal.leaderboard.error': 'Error al actualizar leaderboard',
+  'immortal.teams.configured': '¡Equipos configurados con éxito!',
+  'immortal.teams.configurationComplete': 'Configuración Completa',
+  'immortal.reminder.title': 'Recordatorio Immortal',
+  'immortal.reminder.message': '¡Tienes {{count}} jugador(es) immortal en tu partida! Considera guardar tus evaluaciones después del juego.',
+
+  // === FRIENDS COMPONENT TOASTS ===
+  'friends.invite.generated': '¡Invitación generada!',
+  'friends.invite.error': 'Error de Invitación',
+
+  // === DASHBOARD COMPONENT TOASTS ===
+  'dashboard.clipboard.manualCopy': 'No se pudo copiar automáticamente. Haz clic OK para ver el texto y copiarlo manualmente.',
+  'dashboard.clipboard.manualRequired': 'Copia Manual Requerida',
+
+  // === COMMON MESSAGES ===
+  'common.updating': 'Actualizando',
+  'common.updated': 'Actualizado',
+  'common.error': 'Error',
+  'immortal.reminder.statusCommand': '¡Recuerda usar el comando status si estás en una partida!',
       },
     };
 
